@@ -1,0 +1,16 @@
+pack_id,label_files,reviewers,skipped_label_files,unique_docs_labeled,docs_with_full_read,docs_with_2_full_reads,docs_with_2_clean_votes,disputed_gold_candidates,gold_docs,target,shortfall,status
+cadj-commits,1,1,0,150,150,0,0,0,0,200,200,BELOW_TARGET
+cadj-stackexchange,2,2,0,151,151,88,0,0,0,200,200,BELOW_TARGET
+code-cpp,1,1,0,500,500,0,0,0,0,200,200,BELOW_TARGET
+code-go,1,1,0,500,461,0,0,0,0,200,200,BELOW_TARGET
+code-java,1,1,0,150,150,0,0,0,0,200,200,BELOW_TARGET
+code-js-ts,1,1,0,500,500,0,0,0,0,200,200,BELOW_TARGET
+code-python,2,2,0,723,723,0,0,0,0,200,200,BELOW_TARGET
+code-rust,1,1,0,500,492,0,0,0,0,200,200,BELOW_TARGET
+en-dclm,3,3,0,502,502,149,30,5,25,200,175,BELOW_TARGET
+en-fineweb-edu,1,1,0,150,150,0,0,0,0,200,200,BELOW_TARGET
+en-nemotroncc,1,1,0,150,150,0,0,0,0,200,200,BELOW_TARGET
+en-nemotroncc-synth,1,1,0,500,500,0,0,0,0,200,200,BELOW_TARGET
+math-finemath,2,2,0,500,500,155,30,0,30,200,170,BELOW_TARGET
+sci-finepdfs,1,1,0,150,150,0,0,0,0,200,200,BELOW_TARGET
+ind-mr-sangraha-v,2,2,0,150,150,148,30,0,30,200,170,BELOW_TARGET
