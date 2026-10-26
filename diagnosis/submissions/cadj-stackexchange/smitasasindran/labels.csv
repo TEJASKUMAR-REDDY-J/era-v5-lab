@@ -2,31 +2,31 @@ doc_id,read,verdict,diseases,evidence,hex,note
 87116d4f6facd13b,full,fix,B3,<issue_start> | <issue_comment>,,Is [selected_answer] a ghost token? Probably not..
 c9e11c8baa07c6e0,full,fix,B3;C2,<issue_start> | <issue_comment> | ---------,,horizontal line markers | urls
 d78b5eeab23e7a55,full,fix,B3,<issue_start> | <issue_comment> | <select name=”,,html inside code. Not B2
-1700b09990f0ec0f,full,fix,B3;C5,"<issue_start> | <issue_comment> | resultString = ""string with encoding problem: ⟦U+FFFD⟧"" | <http:...>",,"⟦U+FFFD⟧ referenced inside code and as text. Not A1. urls, url within <>"
+1700b09990f0ec0f,full,fix,B3,<issue_start> | <issue_comment>,,"⟦U+FFFD⟧ referenced inside code and as text, like 'resultString = ""string with encoding problem: ⟦U+FFFD⟧""'  , Not A1. urls, url within <>"
 71acfee0eb411a72,full,fix,B3,<issue_start> | <issue_comment>,,repeating code snippets – not a problem
 578eb1503702a79d,full,fix,B3,<issue_start> | <issue_comment>,,
 b33feafa5645bc5a,full,fix,B3,<issue_start> | <issue_comment>,,
 3e38237c513072d4,full,fix,B3;C5,<issue_start> | <issue_comment> | **Markethttps://market.android.com/details?id,,Long urls
 d07c2ecd24fdef8a,full,fix,B3,<issue_start> | <issue_comment>,,urls
-36c648820e2787fe,full,fix,B3;C5,<issue_start> | <issue_comment> | http://couchdb.apache.org/,,"small urls, can be ignored?"
-796f4f8329c2ee55,full,fix,B3,<issue_start> | <issue_comment>,,sql
+36c648820e2787fe,full,fix,B3,<issue_start> | <issue_comment>,,urls
+796f4f8329c2ee55,full,fix,B3,<issue_start> | <issue_comment>,,
 9a421950f1fe4228,full,fix,B3,<issue_start> | <issue_comment>,,
-1b54ff7534a0fcef,full,fix,B3;C5,<issue_start> | <issue_comment> | <https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js>,,url inside <>
-d55a3d15fa97fb05,full,fix,B3,<issue_start> | <issue_comment>,,"small urls, ignore?"
+1b54ff7534a0fcef,full,fix,B3,<issue_start> | <issue_comment>,,url inside <>
+d55a3d15fa97fb05,full,fix,B3,<issue_start> | <issue_comment>,,urls
 10232664ba5648d0,full,fix,B3,<issue_start> | <issue_comment>,,hex strings. Contains a live injection payload with an external URL. Keep or reject?
 d1f1e0a27b116e2c,full,fix,B3,<issue_start> | <issue_comment>,,long url but not spam
-e41552c03df638c4,full,fix,B3,<issue_start> | <issue_comment> | <http://32feet.codeplex.com/> at offset 5594,,"""include"" got cleaned up. Keep anyway, code snippet still valid. url inside <http>"
+e41552c03df638c4,full,fix,B3,<issue_start> | <issue_comment>,,"""include"" got cleaned up. Keep anyway, code snippet still valid. url inside <http>"
 ddbdd572cf304828,full,fix,B3,<issue_start> | <issue_comment>,,"url  inside <>, some long urls"
 32407cff5d9572ab,full,fix,B3,<issue_start> | <issue_comment>,,"php, small urls"
 7ef89b9a54844e42,full,fix,B3,<issue_start> | <issue_comment>,,
-1a27f25c1da5f427,full,fix,B3,<issue_start> | <issue_comment>,,valid urls
-9bcd93fe008715e7,full,fix,B3,<issue_start> | <issue_comment>,,valid urls
+1a27f25c1da5f427,full,fix,B3,<issue_start> | <issue_comment>,,urls
+9bcd93fe008715e7,full,fix,B3,<issue_start> | <issue_comment>,,urls
 65352cd6815eaba1,full,fix,B3,<issue_start> | <issue_comment>,,url inside <>
-9211637c2d9105fd,full,fix,B3,<issue_start> | <issue_comment>,,valid urls
+9211637c2d9105fd,full,fix,B3,<issue_start> | <issue_comment>,,urls
 8024ee744d14aec1,full,fix,B3,<issue_start> | <issue_comment>,,
-a06ac825948fcdf1,full,fix,B2;B3,<issue_start> | <issue_comment> | <NAME> at offset 1239,,valid url. <NAME> is after cleaning
-b22bb720406e96c8,full,fix,B3,<issue_start> | <issue_comment>,,<NAME> is inside query
-b79c9269b393f7ee,full,fix,B2;B3,<issue_start> | <issue_comment> | <EMAIL> at offset 119,,<EMAIL> is after cleaning
+a06ac825948fcdf1,full,fix,B3;B4,"<issue_start> | <issue_comment> | line ""@<NAME>, i've reformed my answer"" at offset 1239",,<NAME> is in text. urls
+b22bb720406e96c8,full,fix,B3;B4,"<issue_start> | <issue_comment> | <NAME> ×3 at 477, 817, 1119",,<NAME> is inside query code
+b79c9269b393f7ee,full,fix,B3;B4,<issue_start> | <issue_comment> | <EMAIL> at offset 119,,<EMAIL> is inside query code
 1b540ea7a62c8cc4,full,fix,B3,<issue_start> | <issue_comment>,,valid url
 69d61c4d3679875c,full,fix,B3,<issue_start> | <issue_comment>,,
 4b7f07b6682a59b7,full,fix,B3,<issue_start> | <issue_comment>,,
@@ -41,17 +41,17 @@ a8e18cb284cc75f6,full,fix,B3,<issue_start> | <issue_comment>,,
 2e6565188263f052,full,fix,B3,<issue_start> | <issue_comment>,,valid urls
 5e3bc3089dda6fdf,full,fix,B3,<issue_start> | <issue_comment>,,url inside <>. Other valid urls
 9fb87c85679f717b,full,fix,B3,<issue_start> | <issue_comment>,,valid urls
-305393ad2072fc97,full,fix,B2;B3,<issue_start> | <issue_comment> | <NAME> in chapter 3 at offset 1159,,<NAME> is after cleaning
-21aa9baac5b870a9,full,fix,B2;B3,<issue_start> | <issue_comment> | <NAME> in chapter 3 at offset 1180,,<NAME> is after cleaning
+305393ad2072fc97,full,fix,B3;B4,"<issue_start> | <issue_comment> | line ""<NAME> in chapter 3"" at offset 1159",,"<NAME> is after cleaning, in text"
+21aa9baac5b870a9,full,fix,B3;B4,"<issue_start> | <issue_comment> | line ""<NAME> in chapter 3"" at offset 1180",,<NAME> is after cleaning
 89075b3784784e81,full,fix,B3,<issue_start> | <issue_comment>,,
 9dc7c40dedf0381a,full,fix,B3,<issue_start> | <issue_comment>,,
-58529fc2c29c890f,full,fix,B2;B3,<issue_start> | <issue_comment> | <EMAIL> at offset 623,,"<EMAIL> is after cleaning, some inside code"
-fd7ca38dd23da802,full,fix,B2;B3,<issue_start> | <issue_comment> | <EMAIL> at offset 1980,,"<EMAIL> is after cleaning,  inside code"
+58529fc2c29c890f,full,fix,B3;B4,"<issue_start> | <issue_comment> | <EMAIL> at offset 309, 623, 648, 673, 698, 1991, 2443",,"<EMAIL> is after cleaning, some inside code"
+fd7ca38dd23da802,full,fix,B3;B4,<issue_start> | <issue_comment> | <EMAIL> at offset 1980,,"<EMAIL> is after cleaning,  inside code"
 5dc4841cc2434f59,full,fix,B3,<issue_start> | <issue_comment>,,
 3272103639b2d1b3,full,fix,B3,<issue_start> | <issue_comment>,,url
 03fb4983971b0372,full,fix,B3,<issue_start> | <issue_comment>,,"valid urls, one inside <> | <https://github.com/gruntjs/grunt-contrib-connect#livereload>"
 123bb53ea41cdf82,full,fix,B3,<issue_start> | <issue_comment>,,urls
-5d6538f4a5c3009e,full,fix,B2;B3,<issue_start> | <issue_comment>,,<PASSWORD> is inside code. Not marking as B2
+5d6538f4a5c3009e,full,fix,B3;B4,"<issue_start> | <issue_comment> | line 'char \*word = ""<PASSWORD>"";' at 1242 and 2 more ",,<PASSWORD> is inside code
 5a9016952491a520,full,fix,B3,<issue_start> | <issue_comment>,,<PASSWORD> is inside code. Not marking as B2
 18ba740b67dcb026,full,fix,B3,<issue_start> | <issue_comment>,,"<PASSWORD> is inside code. Not marking as B2. One entry looks wrong: password = <PASSWORD>(word,salt);"
 583cfb8f3af34273,full,fix,B3,<issue_start> | <issue_comment>,,<PASSWORD> is inside code
@@ -102,9 +102,9 @@ f9134742398e0f55,full,fix,B3,<issue_start> | <issue_comment>,,
 9d09e0219dd7223d,full,fix,B3,<issue_start> | <issue_comment>,,url
 c67f9f1a8994fbbc,full,fix,B3,<issue_start> | <issue_comment>,,
 1ee11cceece270b9,full,fix,B3,<issue_start> | <issue_comment>,,
-1ea4535b6a2e5a35,full,fix,B2;B3,"<issue_start> | <issue_comment> | intent.putExtra(Intent.EXTRA_EMAIL, ""<EMAIL>""); at offset 178",,<EMAIL> is inside code
-c3c21126741ed209,full,fix,B2;B3,<issue_start> | <issue_comment> | <NAME> at offset 2817,,urls | templates are inside code snippets | has a long sql stacktrace in one line. E1?
-daaef3d9f8db5299,full,fix,B2;B3,<issue_start> | <issue_comment> | <NAME> at offset 3225,,url | <NAME> is after cleaning
+1ea4535b6a2e5a35,full,fix,B3;B4,"<issue_start> | <issue_comment> | line 'intent.putExtra(Intent.EXTRA_EMAIL, ""<EMAIL>"");' at offset 178 and two more occurences",,<EMAIL> is inside code
+c3c21126741ed209,full,fix,B3;B4,<issue_start> | <issue_comment> | line '@<NAME> has shared a nice trick'  at offset 2817,,urls | templates are inside code snippets | has a long sql stacktrace in one line. E1?
+daaef3d9f8db5299,full,fix,B3;B4,<issue_start> | <issue_comment> | <NAME> at offset 3225,,url | <NAME> is after cleaning
 6449d820bcee90d0,full,fix,B3,<issue_start> | <issue_comment>,,url
 0ed98310462c6991,full,fix,B3,<issue_start> | <issue_comment>,,url
 3677c82bf2ae08b6,full,fix,B3,<issue_start> | <issue_comment>,,url
@@ -145,8 +145,9 @@ b77958d746cfd4ef,full,fix,B3,<issue_start> | <issue_comment>,,"HTML tags <image>
 90015e03672815aa,full,fix,B3,<issue_start> | <issue_comment>,,"HTML tags <image> <br> inside code, not B2 | urls | urls inside <>"
 b253be7e6370aa58,full,fix,B3,<issue_start> | <issue_comment>,,
 31c9f726740a9c69,full,fix,B3,<issue_start> | <issue_comment>,,urls inside <>
-5ff91eb8f65e9eff,full,fix,B2;B3,<issue_start> | <issue_comment>,,urls | <EMAIL> is inside code
+5ff91eb8f65e9eff,full,fix,B3;B4,"<issue_start> | <issue_comment> |  line ""Email : <EMAIL>')"" at offset 264",,urls | <EMAIL> is inside code
 08f8e719ac33bb77,full,fix,B3,<issue_start> | <issue_comment>,,
 a7001795247c1a8c,full,fix,B3,<issue_start> | <issue_comment>,,
 c84b6da3144fd746,full,fix,A1;B3,"<issue_start> | <issue_comment> | NBSP ×4  at 13086, 13150, 13405, 13443",,urls
 ca6dd037ea389cee,full,fix,A1;B3,"<issue_start> | <issue_comment> | ⟦NBSP⟧ ×4 at 12678, 12742, 12997, 13035",,urls
+7294c965a5e389a9,full,fix,B3,<issue_start> | <issue_comment>,,
