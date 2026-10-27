@@ -1,7 +1,4 @@
 pack_id,label_files,reviewers,skipped_label_files,unique_docs_labeled,docs_with_full_read,docs_with_2_full_reads,docs_with_2_clean_votes,disputed_gold_candidates,gold_docs,target,shortfall,status
-cadj-commits,3,3,0,310,300,151,124,3,121,200,79,BELOW_TARGET
-cadj-notebooks,1,1,0,150,150,0,0,0,0,200,200,BELOW_TARGET
-cadj-stackexchange,2,2,0,152,152,88,0,0,0,200,200,BELOW_TARGET
 code-cpp,3,3,0,502,502,498,124,4,120,200,80,BELOW_TARGET
 code-go,3,3,0,500,500,473,171,8,163,200,37,BELOW_TARGET
 code-java,2,2,0,500,500,150,40,0,40,200,160,BELOW_TARGET
