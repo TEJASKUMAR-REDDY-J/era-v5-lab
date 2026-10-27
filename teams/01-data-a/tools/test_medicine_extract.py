@@ -222,5 +222,103 @@ class IdCase(unittest.TestCase):
                          {"DA-B3-001": (1, "code-rust/alice.py"), "DA-B3-002": (2, "code-rust/alice.py")})
 
 
+class DirCase(unittest.TestCase):
+    """--dir: many medicine.md files, one run, one registry."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.src = self.tmp / "downloads"          # any folder name works: the pack and handle come from the folders
+        self.registry = self.tmp / "rules" / "registry.json"
+
+    def medicine(self, pack, handle, text):
+        d = self.src / pack / handle
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "medicine.md").write_text(text)
+
+    def run_dir(self, *extra):
+        argv = ["--dir", str(self.src), "--registry", str(self.registry), *extra]
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            rc = medicine_extract.main(argv)
+        return rc, out.getvalue(), err.getvalue()
+
+    def entries(self):
+        return {e["id"]: e for e in json.loads(self.registry.read_text())["rules"]}
+
+    @staticmethod
+    def b3(ret="t"):
+        return md("**Disease:** B3, markers", py(f"def cure_b3(t):\n    return {ret}"))
+
+    def test_all_packs_and_handles_in_one_run(self):
+        self.medicine("code-rust", "alice", self.b3())
+        self.medicine("code-rust", "bob", self.b3())
+        self.medicine("en-dclm", "carol", self.b3())
+        self.medicine("cadj-stackexchange", "dave", self.b3())
+        rc, out, _ = self.run_dir()
+        self.assertEqual(rc, 0)
+        self.assertEqual(sorted(self.entries()), ["DA-B3-001", "DA-B3-002", "DA-B3-003", "DB-B3-001"])
+        self.assertEqual({e["handle"] for e in self.entries().values()}, {"alice", "bob", "carol", "dave"})
+        for pack, handle in [("code-rust", "alice"), ("code-rust", "bob"), ("en-dclm", "carol"), ("cadj-stackexchange", "dave")]:
+            self.assertTrue((self.tmp / "rules" / pack / f"{handle}.py").exists())
+        self.assertIn("4 of 4 medicine.md files done", out)
+
+    def test_same_registry_as_running_the_files_one_by_one(self):
+        files = [("code-rust", "alice"), ("code-rust", "bob"), ("en-dclm", "carol")]
+        for pack, handle in files:
+            self.medicine(pack, handle, self.b3())
+        self.run_dir()
+        by_dir = self.registry.read_text()
+        self.registry.unlink()
+        sub = self.tmp / "submissions"                      # one by one needs the real layout: .../submissions/<pack>/<handle>/
+        for pack, handle in files:                          # in the same (sorted) order that --dir uses
+            d = sub / pack / handle
+            d.mkdir(parents=True)
+            (d / "medicine.md").write_text(self.b3())
+            with contextlib.redirect_stdout(io.StringIO()):
+                medicine_extract.main([str(d / "medicine.md"), "--registry", str(self.registry)])
+        self.assertEqual(self.registry.read_text(), by_dir)
+
+    def test_rerun_changes_nothing(self):
+        self.medicine("code-rust", "alice", self.b3())
+        self.medicine("en-dclm", "carol", self.b3())
+        self.run_dir()
+        before = self.registry.read_text()
+        self.run_dir()
+        self.assertEqual(self.registry.read_text(), before)
+
+    def test_a_medicine_without_rules_is_listed_and_the_others_still_done(self):
+        self.medicine("code-rust", "alice", self.b3())
+        self.medicine("code-rust", "bob", "# Medicine sheet\nnothing here yet\n")
+        rc, out, err = self.run_dir()
+        self.assertEqual(rc, 1)
+        self.assertEqual(sorted(self.entries()), ["DA-B3-001"])
+        self.assertIn("1 of 2 medicine.md files done", out)
+        self.assertIn("no rules: code-rust/bob", out)
+        self.assertIn("no '**Disease:**", err)
+
+    def test_arguments(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(medicine_extract.main([]), 2)                                        # nothing given
+            self.assertEqual(medicine_extract.main(["x.md", "--dir", str(self.src)]), 2)          # both given
+            self.assertEqual(medicine_extract.main(["--dir", str(self.src), "--out", "r.py"]), 2)  # --out with --dir
+            self.assertEqual(medicine_extract.main(["--dir", str(self.tmp / "missing")]), 2)      # not a folder
+        self.src.mkdir()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(medicine_extract.main(["--dir", str(self.src), "--registry", str(self.registry)]), 1)  # empty folder
+        self.assertIn("give one medicine.md, or --dir", err.getvalue())
+        self.assertIn("--out is for one medicine.md", err.getvalue())
+        self.assertIn("is not a folder", err.getvalue())
+        self.assertIn("no <pack_id>/<handle>/medicine.md under", err.getvalue())
+
+    def test_two_runs_of_dir_with_a_new_annotator_keep_old_ids(self):
+        self.medicine("code-rust", "bob", self.b3())
+        self.run_dir()
+        self.assertEqual(self.entries()["DA-B3-001"]["handle"], "bob")
+        self.medicine("code-rust", "alice", self.b3())     # sorts before bob, but must not take bob's ID
+        self.run_dir()
+        self.assertEqual({i: e["handle"] for i, e in self.entries().items()}, {"DA-B3-001": "bob", "DA-B3-002": "alice"})
+
+
 if __name__ == "__main__":
     unittest.main()

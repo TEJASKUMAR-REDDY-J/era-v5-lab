@@ -23,6 +23,8 @@ Reads the `medicine.md` (it does not run it). Each `**Disease:** <code>` line st
 - `teams/01-data-a/rules/<pack_id>/<handle>.py`: the rules as one Python file
 - `teams/01-data-a/rules/registry.json`: one entry per rule, with its ID
 
+To do all the files in one run, give a folder laid out as `<pack_id>/<handle>/medicine.md` with `--dir <folder>`. It extracts every file and saves the registry once. A file that gives no rule is listed at the end, and the others are still done.
+
 The extractor finds the function for a code in this order: the `RULES = {"B3": fn}` dict, a function named `cure_b3`, the only function in the section. If none fits, it says so and writes nothing for that rule.
 
 **Rule IDs** look like `DA-B3-001`: team (`DA` for the Data A packs, `DB` for all others), disease code, number. A rule keeps its ID when you run the extractor again. A rule removed from a `medicine.md` is marked `withdrawn`, and its ID is not reused.

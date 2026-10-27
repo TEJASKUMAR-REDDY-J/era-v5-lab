@@ -2,6 +2,13 @@
 
 Usage:
     python -I medicine_extract.py <medicine.md> [--out <rules.py>]
+    python -I medicine_extract.py --dir <folder>
+
+--dir takes a folder with <pack_id>/<handle>/medicine.md files (for example the folder that fetch_medicines.py
+fills) and does all of them in one run, so the registry is set up with one command. The pack and the handle come
+from the folder names, so the folder can have any name. The rules files go next to the registry, in
+rules/<pack_id>/<handle>.py (--registry moves both). A
+medicine.md that gives no rule is listed at the end; the others are still done.
 
 By default the output goes to teams/01-data-a/rules/<pack_id>/<handle>.py, taken from the path
 diagnosis/submissions/<pack_id>/<handle>/medicine.md. (Do not write into the submissions folder: pr-guard allows
@@ -231,26 +238,26 @@ def render(source_name: str, blocks, chosen, ids=None) -> str:
     return "\n\n".join(out)
 
 
-def default_out(path: Path):
+def rules_path(pack: str, handle: str, base: Path = DEFAULT_REGISTRY.parent) -> Path:
+    """Where the rules file of a pack and handle goes: <base>/<pack_id>/<handle>.py. The base is the registry's folder."""
+    return base / pack / f"{handle}.py"
+
+
+def default_out(path: Path, base: Path = DEFAULT_REGISTRY.parent):
     found = origin(path)
-    return HERE.parent / "rules" / found[0] / f"{found[1]}.py" if found else None
+    return rules_path(found[0], found[1], base) if found else None
 
 
-def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Turn one medicine.md into a rules file for harm_test.py.")
-    ap.add_argument("medicine", type=Path)
-    ap.add_argument("--out", type=Path, help="the rules file to write")
-    ap.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY, help="the rule ID registry (default: ../rules/registry.json)")
-    args = ap.parse_args(argv)
+def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> int:
+    """Turn one medicine.md into the rules file `out`. Return 0 if done, 1 if no rule could be made, 2 if unreadable.
 
-    out = args.out or default_out(args.medicine)
-    if out is None:
-        print("error: this path is not diagnosis/submissions/<pack_id>/<handle>/medicine.md; give --out", file=sys.stderr)
-        return 2
+    `found` is (pack_id, handle), or None. `entries` is the registry list (changed in place, saved by the caller),
+    or None: the rules then get no IDs.
+    """
     try:
-        src = args.medicine.read_text(encoding="utf-8")
-    except OSError as e:
-        print(f"error: cannot read {args.medicine}: {e.strerror}", file=sys.stderr)
+        src = medicine.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        print(f"error: cannot read {medicine}: {getattr(e, 'strerror', None) or e}", file=sys.stderr)
         return 2
 
     sections, blocks = read_medicine(src)
@@ -259,7 +266,7 @@ def main(argv=None) -> int:
         return 1
     chosen, notes = resolve(sections, blocks)
 
-    print(f"{args.medicine.name}: {len(sections)} sections, {len(blocks)} python blocks "
+    print(f"{medicine.name}: {len(sections)} sections, {len(blocks)} python blocks "
           f"({sum(b.kind == 'code' for b in blocks)} code, {sum(b.kind == 'support' for b in blocks)} support)")
     if not chosen:
         for n in notes:
@@ -267,11 +274,9 @@ def main(argv=None) -> int:
         print("error: no rule could be matched to a disease code; nothing written", file=sys.stderr)
         return 1
 
-    found = origin(args.medicine)
-    entries, ids = None, None
-    if found:
-        entries = load_registry(args.registry)
-        file_rel = os.path.relpath(out.resolve(), args.registry.resolve().parent)
+    ids = None
+    if found and entries is not None:
+        file_rel = os.path.relpath(out.resolve(), registry.resolve().parent)
         ids = assign_ids(entries, found[0], found[1], chosen, file_rel)
     for i, r in enumerate(chosen):
         print(f"  {r['code']}: {r['expr']}   (from {r['how']}, action {r['action'] or 'not stated'})"
@@ -281,18 +286,63 @@ def main(argv=None) -> int:
             print(f"  left out: block {b.index}, {b.kind}")
     for n in notes:
         print(f"  note: {n}")
-    if not found:
+    if ids is None:
         print("  note: the path has no pack and handle, so the rules get no IDs and the registry is not changed")
         if any(r["n"] > 1 for r in chosen):
             print("  note: without IDs only the first rule of each code is in the file")
 
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render(args.medicine.name, blocks, chosen, ids), encoding="utf-8")
+    out.write_text(render(medicine.name, blocks, chosen, ids), encoding="utf-8")
     print(f"written: {out}")
-    if entries is not None:
-        save_registry(args.registry, entries)
-        print(f"registry: {args.registry}")
     return 0
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description="Turn medicine.md files into rules files for harm_test.py.")
+    ap.add_argument("medicine", type=Path, nargs="?", help="one medicine.md")
+    ap.add_argument("--dir", type=Path, help="a folder with <pack_id>/<handle>/medicine.md: extract all of them")
+    ap.add_argument("--out", type=Path, help="the rules file to write (one medicine.md only)")
+    ap.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY, help="the rule ID registry (default: ../rules/registry.json)")
+    args = ap.parse_args(argv)
+    if (args.medicine is None) == (args.dir is None):
+        print("error: give one medicine.md, or --dir <folder>", file=sys.stderr)
+        return 2
+    if args.dir and args.out:
+        print("error: --out is for one medicine.md; with --dir each rules file goes next to the registry, in <pack_id>/<handle>.py", file=sys.stderr)
+        return 2
+
+    if args.medicine:
+        found = origin(args.medicine)
+        out = args.out or default_out(args.medicine, args.registry.parent)
+        if out is None:
+            print("error: this path is not diagnosis/submissions/<pack_id>/<handle>/medicine.md; give --out", file=sys.stderr)
+            return 2
+        entries = load_registry(args.registry) if found else None
+        rc = extract_one(args.medicine, found, out, entries, args.registry)
+        if rc == 0 and entries is not None:
+            save_registry(args.registry, entries)
+            print(f"registry: {args.registry}")
+        return rc
+
+    if not args.dir.is_dir():
+        print(f"error: {args.dir} is not a folder", file=sys.stderr)
+        return 2
+    files = sorted(args.dir.glob("*/*/medicine.md"))
+    if not files:
+        print(f"error: no <pack_id>/<handle>/medicine.md under {args.dir}", file=sys.stderr)
+        return 1
+    entries = load_registry(args.registry)
+    status = {}
+    for path in files:
+        pack, handle = path.parent.parent.name, path.parent.name
+        print(f"\n== {pack}/{handle} ==")
+        status[(pack, handle)] = extract_one(path, (pack, handle), rules_path(pack, handle, args.registry.parent), entries, args.registry)
+    save_registry(args.registry, entries)
+    failed = [k for k, rc in status.items() if rc]
+    print(f"\n{len(status) - len(failed)} of {len(status)} medicine.md files done. Registry: {args.registry}")
+    for pack, handle in failed:
+        print(f"  no rules: {pack}/{handle}")
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
