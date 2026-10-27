@@ -3,7 +3,12 @@
 Pack: `code-go`, 500 Go files from bigcode/starcoderdata. Six diseases were found more than five times:
 B3 (247), E4 (76), B4 (45), E1 (40), H3 (38), F2 (7). One section each below.
 
-**Run order.** The drop medicines run first (E1, H3, F2), then the fixes (B4, E4, B3). H3 and F2 read the `url`
+**Rule format.** Each medicine is one self-contained Python snippet with a stable rule ID
+(`DA-<code>-<number>`). It defines `medicine(doc)`. `doc` is one pack row (a dict with `text` and `url`).
+The function returns `(action, text)`. `action` is `"keep"`, `"fix"` or `"drop"`, and `text` is the treated text.
+
+**Run order.** The drop medicines run first (DA-E1-001, DA-H3-001, DA-F2-001), then the fixes
+(DA-B4-001, DA-E4-001, DA-B3-001). H3 and F2 read the `url`
 column of the pack, so they do not depend on the `<reponame>`/`<filename>` markers that B3 removes.
 
 **Gold set used for the harm tests.** The Data A gold set for code-go is not in the repository yet (due Thu 29 Oct).
@@ -23,7 +28,7 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
 - one C3 file
 - one LeetCode file whose path does not name the site
 
-## Medicine 1
+## Medicine 1: `DA-B3-001`
 
 1. **Disease:** B3, StarCoder metadata markers (ruling 1). Count: 247 of 500. Examples:
    - `2f6d4b8c8e3fcbd5`: `<reponame>polaris-slo-cloud/polaris-scheduler` at offset 0
@@ -32,9 +37,13 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
 2. **Medicine:** In this pack the markers only ever appear as one run at the very start of the file, followed by a
    newline: `<reponame>`, `<filename>` and `<gh_stars>`, each followed by its value. Remove that run and the newline.
    ```python
+   RULE_ID = "DA-B3-001"
+   import re
    MARKERS = re.compile(r"^(?:<(?:reponame|filename|gh_stars)>[^<\n]*)+\n?")
-   def b3_markers(text):
-       return MARKERS.sub("", text)
+
+   def medicine(doc):
+       t = MARKERS.sub("", doc["text"])
+       return ("fix" if t != doc["text"] else "keep", t)
    ```
 3. **Action:** fix.
 4. **Harm test:** 171 gold documents: 0 changed, 0 dropped (0.0%). **Pass.**
@@ -44,7 +53,7 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
    None was seen in the pack. The other StarCoder markers (`<issue_start>`, `<jupyter_...>`) are not in Go files
    and are not handled.
 
-## Medicine 2
+## Medicine 2: `DA-E4-001`
 
 1. **Disease:** E4, licence text in the file header. Count: 76 of 500. Examples:
    - `2bdf36ae14fd90fa`: `Licensed under the Apache License` at offset 122
@@ -57,16 +66,22 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
    license that can be found in the LICENSE file" are kept, because the harm test showed that removing them
    changes gold documents (see 4).
    ```python
+   RULE_ID = "DA-E4-001"
+   import re
    LICENCE = re.compile(r"Licensed under|Licensed to the Apache|Permission is hereby granted|Redistribution and use|"
                         r"Use of this source code is governed by|This source code is licensed under|"
                         r"released under the \w+ licen[cs]e|General Public License|Mozilla Public License", re.I)
    BLOCK = re.compile(r"/\*.*?\*/[ \t]*\n?|(?://[^\n]*\n)+", re.S)
-   def e4_licence(text):
-       body = re.search(r"^(?:import|func|type|var|const)\b", text, re.M)
-       end = body.start() if body else len(text)
-       head = BLOCK.sub(lambda m: "" if LICENCE.search(m.group()) and m.group().count("\n") >= 4 else m.group(),
-                        text[:end])
-       return head.lstrip("\n") + text[end:]
+
+   def medicine(doc):
+       t = doc["text"]
+       body = re.search(r"^(?:import|func|type|var|const)\b", t, re.M)
+       end = body.start() if body else len(t)
+       head = t[:end]
+       new = BLOCK.sub(lambda m: "" if LICENCE.search(m.group()) and m.group().count("\n") >= 4 else m.group(), head)
+       if new == head:
+           return ("keep", t)
+       return ("fix", new.lstrip("\n") + t[end:])
    ```
 3. **Action:** fix.
 4. **Harm test:** 171 gold documents: 1 changed (`18a278785cdf215a`, a vendored file that H3 drops first), 0 dropped
@@ -80,7 +95,7 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
    removed. A licence block that sits right on top of the package doc comment, with no blank line between them,
    is one comment block, so the package doc goes with it.
 
-## Medicine 3
+## Medicine 3: `DA-B4-001`
 
 1. **Disease:** B4, placeholders left by earlier PII cleaning (ruling 2). Count: 45 of 500. Examples:
    - `f08e1abfa9c2ebdc`: `<EMAIL>` at offset 138
@@ -89,10 +104,14 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
 2. **Medicine:** Replace each of the four placeholders with a fixed neutral word, so that the model does not learn the
    `<NAME>` token and the Go string literals stay valid. `example.com` is a domain reserved for examples.
    ```python
+   RULE_ID = "DA-B4-001"
+   import re
    NEUTRAL = {"<NAME>": "AUTHOR", "<EMAIL>": "user@example.com", "<KEY>": "EXAMPLE_KEY", "<PASSWORD>": "EXAMPLE_PASSWORD"}
    PLACEHOLDER = re.compile("|".join(map(re.escape, NEUTRAL)))
-   def b4_placeholder(text):
-       return PLACEHOLDER.sub(lambda m: NEUTRAL[m.group()], text)
+
+   def medicine(doc):
+       t = PLACEHOLDER.sub(lambda m: NEUTRAL[m.group()], doc["text"])
+       return ("fix" if t != doc["text"] else "keep", t)
    ```
 3. **Action:** fix. 9 of the B4 documents are labelled `drop` for other reasons. E1 and H3 drop 7 of them. The
    other 2 (F3 and C3) have no medicine here.
@@ -105,7 +124,7 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
    `NAME HERE <EMAIL ADDRESS>` (1 file), which is not one of the four placeholders. The neutral
    word turns a copyright line into "Copyright 2016 AUTHOR", which is still not the true author.
 
-## Medicine 4
+## Medicine 4: `DA-E1-001`
 
 1. **Disease:** E1, generated code (ruling 3: only when the code itself is generated). Count: 40 of 500. Examples:
    - `3c4db0c3d41b7673`: `// Code generated by MockGen. DO NOT EDIT.` at offset 0
@@ -116,10 +135,13 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
    "自动生成". The note has to be in a comment. A generator program that *prints* this line from a Go string
    (`fmt.Fprintln(out, "// Code generated ...")`) is hand-written code and is kept.
    ```python
+   RULE_ID = "DA-E1-001"
+   import re
    GENERATED = re.compile(r"^[ \t]*(?://|/\*|\*)[^\n]*?(?:Code generated|generated by|auto-?generated|"
                           r"automatically generated|AutoRest Code Generator|自动生成)", re.I | re.M)
-   def e1_generated(text):
-       return bool(GENERATED.search(text[:1500]))   # True -> drop
+
+   def medicine(doc):
+       return ("drop" if GENERATED.search(doc["text"][:1500]) else "keep", doc["text"])
    ```
 3. **Action:** drop.
 4. **Harm test:** 171 gold documents: 0 changed, 0 dropped (0.0%). **Pass.**
@@ -131,7 +153,7 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
    A comment such as "// the ID generated by the server" in the first 1500 characters would also match, so watch
    for this when the rule runs at scale.
 
-## Medicine 5
+## Medicine 5: `DA-H3-001`
 
 1. **Disease:** H3, a vendored copy of another repository (the same code exists in its own repository). Count: 38
    of 500. Examples (from the `url` column):
@@ -141,8 +163,11 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
 2. **Medicine:** Drop the file when its repository path has a `vendor/` folder. Go's `vendor/` holds copies of
    other modules.
    ```python
-   def h3_vendored(url):
-       return bool(re.search(r"(?:^|/)vendor/", url))   # True -> drop
+   RULE_ID = "DA-H3-001"
+   import re
+
+   def medicine(doc):
+       return ("drop" if re.search(r"(?:^|/)vendor/", doc["url"]) else "keep", doc["text"])
    ```
 3. **Action:** drop.
 4. **Harm test:** 171 gold documents: 0 changed, **6 dropped (3.5%). Fail.** All six are vendored files that I
@@ -155,7 +180,7 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
    code that sits in other folders (`third_party/`, `external/`) is missed. Dropping a vendored file loses nothing
    only when the original repository is also in the corpus.
 
-## Medicine 6
+## Medicine 6: `DA-F2-001`
 
 1. **Disease:** F2, solutions to competitive-programming problems (benchmark leak risk). Count: 7 of 500. Examples:
    - `b44b171be56ec0f4`: `leetcode/1-100/0020.Valid-Parentheses` at offset 10
@@ -164,9 +189,12 @@ Of the 83 `drop` rows, 77 are dropped, 5 are only fixed and 1 is kept. These 6 a
 2. **Medicine:** Drop the file when the repository name or the path names LeetCode, Codeforces or AtCoder.
    Code benchmarks such as HumanEval and MBPP are built from problems like these.
    ```python
+   RULE_ID = "DA-F2-001"
+   import re
    CONTEST = re.compile(r"leetcode|codeforces|atcoder", re.I)
-   def f2_contest(url):
-       return bool(CONTEST.search(url))   # True -> drop
+
+   def medicine(doc):
+       return ("drop" if CONTEST.search(doc["url"]) else "keep", doc["text"])
    ```
 3. **Action:** drop.
 4. **Harm test:** 171 gold documents: 0 changed, 0 dropped (0.0%). **Pass.**
