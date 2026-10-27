@@ -171,6 +171,12 @@ def read_pack_texts(path: Path, ids):
     return texts
 
 
+def harm_percent(changed: int, dropped: int, n: int, limit: Fraction):
+    """Return (percent of the gold set that was changed or dropped, passed). The one place the limit is applied."""
+    percent = Fraction((changed + dropped) * 100, n)
+    return percent, percent <= limit
+
+
 def run_rule(rule, texts: dict, timeout: float):
     changed, dropped, errors = [], [], []
     if HAS_ALARM:
@@ -232,7 +238,7 @@ def main(argv=None) -> int:
 
     n = len(texts)
     harmed = len(changed) + len(dropped)
-    percent = Fraction(harmed * 100, n)
+    percent, passed = harm_percent(len(changed), len(dropped), n, limit)
     print(f"pack: {args.pack.name}   gold: {args.gold.name} ({n} documents)   rule: {code}")
     print(f"rules file: {rules_path.name}   code sha256: {digest[:16]}")
     print(f"documents changed: {len(changed)}")
@@ -244,7 +250,6 @@ def main(argv=None) -> int:
         print(f"rule errors: {len(errors)} documents, for example {errors[0][0]} ({errors[0][1]})")
         print("result: ERROR (the rule failed on some gold documents, so the harm is not known)")
         return 2
-    passed = percent <= limit
     print("result: " + ("PASS" if passed else "FAIL"))
     return 0 if passed else 1
 

@@ -77,13 +77,13 @@ class ExtractCase(unittest.TestCase):
         self.assertIn("1 support", out)
         self.assertEqual(ns["RULES"]["A1"]("q"), "q")
 
-    def test_second_medicine_for_the_same_code_is_reported_and_ignored(self):
+    def test_second_medicine_without_ids_is_reported(self):
         rc, out, ns = self.extract(md(
             "**Disease:** B3, first", py("def cure_b3(t):\n    return 'first'"),
             "**Disease:** B3, second", py("def other(t):\n    return 'second'")))
         self.assertEqual(rc, 0)
-        self.assertEqual(ns["RULES"]["B3"](""), "first")
-        self.assertIn("second medicine for this code", out)
+        self.assertEqual(ns["RULES"]["B3"](""), "first")              # RULES holds one function for each code
+        self.assertIn("only the first rule of each code", out)
 
     def test_no_disease_line(self):
         rc, _, ns = self.extract(md("# Medicine sheet", py("def cure_b3(t):\n    return t")))
@@ -188,6 +188,38 @@ class IdCase(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("no IDs", stdout.getvalue())
         self.assertFalse(self.registry.exists())
+
+    def two_b3(self):
+        return md("**Disease:** B3, first", "3. **Action:** fix the text. No document is dropped.",
+                  py("def cure_b3(t):\n    return 'first'"),
+                  "**Disease:** B3, second", "3. **Action:** drop.", py("def strict_b3(t):\n    return ('drop', '')"))
+
+    def test_two_medicines_for_one_code_get_two_ids(self):
+        _, out, path = self.run_extract(self.write_medicine("code-rust", "alice", self.two_b3()))
+        self.assertIn("-> DA-B3-001", out)
+        self.assertIn("-> DA-B3-002", out)
+        entries = self.entries()
+        self.assertEqual([(e["n"], e["action"]) for e in entries.values()], [(1, "fix"), (2, "drop")])
+        ns = harm_test.load_rules(path)[0]
+        self.assertEqual(ns["RULES_BY_ID"]["DA-B3-001"]("x"), "first")
+        self.assertEqual(ns["RULES_BY_ID"]["DA-B3-002"]("x"), ("drop", ""))
+        self.assertEqual(ns["RULES"]["B3"]("x"), "first")
+
+    def test_second_medicine_cannot_reuse_the_first_function(self):
+        text = md("**Disease:** B3, first", py("def cure_b3(t):\n    return t"),
+                  "**Disease:** B3, second", "(no code)")
+        _, out, _ = self.run_extract(self.write_medicine("code-rust", "alice", text))
+        self.assertIn("B3 (medicine 2): no function found", out)
+        self.assertEqual(sorted(self.entries()), ["DA-B3-001"])
+
+    def test_old_registry_entries_without_n_count_as_the_first_rule(self):
+        path = self.write_medicine("code-rust", "alice", self.two_b3())
+        self.registry.parent.mkdir(parents=True)
+        self.registry.write_text(json.dumps({"rules": [{"id": "DA-B3-001", "pack": "code-rust", "handle": "alice",
+                                                        "code": "B3", "file": "x.py", "withdrawn": False}]}))
+        self.run_extract(path)
+        self.assertEqual({k: (v["n"], v["file"]) for k, v in self.entries().items()},
+                         {"DA-B3-001": (1, "code-rust/alice.py"), "DA-B3-002": (2, "code-rust/alice.py")})
 
 
 if __name__ == "__main__":

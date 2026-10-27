@@ -25,11 +25,15 @@ The medicine.md is only read, never run. The steps:
      goes into rules/registry.json with the pack, the handle and the file. When you run the extractor again, a
      (pack, handle, code) that is already in the registry keeps its ID. A code that has gone from the
      medicine.md is marked "withdrawn" and its ID is never used again.
+     A second section for the same code is a second rule with its own ID (the registry keeps its number n).
+     The registry also keeps the action the annotator wrote on the "**Action:**" line (fix or drop).
   Then harm_test.py can find the rule by its ID alone:
        python -I harm_test.py --pack <pack.parquet> --gold <gold.csv> --rule DB-B3-001
   A path outside diagnosis/submissions/<pack_id>/<handle>/ has no pack or handle, so it gets no IDs.
 
-One medicine for each code for now: a second section for the same code is reported and ignored.
+Two medicines for one code: the RULES dict and the name cure_<code> can only point to one function, so they are
+used for the first section of a code. A later section of the same code needs the only-function rule: put its
+function in that section, and give it a name that no earlier rule uses.
 """
 import argparse
 import ast
@@ -47,6 +51,8 @@ import harm_test  # noqa: E402  (one definition of the code-fence regex)
 DISEASE = re.compile(r"\*\*Disease:?\*\*:?[ \t]*`?([A-H][1-9])\b")
 APPENDIX = re.compile(r"^#{1,6}[^\n]*appendix", re.I | re.M)
 CONST_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
+ACTION = re.compile(r"\*\*Action:?\*\*:?[ \t]*([^\n]*)")
+ACTION_WORD = re.compile(r"\b(fix|drop)\b", re.I)
 DEFAULT_REGISTRY = HERE.parent / "rules" / "registry.json"
 # The packs Data A owns (English, code, math, science). Data B owns the rest (Indic and cadj-*).
 DATA_A_PACKS = frozenset({
@@ -103,51 +109,58 @@ class Block:
 
 
 def read_medicine(src: str):
-    """Return (sections, blocks). A section is (start, end, code)."""
+    """Return (sections, blocks). A section is (start, end, code, action); action is "fix", "drop" or None."""
     starts = [(m.start(), m.group(1)) for m in DISEASE.finditer(src)]
     appendix = APPENDIX.search(src)
     cut = appendix.start() if appendix else len(src)
     sections = []
     for i, (pos, code) in enumerate(starts):
         end = starts[i + 1][0] if i + 1 < len(starts) else len(src)
-        sections.append((pos, min(end, cut) if pos < cut else end, code))
+        end = min(end, cut) if pos < cut else end
+        line = ACTION.search(src, pos, end)
+        word = ACTION_WORD.search(line.group(1)) if line else None  # the first one: "fix the text. No document is dropped."
+        sections.append((pos, end, code, word.group(1).lower() if word else None))
     blocks = [Block(i, textwrap.dedent(m.group(2)), m.start()) for i, m in enumerate(harm_test.FENCE.finditer(src), 1)]
     for b in blocks:
-        for si, (start, end, _) in enumerate(sections):
+        for si, (start, end, _, _) in enumerate(sections):
             if start <= b.pos < end:
                 b.section = si
     return sections, blocks
 
 
 def resolve(sections, blocks):
-    """Return ({code: (expression, how)}, [notes]). The expression is Python that names the rule."""
+    """Return ([rule], [notes]). A rule is {code, n, expr, how, action}; n counts the sections of one code.
+
+    expr is Python that names the rule's function. The RULES dict and cure_<code> serve the first section of
+    a code only. A later section needs a function of its own, not already used by an earlier rule.
+    """
     code_blocks = [b for b in blocks if b.kind == "code"]
     rules_map = {}
     for b in code_blocks:
         rules_map.update(b.rules_map)
     funcs = {n.lower(): n for b in code_blocks for n in b.funcs}
-    chosen, notes = {}, []
-    for si, (_, _, code) in enumerate(sections):
-        if code in chosen:
-            notes.append(f"{code}: a second medicine for this code (section {si + 1}) is ignored for now")
-            continue
+    chosen, notes, seen, claimed = [], [], {}, set()
+    for si, (_, _, code, action) in enumerate(sections):
+        n = seen[code] = seen.get(code, 0) + 1
+        label = code if n == 1 else f"{code} (medicine {n})"
         expr = how = None
-        if code in rules_map:
+        if n == 1 and code in rules_map:
             expr = rules_map[code] or f'_student_rules["{code}"]'
             how = "RULES dict"
-        elif f"cure_{code.lower()}" in funcs:
+        elif n == 1 and f"cure_{code.lower()}" in funcs:
             expr, how = funcs[f"cure_{code.lower()}"], f"function cure_{code.lower()}"
         else:
-            publics = sorted({n for b in code_blocks if b.section == si for n in b.funcs if not n.startswith("_")})
+            publics = sorted({f for b in code_blocks if b.section == si for f in b.funcs if not f.startswith("_")} - claimed)
             if len(publics) == 1:
                 expr, how = publics[0], "the only function in the section"
             elif publics:
-                notes.append(f"{code}: several functions in the section ({', '.join(publics)}); "
+                notes.append(f"{label}: several functions in the section ({', '.join(publics)}); "
                              f"name the rule cure_{code.lower()} or add it to RULES")
             else:
-                notes.append(f"{code}: no function found for this section")
+                notes.append(f"{label}: no function found for this section")
         if expr:
-            chosen[code] = (expr, how)
+            chosen.append({"code": code, "n": n, "expr": expr, "how": how, "action": action})
+            claimed.add(expr)
     return chosen, notes
 
 
@@ -174,25 +187,27 @@ def save_registry(path: Path, entries):
     path.write_text(json.dumps({"rules": entries}, indent=2) + "\n", encoding="utf-8")
 
 
-def assign_ids(entries, pack: str, handle: str, codes, file_rel: str):
-    """Return {code: rule ID} for this medicine.md, adding new entries to the registry list.
+def assign_ids(entries, pack: str, handle: str, rules, file_rel: str):
+    """Return the rule ID of each rule in `rules`, in order. New entries are added to the registry list.
 
-    A (pack, handle, code) that is in the registry keeps its ID. A new one takes the next number for its team
-    and code. Codes of this pack and handle that are no longer in the medicine.md are marked withdrawn.
+    A (pack, handle, code, n) that is in the registry keeps its ID. A new one takes the next number for its
+    team and code. Rules of this pack and handle that are no longer in the medicine.md are marked withdrawn.
     """
     prefix = "DA" if pack in DATA_A_PACKS else "DB"
-    mine = {e["code"]: e for e in entries if e["pack"] == pack and e["handle"] == handle}
-    for code, e in mine.items():
-        e["withdrawn"] = code not in codes
-    ids = {}
-    for code in codes:
-        e = mine.get(code)
+    mine = {(e["code"], e.get("n", 1)): e for e in entries if e["pack"] == pack and e["handle"] == handle}
+    now = {(r["code"], r["n"]) for r in rules}
+    for key, e in mine.items():
+        e["withdrawn"] = key not in now
+    ids = []
+    for r in rules:
+        e = mine.get((r["code"], r["n"]))
         if e is None:
-            used = [int(x["id"].rsplit("-", 1)[1]) for x in entries if x["id"].startswith(f"{prefix}-{code}-")]
-            e = {"id": f"{prefix}-{code}-{max(used, default=0) + 1:03d}", "pack": pack, "handle": handle, "code": code}
+            used = [int(x["id"].rsplit("-", 1)[1]) for x in entries if x["id"].startswith(f"{prefix}-{r['code']}-")]
+            e = {"id": f"{prefix}-{r['code']}-{max(used, default=0) + 1:03d}", "pack": pack, "handle": handle,
+                 "code": r["code"], "n": r["n"]}
             entries.append(e)
-        e["file"], e["withdrawn"] = file_rel, False
-        ids[code] = e["id"]
+        e["n"], e["file"], e["action"], e["withdrawn"] = r["n"], file_rel, r["action"], False
+        ids.append(e["id"])
     return ids
 
 
@@ -207,9 +222,12 @@ def render(source_name: str, blocks, chosen, ids=None) -> str:
             out.append(f"# --- block {b.index} (imports and constants; ignored if it does not run) ---\n"
                        f"try:\n{textwrap.indent(text, '    ')}except Exception:\n    pass\n")
     out.append('_student_rules = RULES if isinstance(globals().get("RULES"), dict) else {}')
-    out.append("RULES = {\n" + "".join(f'    "{code}": {expr},\n' for code, (expr, _) in chosen.items()) + "}\n")
+    first = {}
+    for r in chosen:
+        first.setdefault(r["code"], r["expr"])  # RULES has one function for each code; the others are only in RULES_BY_ID
+    out.append("RULES = {\n" + "".join(f'    "{code}": {expr},\n' for code, expr in first.items()) + "}\n")
     if ids:
-        out.append("RULES_BY_ID = {\n" + "".join(f'    "{rid}": RULES["{code}"],\n' for code, rid in ids.items()) + "}\n")
+        out.append("RULES_BY_ID = {\n" + "".join(f'    "{rid}": {r["expr"]},\n' for rid, r in zip(ids, chosen)) + "}\n")
     return "\n\n".join(out)
 
 
@@ -254,9 +272,10 @@ def main(argv=None) -> int:
     if found:
         entries = load_registry(args.registry)
         file_rel = os.path.relpath(out.resolve(), args.registry.resolve().parent)
-        ids = assign_ids(entries, found[0], found[1], list(chosen), file_rel)
-    for code, (expr, how) in chosen.items():
-        print(f"  {code}: {expr}   (from {how})" + (f"   -> {ids[code]}" if ids else ""))
+        ids = assign_ids(entries, found[0], found[1], chosen, file_rel)
+    for i, r in enumerate(chosen):
+        print(f"  {r['code']}: {r['expr']}   (from {r['how']}, action {r['action'] or 'not stated'})"
+              + (f"   -> {ids[i]}" if ids else ""))
     for b in blocks:
         if b.kind in ("fragment", "syntax error"):
             print(f"  left out: block {b.index}, {b.kind}")
@@ -264,6 +283,8 @@ def main(argv=None) -> int:
         print(f"  note: {n}")
     if not found:
         print("  note: the path has no pack and handle, so the rules get no IDs and the registry is not changed")
+        if any(r["n"] > 1 for r in chosen):
+            print("  note: without IDs only the first rule of each code is in the file")
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render(args.medicine.name, blocks, chosen, ids), encoding="utf-8")
