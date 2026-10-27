@@ -52,6 +52,29 @@ Runs every rule of the pack and writes `teams/01-data-a/rules/<pack_id>/REPORT.m
 
 The advice is for a person to check. Nothing records the decision yet.
 
+## The registry and Spec v1
+
+`teams/01-data-a/rules/registry.json` has one entry for every rule that the extractor found:
+
+| Field | Meaning |
+|---|---|
+| `id` | the rule ID, for example `DA-B3-001` |
+| `pack`, `handle` | where the rule came from |
+| `code`, `n` | the disease code, and which medicine of that code in the annotator's file (1, 2, ...) |
+| `action` | `fix` or `drop`, as the annotator wrote it |
+| `file` | the rules file that holds the code, relative to the registry |
+| `withdrawn` | `true` if the rule is no longer in the `medicine.md` |
+
+To build `spec_v1.md` from it:
+
+1. Run the extractor on every `medicine.md`, then `rule_report.py` for every pack.
+2. Take the rules that are not withdrawn, PASS the harm test, and that the report advises to KEEP.
+3. For each one, write the ID, the code, the action (from the registry), the rule in words (the **Medicine** text in that annotator's `medicine.md`), the rule in code (the function in `file`), and the harm test result (from the report).
+4. Add the Indic rules from G2.
+5. Decide the order the rules run. The registry does not hold an order, so the team decides it.
+
+Nothing writes `spec_v1.md` automatically yet.
+
 ## Writing a medicine.md so the extractor can read it
 
 - Put `**Disease:** <code>` and `**Action:** fix` (or `drop`) in each section.
