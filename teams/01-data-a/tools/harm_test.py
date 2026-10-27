@@ -1,19 +1,24 @@
 """Harm test: run one cleaning rule on a gold set and count the damage.
 
 Usage:
+    python -I harm_test.py --pack <pack.parquet> --gold <pack_gold.csv> --rule <RULE_ID>
     python -I harm_test.py --pack <pack.parquet> --gold <pack_gold.csv> --rules <rules.py|medicine.md> --rule <CODE>
 
-    --pack     the pack Parquet file (columns doc_id, text are read)
-    --gold     the gold CSV (column doc_id; reader_1 and reader_2 are ignored)
-    --rules    a .py file, or a medicine.md file whose ```python blocks hold the code
-    --rule     the disease code of the rule to test, for example B3
-    --limit    the failing limit in percent of the gold set (default 1)
-    --show N   also list the first N changed or dropped doc_ids (ids only, never text)
-    --timeout  seconds allowed for one rule call on one document (default 5)
+    --pack      the pack Parquet file (columns doc_id, text are read)
+    --gold      the gold CSV (column doc_id; reader_1 and reader_2 are ignored)
+    --rule      a rule ID such as DA-B3-001 (DA = Data A, DB = Data B, then the disease code and a number),
+                or a disease code such as B3 when --rules is given
+    --rules     a .py file, or a medicine.md file whose ```python blocks hold the code. Not needed for a rule ID:
+                the registry says which file medicine_extract.py wrote the rule to
+    --registry  the registry file (default: ../rules/registry.json)
+    --limit     the failing limit in percent of the gold set (default 1)
+    --show N    also list the first N changed or dropped doc_ids (ids only, never text)
+    --timeout   seconds allowed for one rule call on one document (default 5)
 
-The rule is found in the code in one of two ways:
-    RULES = {"B3": fn}        fn(text) -> ("keep" | "fix" | "drop", new_text)   (the shared format)
-    def cure_b3(text): ...    returns the new text as a str
+Inside a rules file the rule is found in one of three ways:
+    RULES_BY_ID = {"DA-B3-001": fn}   written by medicine_extract.py (used for a rule ID)
+    RULES = {"B3": fn}                fn(text) -> ("keep" | "fix" | "drop", new_text)   (the shared format)
+    def cure_b3(text): ...            returns the new text as a str
 
 A document is "changed" when the rule returns text that differs from the input (compared byte for byte, no
 normalisation). It is "dropped" when the rule returns the action "drop". Each document counts once.
@@ -26,6 +31,7 @@ The rules file is run as code: read it before you run it. A per-document timeout
 import argparse
 import csv
 import hashlib
+import json
 import re
 import signal
 import sys
@@ -38,6 +44,8 @@ import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 ACTIONS = ("keep", "fix", "drop")
+RULE_ID = re.compile(r"^D[AB]-[A-H][1-9]-\d{3}$")
+DEFAULT_REGISTRY = Path(__file__).resolve().parent.parent / "rules" / "registry.json"
 # A fenced block, possibly indented inside a list item. The closing fence must have the same indent.
 FENCE = re.compile(r"^([ \t]*)```(?:python|py)[ \t]*\n(.*?)^\1```[ \t]*$", re.S | re.M)
 HAS_ALARM = hasattr(signal, "setitimer")
@@ -82,7 +90,26 @@ def load_rules(path: Path):
     return ns, hashlib.sha256("\n".join(ran).encode("utf-8")).hexdigest()
 
 
+def registry_file_for(rule_id: str, registry: Path) -> Path:
+    """Find the rules file of a rule ID in the registry."""
+    try:
+        entries = json.loads(registry.read_text(encoding="utf-8"))["rules"]
+    except (OSError, ValueError, KeyError) as e:
+        raise Fatal(f"cannot read the registry {registry}: {e}")
+    for e in entries:
+        if e["id"] == rule_id:
+            if e.get("withdrawn"):
+                print(f"warning: {rule_id} is withdrawn: its medicine.md no longer has this rule", file=sys.stderr)
+            return registry.parent / e["file"]
+    raise Fatal(f"{rule_id} is not in the registry {registry}")
+
+
 def find_rule(ns: dict, code: str):
+    if RULE_ID.match(code):
+        by_id = ns.get("RULES_BY_ID")
+        if isinstance(by_id, dict) and code in by_id:
+            return by_id[code]
+        raise Fatal(f"rule {code} is not in the rules file (found: {', '.join(sorted(by_id or {})) or 'none'})")
     rules = ns.get("RULES")
     if isinstance(rules, dict) and code in rules:
         return rules[code]
@@ -170,8 +197,9 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Run one cleaning rule on a gold set and report the harm.")
     ap.add_argument("--pack", required=True, type=Path)
     ap.add_argument("--gold", required=True, type=Path)
-    ap.add_argument("--rules", required=True, type=Path)
-    ap.add_argument("--rule", required=True, help="disease code, for example B3")
+    ap.add_argument("--rules", type=Path, help="rules .py or medicine.md (not needed for a rule ID)")
+    ap.add_argument("--rule", required=True, help="rule ID such as DA-B3-001, or a disease code such as B3")
+    ap.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
     ap.add_argument("--limit", default="1", help="failing limit in percent of the gold set (default 1)")
     ap.add_argument("--show", type=int, default=0, metavar="N", help="list the first N affected doc_ids")
     ap.add_argument("--timeout", type=float, default=5.0, help="seconds per document (default 5)")
@@ -185,11 +213,15 @@ def main(argv=None) -> int:
         print(f"error: --limit must be a number of percent, not {args.limit!r}", file=sys.stderr)
         return 2
     code = args.rule.strip().upper()
+    if args.rules is None and not RULE_ID.match(code):
+        print("error: give --rules, or a rule ID such as DA-B3-001 as --rule", file=sys.stderr)
+        return 2
 
     try:
         ids = read_gold(args.gold)
         texts = read_pack_texts(args.pack, ids)
-        ns, digest = load_rules(args.rules)
+        rules_path = args.rules or registry_file_for(code, args.registry)
+        ns, digest = load_rules(rules_path)
         rule = find_rule(ns, code)
         if not HAS_ALARM:
             print("warning: no per-document timeout on this platform", file=sys.stderr)
@@ -202,7 +234,7 @@ def main(argv=None) -> int:
     harmed = len(changed) + len(dropped)
     percent = Fraction(harmed * 100, n)
     print(f"pack: {args.pack.name}   gold: {args.gold.name} ({n} documents)   rule: {code}")
-    print(f"rules file: {args.rules.name}   code sha256: {digest[:16]}")
+    print(f"rules file: {rules_path.name}   code sha256: {digest[:16]}")
     print(f"documents changed: {len(changed)}")
     print(f"documents dropped: {len(dropped)}")
     print(f"percent: {float(percent):.2f}% of the gold set (limit {args.limit}%)")

@@ -1,10 +1,14 @@
 """Tests for medicine_extract.py. Run: python -I teams/01-data-a/tools/test_medicine_extract.py"""
 import contextlib
 import io
+import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import harm_test  # noqa: E402
@@ -97,6 +101,93 @@ class ExtractCase(unittest.TestCase):
         self.assertIsNone(medicine_extract.default_out(Path("/tmp/x/medicine.md")))
         p = Path("/r/diagnosis/submissions/code-rust/amukka/medicine.md")
         self.assertEqual(medicine_extract.default_out(p).parts[-3:], ("rules", "code-rust", "amukka.py"))
+
+
+class IdCase(unittest.TestCase):
+    """Rule IDs and the registry. Medicine files live in <tmp>/submissions/<pack>/<handle>/medicine.md."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.registry = self.tmp / "rules" / "registry.json"
+
+    def write_medicine(self, pack, handle, text):
+        d = self.tmp / "submissions" / pack / handle
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "medicine.md").write_text(text)
+        return d / "medicine.md"
+
+    def run_extract(self, path):
+        out = self.tmp / "rules" / path.parent.parent.name / f"{path.parent.name}.py"
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(io.StringIO()):
+            rc = medicine_extract.main([str(path), "--out", str(out), "--registry", str(self.registry)])
+        return rc, stdout.getvalue(), out
+
+    def entries(self):
+        return {e["id"]: e for e in json.loads(self.registry.read_text())["rules"]}
+
+    @staticmethod
+    def b3(ret="t"):
+        return md("**Disease:** B3, markers", py(f"def cure_b3(t):\n    return {ret}"))
+
+    def test_team_prefix_and_counter(self):
+        self.run_extract(self.write_medicine("code-rust", "alice", self.b3()))
+        self.run_extract(self.write_medicine("code-rust", "bob", self.b3()))
+        self.run_extract(self.write_medicine("cadj-stackexchange", "carol", self.b3()))
+        self.assertEqual(sorted(self.entries()), ["DA-B3-001", "DA-B3-002", "DB-B3-001"])
+        self.assertEqual(self.entries()["DA-B3-002"]["handle"], "bob")
+
+    def test_rerun_keeps_ids_and_marks_withdrawn(self):
+        two = md("**Disease:** B3, a", py("def cure_b3(t):\n    return t"), "**Disease:** B4, b", py("def cure_b4(t):\n    return t"))
+        path = self.write_medicine("code-rust", "alice", two)
+        self.run_extract(path)
+        self.run_extract(self.write_medicine("code-rust", "bob", self.b3()))      # DA-B3-002
+        before = self.entries()
+        self.run_extract(path)
+        self.assertEqual(self.entries(), before)                                   # rerun changes nothing
+        self.run_extract(self.write_medicine("code-rust", "alice", self.b3()))   # B4 removed
+        after = self.entries()
+        self.assertTrue(after["DA-B4-001"]["withdrawn"])
+        self.assertFalse(after["DA-B3-001"]["withdrawn"])
+        self.assertEqual(sorted(after), ["DA-B3-001", "DA-B3-002", "DA-B4-001"])  # the ID is kept, not reused
+        self.run_extract(self.write_medicine("code-rust", "alice", two))         # B4 comes back
+        self.assertFalse(self.entries()["DA-B4-001"]["withdrawn"])
+
+    def test_generated_file_has_rules_by_id(self):
+        _, out, path = self.run_extract(self.write_medicine("code-rust", "alice", self.b3("'x'")))
+        self.assertIn("-> DA-B3-001", out)
+        ns = harm_test.load_rules(path.parent / "alice.py")[0]
+        self.assertEqual(ns["RULES_BY_ID"]["DA-B3-001"]("anything"), "x")
+
+    def test_harm_test_finds_the_rule_by_id(self):
+        self.run_extract(self.write_medicine("code-rust", "alice", self.b3("t.replace('<m>', '')")))
+        pack, gold = self.tmp / "pack.parquet", self.tmp / "gold.csv"
+        ids = [f"d{i}" for i in range(100)]
+        pq.write_table(pa.table({"doc_id": ids, "text": ["plain"] * 99 + ["has <m> marker"]}), pack)
+        gold.write_text("doc_id,reader_1,reader_2\n" + "".join(f"{i},a,b\n" for i in ids))
+        argv = ["--pack", str(pack), "--gold", str(gold), "--registry", str(self.registry)]
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            rc = harm_test.main(argv + ["--rule", "DA-B3-001"])
+        self.assertEqual(rc, 0)                                   # 1 of 100 = 1.00%
+        self.assertIn("documents changed: 1", out.getvalue())
+        self.assertIn("rule: DA-B3-001", out.getvalue())
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(harm_test.main(argv + ["--rule", "DA-B3-009"]), 2)   # not in the registry
+            self.assertEqual(harm_test.main(argv + ["--rule", "B3"]), 2)           # a code needs --rules
+        self.assertIn("not in the registry", err.getvalue())
+        self.assertIn("give --rules", err.getvalue())
+
+    def test_path_outside_submissions_gets_no_ids(self):
+        src = self.tmp / "medicine.md"
+        src.write_text(self.b3())
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            rc = medicine_extract.main([str(src), "--out", str(self.tmp / "r.py"), "--registry", str(self.registry)])
+        self.assertEqual(rc, 0)
+        self.assertIn("no IDs", stdout.getvalue())
+        self.assertFalse(self.registry.exists())
 
 
 if __name__ == "__main__":
