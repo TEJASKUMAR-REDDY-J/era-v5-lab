@@ -44,6 +44,11 @@ class ExtractCase(unittest.TestCase):
         self.assertEqual(sorted(ns["RULES"]), ["B3", "B4"])
         self.assertEqual(ns["RULES"]["B3"]("a<x>b"), "ab")
 
+    def test_re_is_always_imported(self):
+        rc, _, ns = self.extract(md("**Disease:** B3, markers", py("def cure_b3(t):\n    return re.sub('<x>', '', t)")))
+        self.assertEqual(rc, 0)
+        self.assertEqual(ns["RULES"]["B3"]("a<x>b"), "ab")      # the medicine.md never imports re
+
     def test_any_function_name_when_it_is_the_only_one_in_the_section(self):
         rc, out, ns = self.extract(md("**Disease:** A1, junk", py("def strip_junk(t):\n    return t.strip()")))
         self.assertEqual(rc, 0)
