@@ -115,6 +115,28 @@ Why each rule is limited:
 | Detector only (1) | `DA-B4-004` returns True or False, so it would drop B4 files that the ruling says to fix. | Yes. `DA-B4-005` fixes the same rows. |
 | Cannot run (1) | `DA-E4-001` needs a second `header` argument and has no detection logic. | Its author needs to fix it. |
 
+## Sync with `tools/harm_test.py`
+
+`test_medicine_code.py` imports the team's `tools/harm_test.py` and uses its `read_gold`, `classify` and `harm_percent`. The gold file, the counting and the 1% limit are therefore the same in both scripts. Only reading the pack stays here, for two reasons:
+- The shared tool reads `doc_id` and `text` only, and calls `fn(text)`. The H3 and F2 rules need `url`, and `LANGS` needs `lang_label`.
+- The shared tool gives the same numbers for the registry rules that it can run, for example `DA-E4-004` on rust and `DA-B4-005` on cpp: 0 changed, 0 dropped, PASS.
+
+Some code rules do not run under the shared tool yet. `medicine_code.md` gets around each problem with its wrapper:
+
+| rules file | under `tools/harm_test.py` | why | how `medicine_code.md` handles it |
+|---|---|---|---|
+| `code-go/RaviNaik.py`, `code-java/curioustushar.py` | the file does not load | `import re` was lost in extraction (NameError) | the copied code carries its own `import re` |
+| `code-js-ts/varshith2000.py`: `DA-E1-002`, `DA-E3-001`, `DA-B4-004` | ERROR on every doc | detectors return True/False, while the shared `classify` takes only a str or `(action, text)` | True becomes drop and False becomes keep |
+| `code-go/TEJASKUMAR-REDDY-J.py`: `DA-B3-003` | ERROR on every doc | the rule is `medicine(doc)` and gets a dict, not the text | the rules in the sheet take `doc` |
+| `code-cpp/TharunSivamani.py`: `DA-E4-001` | ERROR | it needs a second `header` argument | not used |
+
+To end up with one harm test, `tools/harm_test.py` would need three changes:
+1. Accept True/False results: True means drop.
+2. Pass `url` and `lang_label` to the rule, for example with an optional `doc` argument.
+3. Skip a rule on rows outside its `LANGS`.
+
+With those, this sheet runs on the shared tool directly.
+
 ## Open points
 
 1. **Two docs change again on a second run of the sheet.** Neither is a gold doc.
