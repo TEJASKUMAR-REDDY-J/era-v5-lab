@@ -8,10 +8,35 @@ Run them in this order. Steps 2 and 3 both use the rules and IDs that step 1 mak
 
 | Step | Script | Input | Output |
 |---|---|---|---|
-| 1 | `medicine_extract.py` | one `medicine.md`, or a dir | the rules as a Python file, and a rule ID for each rule |
+| 0 | `fetch_medicines.py` | the `medicine.md` files in your checkout, and in the open PRs | the files in `teams/01-data-a/medicines/submissions/<pack_id>/<handle>/` |
+| 1 | `medicine_extract.py` | one `medicine.md`, or a directory (eg submissions dir) | the rules as a Python file, and a rule ID for each rule |
 | 2 | `harm_test.py` | one pack, one gold file, one rule ID | documents changed, documents dropped, the percent, PASS or FAIL at 1% |
 | 3 | `rule_report.py` | one pack, its gold file, all its rules | `REPORT.md`: harm test of every rule for the pack, and advice on which rules to keep |
 | any time | `registry_view.py` | the registry | `registry.html`: a page to search the rules and see each rule's function |
+
+## 0. Fetch the medicines: `fetch_medicines.py`
+
+```
+python -I teams/01-data-a/tools/fetch_medicines.py --include-open-prs
+```
+
+Collects the current `medicine.md` of every annotator into `teams/01-data-a/medicines/submissions/<pack_id>/<handle>/medicine.md`. It only saves the files as text. Nothing in them is run. It reads your local `diagnosis/submissions` and, with `--include-open-prs`, the open pull requests too. For each pack and handle the newest version wins: an open PR beats the local file, and a later PR beats an earlier one. Run it again to refresh. Each file is listed as new, updated or unchanged.
+
+`--include-open-prs` needs a GitHub token: set `GH_TOKEN` or `GITHUB_TOKEN`, or run `gh auth login`. Without that option no token is needed. Never commit a token.
+
+Then run step 1 with `--dir teams/01-data-a/medicines/submissions`.
+
+| Option | Meaning |
+|---|---|
+| `--include-open-prs` | also read the open pull requests. Needs a GitHub token |
+| `--pack-id <id>` | only this pack. Can be given more than once |
+| `--pack-prefixes <list>` | the packs to take when `--pack-id` is not given. Default: `en-,code-,math-,sci-,cadj-` |
+| `--all-packs` | every pack, not only those prefixes |
+| `--out <folder>` | where to save. Default: `teams/01-data-a/medicines/submissions`. Keep the last folder named `submissions`, because the extractor reads the pack and handle from the path |
+| `--repo <owner/repo>` | the GitHub repo to read the PRs from. Default: `theschoolofai/era-v5-lab` |
+| `--repo-root <folder>` | your local checkout. Default: found from the script's location |
+
+Exit code: 0 done, 1 it could not run (for example a missing folder or token).
 
 ## 1. Extract the rules: `medicine_extract.py`
 
@@ -26,6 +51,19 @@ Reads the `medicine.md` (it does not run it). Each `**Disease:** <code>` line st
 
 To do all the files in one run, give a folder laid out as `<pack_id>/<handle>/medicine.md` with `--dir <folder>`. It extracts every file and saves the registry once. A file that gives no rule is listed at the end, and the others are still done.
 
+```
+python -I teams/01-data-a/tools/medicine_extract.py --dir teams/01-data-a/medicines/submissions
+```
+
+| Option | Meaning |
+|---|---|
+| `medicine` | one `medicine.md` (give this or `--dir`, not both) |
+| `--dir <folder>` | a folder of `<pack_id>/<handle>/medicine.md`: extract all of them |
+| `--out <file>` | where to write the rules file. One `medicine.md` only. Default: `rules/<pack_id>/<handle>.py` |
+| `--registry <file>` | the registry to read and update. Default: `rules/registry.json`. With `--dir` the rules files go next to it |
+
+Exit code: 0 done, 1 no rule could be made (with `--dir`: for at least one file), 2 the command could not run.
+
 The extractor finds the function for a code in this order: the `RULES = {"B3": fn}` dict, a function named `cure_b3`, the only function in the section. If none fits, it says so and writes nothing for that rule.
 
 **Rule IDs** look like `DA-B3-001`: team (`DA` for the Data A packs, `DB` for all others), disease code, number. A rule keeps its ID when you run the extractor again. A rule removed from a `medicine.md` is marked `withdrawn`, and its ID is not reused.
@@ -39,6 +77,17 @@ python -I teams/01-data-a/tools/harm_test.py --pack <pack.parquet> --gold <pack_
 Runs one rule on the gold set. Prints documents changed, documents dropped, the percent, and PASS or FAIL (changed + dropped must be 1% or less of the gold set). The exit code is 0 for PASS, 1 for FAIL and 2 if the test could not run.
 
 To test code that is not in the registry, use `--rules <rules.py or medicine.md> --rule B3`.
+
+| Option | Meaning |
+|---|---|
+| `--pack <file>` | the pack Parquet file (required) |
+| `--gold <file>` | the gold CSV of that pack (required) |
+| `--rule <id or code>` | a rule ID such as `DA-B3-001`, or a disease code such as `B3` (required) |
+| `--rules <file>` | a rules `.py` or a `medicine.md`. Not needed for a rule ID |
+| `--registry <file>` | where to look up a rule ID. Default: `rules/registry.json` |
+| `--limit <percent>` | the failing limit, as a percent of the gold set. Default `1` |
+| `--show <N>` | also list the first N `doc_id`s that were changed or dropped. Default `0` |
+| `--timeout <seconds>` | the time allowed for one document. Default `5` |
 
 **Medicine sheets.** A sheet such as `code-medicines/medicine_code.md` has one rule per ```python block. Each block has its own `RULE_ID = "DA-B3-001"` and a function `medicine(doc)`. Each block runs in its own namespace, so blocks may reuse names. A single rule is found by its ID:
 
@@ -68,6 +117,19 @@ Runs every rule of the pack and writes `teams/01-data-a/rules/<pack_id>/REPORT.m
 
 The advice is for a person to check. Nothing records the decision yet.
 
+| Option | Meaning |
+|---|---|
+| `--pack-id <id>` | the pack ID, for example `code-rust` (required). Its rules come from the registry |
+| `--pack-file <file>` | the pack Parquet file (required) |
+| `--gold <file>` | the gold CSV of that pack |
+| `--limit <percent>` | the failing limit, as a percent of the gold set. Default `1` |
+| `--registry <file>` | the registry to read. Default: `rules/registry.json` |
+| `--submissions <folder>` | where the `labels.csv` files are. Default: `diagnosis/submissions` |
+| `--out <file>` | where to write the report. Default: `rules/<pack_id>/REPORT.md` |
+| `--timeout <seconds>` | the time allowed for one document. Default `5` |
+
+Exit code: 0 done, 2 the report could not be made.
+
 ## The registry and Spec v1
 
 `teams/01-data-a/rules/registry.json` has one entry for every rule that the extractor found:
@@ -83,6 +145,12 @@ The advice is for a person to check. Nothing records the decision yet.
 
 To look at the rules, run `python -I teams/01-data-a/tools/registry_view.py`. It writes `rules/registry.html`, a page you open in a browser: search the rules and expand one to see its function. It does not run the code and needs no `pyarrow`. Run it again after the registry changes and commit the new page. `--show DA-B3-001` prints one rule in the terminal.
 
+| Option | Meaning |
+|---|---|
+| `--registry <file>` | the registry to read. Default: `rules/registry.json` |
+| `--out <file>` | where to write the page. Default: `registry.html` next to the registry |
+| `--show <rule ID>` | print the source of one rule in the terminal, and write no page |
+
 To build `spec_v1.md` from it:
 
 1. Run the extractor on every `medicine.md`, then `rule_report.py` for every pack.
@@ -97,7 +165,7 @@ Nothing writes `spec_v1.md` automatically yet.
 
 - Put `**Disease:** <code>` and `**Action:** fix` (or `drop`) in each section.
 - Put the Python in a ```` ```python ```` block in that section.
-- Name the function `cure_<code>` (for example `cure_b3`). It takes the text and returns the new text.
+- Optional - Name the function `cure_<code>` (for example `cure_b3`). It takes the text and returns the new text.
 - To drop a document, return `("drop", "")`. To fix, return a string, or `("fix", new_text)`.
 - A second medicine for the same code goes in its own section, with a function that has its own name.
 
@@ -106,5 +174,5 @@ Nothing writes `spec_v1.md` automatically yet.
 - The tools **run the annotators' code** (`harm_test.py`, `rule_report.py`). Read it first.
 - Gold files go in `teams/01-data-a/gold/<pack_id>_gold.csv`: doc-ids only, no text. A `_DUMMY` gold file is for testing.
 - The pack Parquet files are not in the repo.
-- Tests: `python -I teams/01-data-a/tools/test_harm_test.py` (and `test_medicine_extract.py`, `test_rule_report.py`).
+- Tests: `python -I teams/01-data-a/tools/test_harm_test.py` (and `test_medicine_extract.py`, `test_rule_report.py`, `test_fetch_medicines.py`, `test_registry_view.py`).
 - `registry.json` is shared. Decide who runs the extractor and commits it, to avoid merge conflicts.
