@@ -8,31 +8,65 @@ Per language cell: gold harm % (gold docs touched / gold docs) and sick rows fix
 
 | # | ID | disease | action | go | rust | js-ts | java | cpp | what it does |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | `DA-E1-005` | E1 generated code | drop | 0.00% (0/163) · 41/43 | 0.00% (0/78) · 14/23 | 0.00% (0/49) · 3/22 | 0.00% (0/40) · 3/3 | 0.00% (0/120) · 6/20 | generator banner in a header comment ("Code generated", "auto-generated"...), or a Kiota/goformation fingerprint. |
-| 2 | `DA-E1-004` | E1 generated code | drop | 0.00% (0/163) · 34/43 | 0.00% (0/78) · 17/23 | 0.00% (0/49) · 3/22 | 0.00% (0/40) · 2/3 | 0.00% (0/120) · 6/20 | generator banner in the first 15 lines, or 20+ `#[doc = "..."]` lines. |
-| 3 | `DA-E1-001` | E1 generated code | drop | 0.00% (0/163) · 42/43 | 0.00% (0/78) · 8/23 | 0.00% (0/49) · 3/22 | 0.00% (0/40) · 2/3 | 0.00% (0/120) · 5/20 | generator marker before or just after the package clause, or a Kiota/goformation fingerprint. |
-| 4 | `DA-E1-002` | E1 generated code | drop | 0.00% (0/163) · 32/43 | 0.00% (0/78) · 8/23 | 0.00% (0/49) · 15/22 | 0.00% (0/40) · 1/3 | 0.00% (0/120) · 2/20 | "auto-generated", "do not edit", `sourceMappingURL` or a minified file (<=2 lines, >10k chars). Detector: returns True/False. |
-| 5 | `DA-E2-001` | E2 binary blob | drop | 0.00% (0/163) · 7/7 | 0.00% (0/78) · 0/2 | 0.00% (0/49) · 0/1 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 1/1 | byte-array literals cover >=10% of the file, or base64 runs >=40%. |
-| 6 | `DA-E3-003` | E3 hard-coded secret | fix | 0.00% (0/163) · 1/1 | 0.00% (0/78) · 0/1 | 0.00% (0/49) · 0/9 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | known key formats and base32 seeds assigned to secret/seed/otp names -> `EXAMPLE_SECRET`. |
-| 7 | `DA-E4-005` | E4 licence header | drop | 0.00% (0/163) · 1/76 | 0.00% (0/78) · 0/22 | 0.00% (0/49) · 0/9 | 0.00% (0/40) · 0/100 | 0.00% (0/120) · 0/176 | restrictive licence phrase in the first 60 lines ("free for personal use", "commercial use requires"...). |
-| 8 | `DA-H3-001` | H3 vendored copy | drop | 0.00% (0/163) · 38/38 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | `vendor/` folder in the file path. |
-| 9 | `DA-C3-002` | C3 broken code | drop | 0.00% (0/163) · 1/1 | off | off | off | off | Go lexical check fails (unclosed string, rune or block comment; unbalanced brackets). |
-| 10 | `DA-E3-001` | E3 hard-coded secret | drop | off | 0.00% (0/78) · 0/1 | 0.00% (0/49) · 4/9 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | a quoted value of 8+ chars assigned to api_key/token/password/secret. Detector: returns True/False. |
-| 11 | `DA-F2-001` | F2 contest solution | drop | 0.00% (0/163) · 6/7 | 0.00% (0/78) · 4/4 | 0.00% (0/49) · 1/1 | off | off | path names LeetCode, Codeforces or AtCoder. |
-| 12 | `DA-A1-001` | A1 invisible characters | fix | 0.00% (0/163) · 0/0 | 0.00% (0/78) · 1/1 | 0.00% (0/49) · 1/1 | 0.00% (0/40) · 1/1 | 0.00% (0/120) · 12/12 | delete U+FEFF (BOM). |
-| 13 | `DA-A2-001` | A2 control characters | fix | 0.00% (0/163) · 1/1 | 0.00% (0/78) · 6/6 | 0.00% (0/49) · 17/17 | 0.00% (0/40) · 44/44 | 0.00% (0/120) · 47/47 | CRLF and lone CR -> LF. |
-| 14 | `DA-A4-002` | A4 lost bytes (U+FFFD) | fix | 0.00% (0/163) · 1/1 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | delete a `//` comment that holds only U+FFFD debris (an author-quoted U+FFFD is kept, ruling 7). |
-| 15 | `DA-A6-001` | A6 look-alike letters | fix | 0.00% (0/163) · 2/2 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | Cyrillic look-alike letters inside Latin words -> Latin. |
-| 16 | `DA-B2-001` | B2 dataset metadata line | fix | 0.00% (0/163) · 0/0 | 0.00% (0/78) · 0/1 | 0.00% (0/49) · 244/244 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | strip the `<reponame>`/`<filename>`/`<gh_stars>` line at the start. |
-| 17 | `DA-B3-008` | B3 dataset markers | fix | 0.00% (0/163) · 247/247 | 0.00% (0/78) · 225/225 | 0.00% (0/49) · 82/82 | 0.00% (0/40) · 250/250 | 0.00% (0/120) · 245/245 | strip the marker lines at the start; `<EMAIL>` -> example address, `<NAME>` -> `[AUTHOR]`; remove chat tokens. |
-| 18 | `DA-B4-005` | B4 PII placeholders | fix | 0.00% (0/163) · 43/45 | 0.00% (0/78) · 18/18 | 0.00% (0/49) · 25/25 | 0.00% (0/40) · 82/83 | 0.00% (0/120) · 121/122 | delete `<NAME>`/`<EMAIL>`/`<KEY>`/`<PASSWORD>` in comments and strings, `""` in code. |
-| 19 | `DA-C1-004` | C1 tool boilerplate | fix | 0.00% (0/163) · 1/1 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 0/69 | 0.00% (0/120) · 0/2 | delete kubebuilder/operator-sdk scaffold notes ("EDIT THIS FILE!", "NOTE: json tags are required"...). |
-| 20 | `DA-C1-001` | C1 tool boilerplate | fix | 0.00% (0/163) · 0/1 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 1/69 | 0.00% (0/120) · 0/2 | delete the NetBeans licence-template and IntelliJ "Created by" header comments. |
-| 21 | `DA-E4-004` | E4 licence header | fix | 0.00% (0/163) · 50/76 | 0.00% (0/78) · 21/22 | 0.00% (0/49) · 6/9 | 0.00% (0/40) · 81/100 | 0.00% (0/120) · 93/176 | delete a leading comment block of 5+ lines that is >=40% licence text (doc comments kept). |
-| 22 | `DA-E4-002` | E4 licence header | fix | off | 0.00% (0/78) · 0/22 | 0.00% (0/49) · 1/9 | 0.00% (0/40) · 37/100 | 0.00% (0/120) · 0/176 | delete a leading licence comment block when `package`/`import` follows it. |
-| 23 | `DA-E4-006` | E4 licence header | fix | 0.00% (0/163) · 55/76 | off | 0.00% (0/49) · 9/9 | 0.00% (0/40) · 81/100 | off | delete a licence comment block of 4+ lines in the header, a boxed `/* */` header, or a licence block at the end. |
+| 1 | `DA-A4-001` | A4 lost bytes (U+FFFD) | drop | 0.00% (0/163) · 1/1 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 2/2 | 0.00% (0/120) · 0/0 | the text holds U+FFFD (unless it mentions 0xfffd). |
+| 2 | `DA-E1-005` | E1 generated code | drop | 0.00% (0/163) · 41/43 | 0.00% (0/78) · 14/23 | 0.00% (0/49) · 3/23 | 0.00% (0/40) · 6/14 | 0.00% (0/120) · 6/20 | generator banner in a header comment ("Code generated", "auto-generated"...), or a Kiota/goformation fingerprint. |
+| 3 | `DA-E1-004` | E1 generated code | drop | 0.00% (0/163) · 34/43 | 0.00% (0/78) · 17/23 | 0.00% (0/49) · 4/23 | 0.00% (0/40) · 4/14 | 0.00% (0/120) · 6/20 | generator banner in the first 15 lines, or 20+ `#[doc = "..."]` lines. |
+| 4 | `DA-E1-001` | E1 generated code | drop | 0.00% (0/163) · 42/43 | 0.00% (0/78) · 8/23 | 0.00% (0/49) · 4/23 | 0.00% (0/40) · 3/14 | 0.00% (0/120) · 5/20 | generator marker before or just after the package clause, or a Kiota/goformation fingerprint. |
+| 5 | `DA-E1-002` | E1 generated code | drop | 0.00% (0/163) · 32/43 | 0.00% (0/78) · 8/23 | 0.00% (0/49) · 16/23 | 0.00% (0/40) · 3/14 | 0.00% (0/120) · 2/20 | "auto-generated", "do not edit", `sourceMappingURL` or a minified file (<=2 lines, >10k chars). Detector: returns True/False. |
+| 6 | `DA-E1-006` | E1 generated code | drop | 0.00% (0/163) · 2/43 | 0.00% (0/78) · 0/23 | 0.00% (0/49) · 1/23 | 0.00% (0/40) · 10/14 | 0.00% (0/120) · 0/20 | decompiler or generator marker (Jad/Procyon, "AUTO-GENERATED FILE", "This class was generated by", swagger...). Detector: returns True/False. |
+| 7 | `DA-E2-001` | E2 binary blob | drop | 0.00% (0/163) · 7/7 | 0.00% (0/78) · 0/2 | 0.00% (0/49) · 0/1 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 1/1 | byte-array literals cover >=10% of the file, or base64 runs >=40%. |
+| 8 | `DA-E3-003` | E3 hard-coded secret | fix | 0.00% (0/163) · 1/1 | 0.00% (0/78) · 0/1 | 0.00% (0/49) · 0/9 | 0.00% (0/40) · 0/1 | 0.00% (0/120) · 0/0 | known key formats and base32 seeds assigned to secret/seed/otp names -> `EXAMPLE_SECRET`. |
+| 9 | `DA-E4-005` | E4 licence header | drop | 0.00% (0/163) · 1/76 | 0.00% (0/78) · 0/22 | 0.00% (0/49) · 0/9 | 0.00% (0/40) · 0/100 | 0.00% (0/120) · 0/176 | restrictive licence phrase in the first 60 lines ("free for personal use", "commercial use requires"...). |
+| 10 | `DA-H3-001` | H3 vendored copy | drop | 0.00% (0/163) · 38/38 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | `vendor/` folder in the file path. |
+| 11 | `DA-C3-002` | C3 broken code | drop | 0.00% (0/163) · 1/1 | off | off | off | off | Go lexical check fails (unclosed string, rune or block comment; unbalanced brackets). |
+| 12 | `DA-E3-001` | E3 hard-coded secret | drop | off | 0.00% (0/78) · 0/1 | 0.00% (0/49) · 4/9 | 0.00% (0/40) · 0/1 | 0.00% (0/120) · 0/0 | a quoted value of 8+ chars assigned to api_key/token/password/secret. Detector: returns True/False. |
+| 13 | `DA-F2-001` | F2 contest solution | drop | 0.00% (0/163) · 6/7 | 0.00% (0/78) · 4/4 | 0.00% (0/49) · 1/1 | off | off | path names LeetCode, Codeforces or AtCoder. |
+| 14 | `DA-A1-001` | A1 invisible characters | fix | 0.00% (0/163) · 0/0 | 0.00% (0/78) · 1/1 | 0.00% (0/49) · 1/1 | 0.00% (0/40) · 1/1 | 0.00% (0/120) · 12/12 | delete U+FEFF (BOM). |
+| 15 | `DA-A2-001` | A2 control characters | fix | 0.00% (0/163) · 1/1 | 0.00% (0/78) · 6/6 | 0.00% (0/49) · 17/17 | 0.00% (0/40) · 44/44 | 0.00% (0/120) · 47/47 | CRLF and lone CR -> LF. |
+| 16 | `DA-A6-001` | A6 look-alike letters | fix | 0.00% (0/163) · 2/2 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | Cyrillic look-alike letters inside Latin words -> Latin. |
+| 17 | `DA-B2-001` | B2 dataset metadata line | fix | 0.00% (0/163) · 0/0 | 0.00% (0/78) · 0/1 | 0.00% (0/49) · 244/244 | 0.00% (0/40) · 0/0 | 0.00% (0/120) · 0/0 | strip the `<reponame>`/`<filename>`/`<gh_stars>` line at the start. |
+| 18 | `DA-B3-008` | B3 dataset markers | fix | 0.00% (0/163) · 247/247 | 0.00% (0/78) · 225/225 | 0.00% (0/49) · 258/258 | 0.00% (0/40) · 250/250 | 0.00% (0/120) · 245/245 | strip the marker lines at the start; `<EMAIL>` -> example address, `<NAME>` -> `[AUTHOR]`; remove chat tokens. |
+| 19 | `DA-B4-005` | B4 PII placeholders | fix | 0.00% (0/163) · 43/45 | 0.00% (0/78) · 18/18 | 0.00% (0/49) · 25/25 | 0.00% (0/40) · 82/83 | 0.00% (0/120) · 121/122 | delete `<NAME>`/`<EMAIL>`/`<KEY>`/`<PASSWORD>` in comments and strings, `""` in code. |
+| 20 | `DA-C1-004` | C1 tool boilerplate | fix | 0.00% (0/163) · 1/1 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 0/70 | 0.00% (0/120) · 0/2 | delete kubebuilder/operator-sdk scaffold notes ("EDIT THIS FILE!", "NOTE: json tags are required"...). |
+| 21 | `DA-C1-001` | C1 tool boilerplate | fix | 0.00% (0/163) · 0/1 | 0.00% (0/78) · 0/0 | 0.00% (0/49) · 0/0 | 0.00% (0/40) · 1/70 | 0.00% (0/120) · 0/2 | delete the NetBeans licence-template and IntelliJ "Created by" header comments. |
+| 22 | `DA-E4-004` | E4 licence header | fix | 0.00% (0/163) · 50/76 | 0.00% (0/78) · 21/22 | 0.00% (0/49) · 6/9 | 0.00% (0/40) · 81/100 | 0.00% (0/120) · 93/176 | delete a leading comment block of 5+ lines that is >=40% licence text (doc comments kept). |
+| 23 | `DA-E4-007` | E4 licence header | fix | 0.00% (0/163) · 23/76 | 0.00% (0/78) · 3/22 | 0.00% (0/49) · 5/9 | 0.00% (0/40) · 72/100 | 0.00% (0/120) · 47/176 | delete the first `/* */` block when it is 8+ lines and names Apache, MIT or GPL. |
+| 24 | `DA-E4-002` | E4 licence header | fix | off | 0.00% (0/78) · 0/22 | 0.00% (0/49) · 1/9 | 0.00% (0/40) · 37/100 | 0.00% (0/120) · 0/176 | delete a leading licence comment block when `package`/`import` follows it. |
+| 25 | `DA-E4-006` | E4 licence header | fix | 0.00% (0/163) · 55/76 | off | 0.00% (0/49) · 9/9 | 0.00% (0/40) · 81/100 | off | delete a licence comment block of 4+ lines in the header, a boxed `/* */` header, or a licence block at the end. |
 
-## 1. `DA-E1-005` · E1 generated code · drop · all 5
+## 1. `DA-A4-001` · A4 lost bytes (U+FFFD) · drop · all 5
+
+the text holds U+FFFD (unless it mentions 0xfffd).
+
+```python
+RULE_ID = "DA-A4-001"
+CODE = "A4"
+ACTION = "drop"
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
+ORIGIN = "code-python"  # pack whose medicine this came from
+import html, re
+
+def medicine_a4(text: str) -> str | None:
+    return None if ("\ufffd" in text and "0xfffd" not in text.lower()) else text
+
+
+def _std(out, text):
+    # source result in the shared form: str -> fix/keep, None or True -> drop, False -> keep
+    if out is None or out is True: return ("drop", text)
+    if out is False: return ("keep", text)
+    if isinstance(out, str): return ("fix" if out != text else "keep", out)
+    action, new = out
+    if action == "drop": return ("drop", text)
+    return ("fix" if new != text else "keep", new)
+
+
+def medicine(doc):
+    if doc.get("lang_label") not in LANGS:
+        return ("keep", doc["text"])
+    return _std(medicine_a4(doc["text"]), doc["text"])
+```
+
+## 2. `DA-E1-005` · E1 generated code · drop · all 5
 
 generator banner in a header comment ("Code generated", "auto-generated"...), or a Kiota/goformation fingerprint.
 
@@ -40,7 +74,7 @@ generator banner in a header comment ("Code generated", "auto-generated"...), or
 RULE_ID = "DA-E1-005"
 CODE = "E1"
 ACTION = "drop"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import re
 GENERATED = re.compile(r"^[ \t]*(?://|/\*|\*)[^\n]*?(?:Code generated|generated by|auto-?generated|"
@@ -55,7 +89,7 @@ def medicine(doc):
     return ("drop" if GENERATED.search(t[:1500]) or FINGERPRINT.search(t[:3000]) else "keep", t)
 ```
 
-## 2. `DA-E1-004` · E1 generated code · drop · all 5
+## 3. `DA-E1-004` · E1 generated code · drop · all 5
 
 generator banner in the first 15 lines, or 20+ `#[doc = "..."]` lines.
 
@@ -63,7 +97,7 @@ generator banner in the first 15 lines, or 20+ `#[doc = "..."]` lines.
 RULE_ID = "DA-E1-004"
 CODE = "E1"
 ACTION = "drop"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-rust"  # pack whose medicine this came from
 import html, re
 
@@ -102,7 +136,7 @@ def medicine(doc):
     return _std(e1_generated(doc["text"]), doc["text"])
 ```
 
-## 3. `DA-E1-001` · E1 generated code · drop · all 5
+## 4. `DA-E1-001` · E1 generated code · drop · all 5
 
 generator marker before or just after the package clause, or a Kiota/goformation fingerprint.
 
@@ -110,7 +144,7 @@ generator marker before or just after the package clause, or a Kiota/goformation
 RULE_ID = "DA-E1-001"
 CODE = "E1"
 ACTION = "drop"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import html, re
 
@@ -163,7 +197,7 @@ def medicine(doc):
     return _std(drop_generated(doc["text"]), doc["text"])
 ```
 
-## 4. `DA-E1-002` · E1 generated code · drop · all 5
+## 5. `DA-E1-002` · E1 generated code · drop · all 5
 
 "auto-generated", "do not edit", `sourceMappingURL` or a minified file (<=2 lines, >10k chars). Detector: returns True/False.
 
@@ -171,7 +205,7 @@ def medicine(doc):
 RULE_ID = "DA-E1-002"
 CODE = "E1"
 ACTION = "drop"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-js-ts"  # pack whose medicine this came from
 import html, re
 
@@ -201,7 +235,43 @@ def medicine(doc):
     return _std(is_generated_artifact(doc["text"]), doc["text"])
 ```
 
-## 5. `DA-E2-001` · E2 binary blob · drop · all 5
+## 6. `DA-E1-006` · E1 generated code · drop · all 5
+
+decompiler or generator marker (Jad/Procyon, "AUTO-GENERATED FILE", "This class was generated by", swagger...). Detector: returns True/False.
+
+```python
+RULE_ID = "DA-E1-006"
+CODE = "E1"
+ACTION = "drop"
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
+ORIGIN = "code-java"  # pack whose medicine this came from
+import html, re
+
+GEN = re.compile(r'Decompiled by (Jad|Procyon)|Code generated by [^\n]{0,60}Generator|AUTO-GENERATED FILE'
+                 r'|generated by a tool and any changes will be overwritten|Automatically generated - do not modify'
+                 r'|This class was (automatically )?generated by|auto generated by the swagger'
+                 r'|This is a generated file\. Not intended for manual editing')
+
+def drop_e1(text): return bool(GEN.search(text))
+
+
+def _std(out, text):
+    # source result in the shared form: str -> fix/keep, None or True -> drop, False -> keep
+    if out is None or out is True: return ("drop", text)
+    if out is False: return ("keep", text)
+    if isinstance(out, str): return ("fix" if out != text else "keep", out)
+    action, new = out
+    if action == "drop": return ("drop", text)
+    return ("fix" if new != text else "keep", new)
+
+
+def medicine(doc):
+    if doc.get("lang_label") not in LANGS:
+        return ("keep", doc["text"])
+    return _std(drop_e1(doc["text"]), doc["text"])
+```
+
+## 7. `DA-E2-001` · E2 binary blob · drop · all 5
 
 byte-array literals cover >=10% of the file, or base64 runs >=40%.
 
@@ -209,7 +279,7 @@ byte-array literals cover >=10% of the file, or base64 runs >=40%.
 RULE_ID = "DA-E2-001"
 CODE = "E2"
 ACTION = "drop"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import html, re
 
@@ -246,7 +316,7 @@ def medicine(doc):
     return _std(drop_blob(doc["text"]), doc["text"])
 ```
 
-## 6. `DA-E3-003` · E3 hard-coded secret · fix · all 5
+## 8. `DA-E3-003` · E3 hard-coded secret · fix · all 5
 
 known key formats and base32 seeds assigned to secret/seed/otp names -> `EXAMPLE_SECRET`.
 
@@ -254,7 +324,7 @@ known key formats and base32 seeds assigned to secret/seed/otp names -> `EXAMPLE
 RULE_ID = "DA-E3-003"
 CODE = "E3"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import re
 KEYS = [re.compile(p) for p in (r"AKIA[0-9A-Z]{16}", r"gh[pousr]_[A-Za-z0-9]{30,}", r"\bsk-[A-Za-z0-9_-]{20,}",
@@ -271,7 +341,7 @@ def medicine(doc):
     return ("fix" if t != doc["text"] else "keep", t)
 ```
 
-## 7. `DA-E4-005` · E4 licence header · drop · all 5
+## 9. `DA-E4-005` · E4 licence header · drop · all 5
 
 restrictive licence phrase in the first 60 lines ("free for personal use", "commercial use requires"...).
 
@@ -279,7 +349,7 @@ restrictive licence phrase in the first 60 lines ("free for personal use", "comm
 RULE_ID = "DA-E4-005"
 CODE = "E4"
 ACTION = "drop"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import re
 RESTRICTIVE = re.compile(r"(?i)free for personal use|commercial use requires|non-?commercial use only|"
@@ -292,7 +362,7 @@ def medicine(doc):
     return ("drop" if RESTRICTIVE.search(head) else "keep", doc["text"])
 ```
 
-## 8. `DA-H3-001` · H3 vendored copy · drop · all 5
+## 10. `DA-H3-001` · H3 vendored copy · drop · all 5
 
 `vendor/` folder in the file path.
 
@@ -300,7 +370,7 @@ def medicine(doc):
 RULE_ID = "DA-H3-001"
 CODE = "H3"
 ACTION = "drop"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import re
 
@@ -310,7 +380,7 @@ def medicine(doc):
     return ("drop" if re.search(r"(?:^|/)vendor/", doc["url"]) else "keep", doc["text"])
 ```
 
-## 9. `DA-C3-002` · C3 broken code · drop · go
+## 11. `DA-C3-002` · C3 broken code · drop · go
 
 Go lexical check fails (unclosed string, rune or block comment; unbalanced brackets).
 
@@ -360,7 +430,7 @@ def medicine(doc):
     return ("keep" if go_lexes(doc["text"]) else "drop", doc["text"])
 ```
 
-## 10. `DA-E3-001` · E3 hard-coded secret · drop · rust, js-ts, java, cpp
+## 12. `DA-E3-001` · E3 hard-coded secret · drop · rust, js-ts, java, cpp
 
 a quoted value of 8+ chars assigned to api_key/token/password/secret. Detector: returns True/False.
 
@@ -368,7 +438,7 @@ a quoted value of 8+ chars assigned to api_key/token/password/secret. Detector: 
 RULE_ID = "DA-E3-001"
 CODE = "E3"
 ACTION = "drop"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java'}
+LANGS = {'javascript', 'typescript', 'rust', 'cpp', 'java'}
 ORIGIN = "code-js-ts"  # pack whose medicine this came from
 import html, re
 
@@ -397,7 +467,7 @@ def medicine(doc):
     return _std(contains_secret_assignment(doc["text"]), doc["text"])
 ```
 
-## 11. `DA-F2-001` · F2 contest solution · drop · go, rust, js-ts
+## 13. `DA-F2-001` · F2 contest solution · drop · go, rust, js-ts
 
 path names LeetCode, Codeforces or AtCoder.
 
@@ -405,7 +475,7 @@ path names LeetCode, Codeforces or AtCoder.
 RULE_ID = "DA-F2-001"
 CODE = "F2"
 ACTION = "drop"
-LANGS = {'rust', 'go', 'typescript', 'javascript'}
+LANGS = {'javascript', 'go', 'rust', 'typescript'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import re
 CONTEST = re.compile(r"leetcode|codeforces|atcoder", re.I)
@@ -416,7 +486,7 @@ def medicine(doc):
     return ("drop" if CONTEST.search(doc["url"]) else "keep", doc["text"])
 ```
 
-## 12. `DA-A1-001` · A1 invisible characters · fix · all 5
+## 14. `DA-A1-001` · A1 invisible characters · fix · all 5
 
 delete U+FEFF (BOM).
 
@@ -424,7 +494,7 @@ delete U+FEFF (BOM).
 RULE_ID = "DA-A1-001"
 CODE = "A1"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-cpp"  # pack whose medicine this came from
 import html, re
 
@@ -448,7 +518,7 @@ def medicine(doc):
     return _std(remove_bom_characters(doc["text"]), doc["text"])
 ```
 
-## 13. `DA-A2-001` · A2 control characters · fix · all 5
+## 15. `DA-A2-001` · A2 control characters · fix · all 5
 
 CRLF and lone CR -> LF.
 
@@ -456,7 +526,7 @@ CRLF and lone CR -> LF.
 RULE_ID = "DA-A2-001"
 CODE = "A2"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-cpp"  # pack whose medicine this came from
 import html, re
 
@@ -480,27 +550,7 @@ def medicine(doc):
     return _std(normalize_line_endings(doc["text"]), doc["text"])
 ```
 
-## 14. `DA-A4-002` · A4 lost bytes (U+FFFD) · fix · all 5
-
-delete a `//` comment that holds only U+FFFD debris (an author-quoted U+FFFD is kept, ruling 7).
-
-```python
-RULE_ID = "DA-A4-002"
-CODE = "A4"
-ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
-ORIGIN = "code-go"  # pack whose medicine this came from
-import re
-LOST = re.compile(r"[ \t]*//[^\n\w]*�[^\nA-Za-z0-9]*$", re.M)
-
-def medicine(doc):
-    if doc.get("lang_label") not in LANGS:
-        return ("keep", doc["text"])
-    t = LOST.sub("", doc["text"])
-    return ("fix" if t != doc["text"] else "keep", t)
-```
-
-## 15. `DA-A6-001` · A6 look-alike letters · fix · all 5
+## 16. `DA-A6-001` · A6 look-alike letters · fix · all 5
 
 Cyrillic look-alike letters inside Latin words -> Latin.
 
@@ -508,7 +558,7 @@ Cyrillic look-alike letters inside Latin words -> Latin.
 RULE_ID = "DA-A6-001"
 CODE = "A6"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import re
 HOMO = str.maketrans("аеорсухіјѕАВЕКМНОРСТХІЈЅ", "aeopcyxijsABEKMHOPCTXIJS")
@@ -521,7 +571,7 @@ def medicine(doc):
     return ("fix" if t != doc["text"] else "keep", t)
 ```
 
-## 16. `DA-B2-001` · B2 dataset metadata line · fix · all 5
+## 17. `DA-B2-001` · B2 dataset metadata line · fix · all 5
 
 strip the `<reponame>`/`<filename>`/`<gh_stars>` line at the start.
 
@@ -529,7 +579,7 @@ strip the `<reponame>`/`<filename>`/`<gh_stars>` line at the start.
 RULE_ID = "DA-B2-001"
 CODE = "B2"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-js-ts"  # pack whose medicine this came from
 import html, re
 
@@ -557,7 +607,7 @@ def medicine(doc):
     return _std(remove_source_metadata(doc["text"]), doc["text"])
 ```
 
-## 17. `DA-B3-008` · B3 dataset markers · fix · all 5
+## 18. `DA-B3-008` · B3 dataset markers · fix · all 5
 
 strip the marker lines at the start; `<EMAIL>` -> example address, `<NAME>` -> `[AUTHOR]`; remove chat tokens.
 
@@ -565,7 +615,7 @@ strip the marker lines at the start; `<EMAIL>` -> example address, `<NAME>` -> `
 RULE_ID = "DA-B3-008"
 CODE = "B3"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-js-ts"  # pack whose medicine this came from
 import html, re
 
@@ -619,7 +669,7 @@ def medicine(doc):
     return _std(fix_b3(doc["text"]), doc["text"])
 ```
 
-## 18. `DA-B4-005` · B4 PII placeholders · fix · all 5
+## 19. `DA-B4-005` · B4 PII placeholders · fix · all 5
 
 delete `<NAME>`/`<EMAIL>`/`<KEY>`/`<PASSWORD>` in comments and strings, `""` in code.
 
@@ -627,7 +677,7 @@ delete `<NAME>`/`<EMAIL>`/`<KEY>`/`<PASSWORD>` in comments and strings, `""` in 
 RULE_ID = "DA-B4-005"
 CODE = "B4"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-rust"  # pack whose medicine this came from
 import html, re
 
@@ -668,7 +718,7 @@ def medicine(doc):
     return _std(b4_pii_placeholder(doc["text"]), doc["text"])
 ```
 
-## 19. `DA-C1-004` · C1 tool boilerplate · fix · all 5
+## 20. `DA-C1-004` · C1 tool boilerplate · fix · all 5
 
 delete kubebuilder/operator-sdk scaffold notes ("EDIT THIS FILE!", "NOTE: json tags are required"...).
 
@@ -676,7 +726,7 @@ delete kubebuilder/operator-sdk scaffold notes ("EDIT THIS FILE!", "NOTE: json t
 RULE_ID = "DA-C1-004"
 CODE = "C1"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import re
 SCAFFOLD = re.compile(r'^[ \t]*//[ \t]*(?:EDIT THIS FILE!.*|NOTE: json tags are required\..*|'
@@ -690,7 +740,7 @@ def medicine(doc):
     return ("fix" if t != doc["text"] else "keep", t)
 ```
 
-## 20. `DA-C1-001` · C1 tool boilerplate · fix · all 5
+## 21. `DA-C1-001` · C1 tool boilerplate · fix · all 5
 
 delete the NetBeans licence-template and IntelliJ "Created by" header comments.
 
@@ -698,7 +748,7 @@ delete the NetBeans licence-template and IntelliJ "Created by" header comments.
 RULE_ID = "DA-C1-001"
 CODE = "C1"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-java"  # pack whose medicine this came from
 import html, re
 
@@ -732,7 +782,7 @@ def medicine(doc):
     return _std(m5_strip_ide_boilerplate(doc["text"]), doc["text"])
 ```
 
-## 21. `DA-E4-004` · E4 licence header · fix · all 5
+## 22. `DA-E4-004` · E4 licence header · fix · all 5
 
 delete a leading comment block of 5+ lines that is >=40% licence text (doc comments kept).
 
@@ -740,7 +790,7 @@ delete a leading comment block of 5+ lines that is >=40% licence text (doc comme
 RULE_ID = "DA-E4-004"
 CODE = "E4"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java', 'go'}
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
 ORIGIN = "code-rust"  # pack whose medicine this came from
 import html, re
 
@@ -811,7 +861,48 @@ def medicine(doc):
     return _std(e4_licence_header(doc["text"]), doc["text"])
 ```
 
-## 22. `DA-E4-002` · E4 licence header · fix · rust, js-ts, java, cpp
+## 23. `DA-E4-007` · E4 licence header · fix · all 5
+
+delete the first `/* */` block when it is 8+ lines and names Apache, MIT or GPL.
+
+```python
+RULE_ID = "DA-E4-007"
+CODE = "E4"
+ACTION = "fix"
+LANGS = {'javascript', 'go', 'rust', 'typescript', 'cpp', 'java'}
+ORIGIN = "code-java"  # pack whose medicine this came from
+import html, re
+
+TOK = re.compile(r'^(?:<(?:reponame|filename|gh_stars)>[^\n<]*)+\n?')
+
+LIC = re.compile(r'Apache License|Licensed to the Apache|Permission is hereby granted|GNU (Lesser |Affero )?General Public License')
+
+def fix_e4(text):
+    b = TOK.sub('', text, count=1)
+    lead = len(b) - len(b.lstrip('\ufeff \r\n\t'))
+    m = re.match(r'/\*.*?\*/', b[lead:], re.S)
+    if m and m.group(0).count('\n') >= 7 and LIC.search(m.group(0)):
+        return text[:len(text) - len(b)] + b[lead + m.end():].lstrip('\r\n')
+    return text
+
+
+def _std(out, text):
+    # source result in the shared form: str -> fix/keep, None or True -> drop, False -> keep
+    if out is None or out is True: return ("drop", text)
+    if out is False: return ("keep", text)
+    if isinstance(out, str): return ("fix" if out != text else "keep", out)
+    action, new = out
+    if action == "drop": return ("drop", text)
+    return ("fix" if new != text else "keep", new)
+
+
+def medicine(doc):
+    if doc.get("lang_label") not in LANGS:
+        return ("keep", doc["text"])
+    return _std(fix_e4(doc["text"]), doc["text"])
+```
+
+## 24. `DA-E4-002` · E4 licence header · fix · rust, js-ts, java, cpp
 
 delete a leading licence comment block when `package`/`import` follows it.
 
@@ -819,7 +910,7 @@ delete a leading licence comment block when `package`/`import` follows it.
 RULE_ID = "DA-E4-002"
 CODE = "E4"
 ACTION = "fix"
-LANGS = {'rust', 'javascript', 'cpp', 'typescript', 'java'}
+LANGS = {'javascript', 'typescript', 'rust', 'cpp', 'java'}
 ORIGIN = "code-java"  # pack whose medicine this came from
 import html, re
 
@@ -852,7 +943,7 @@ def medicine(doc):
     return _std(m4_strip_licence_header(doc["text"]), doc["text"])
 ```
 
-## 23. `DA-E4-006` · E4 licence header · fix · go, js-ts, java
+## 25. `DA-E4-006` · E4 licence header · fix · go, js-ts, java
 
 delete a licence comment block of 4+ lines in the header, a boxed `/* */` header, or a licence block at the end.
 
@@ -860,7 +951,7 @@ delete a licence comment block of 4+ lines in the header, a boxed `/* */` header
 RULE_ID = "DA-E4-006"
 CODE = "E4"
 ACTION = "fix"
-LANGS = {'go', 'typescript', 'javascript', 'java'}
+LANGS = {'javascript', 'go', 'java', 'typescript'}
 ORIGIN = "code-go"  # pack whose medicine this came from
 import re
 LICENCE = re.compile(r"Licensed under|Licensed to the Apache|Permission is hereby granted|Redistribution and use|"
@@ -892,8 +983,8 @@ def medicine(doc):
 
 | pack | gold | rules on | rules FAIL alone | gold changed | gold dropped | harm % | result | pack fixed / dropped / untouched |
 |---|---|---|---|---|---|---|---|---|
-| go | 163 | 21 | none | 0 | 0 | 0.00 | PASS | 244 / 82 / 174 |
-| rust | 78 | 21 | none | 0 | 0 | 0.00 | PASS | 234 / 23 / 243 |
-| js-ts | 49 | 22 | none | 0 | 0 | 0.00 | PASS | 268 / 23 / 209 |
-| java | 40 | 21 | none | 0 | 0 | 0.00 | PASS | 324 / 17 / 159 |
-| cpp | 120 | 20 | none | 0 | 0 | 0.00 | PASS | 348 / 9 / 143 |
+| go | 163 | 23 | none | 0 | 0 | 0.00 | PASS | 243 / 83 / 174 |
+| rust | 78 | 23 | none | 0 | 0 | 0.00 | PASS | 234 / 23 / 243 |
+| js-ts | 49 | 24 | none | 0 | 0 | 0.00 | PASS | 268 / 23 / 209 |
+| java | 40 | 23 | none | 0 | 0 | 0.00 | PASS | 319 / 23 / 158 |
+| cpp | 120 | 22 | none | 0 | 0 | 0.00 | PASS | 348 / 9 / 143 |
