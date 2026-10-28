@@ -49,7 +49,38 @@ The step from (b) to (c) is the harm gate. It turns 5 rules off in the packs whe
 | go | 1 | `DA-E3-001` |
 | go | 1 | `DA-E4-002` |
 
-No rule was removed from the sheet, no gold doc was changed, and no label was changed. The 0% comes from these 5 per-language switches.
+No rule was removed from the sheet, no gold doc was changed, and no label was changed. The 0% comes from these 5 per-language switches. Switching a rule off does not repair it; it stops the rule in the packs where it misfires.
+
+### Each gold hit, checked by hand
+
+| rule, pack | what it did to gold | verdict | sick rows lost by switching it off |
+|---|---|---|---|
+| `DA-C3-002`, rust | dropped 16 valid Rust files; 14 contain lifetimes (`'a`), which the Go lexer reads as unclosed rune literals | **rule bug** for Rust; switching it off is right | 0 (rust has no C3 rows) |
+| `DA-E3-001`, go | dropped `environment_test.go` for `Password: "password"`, a dummy test value | **rule false positive**; switching it off is right | 0 (`DA-E3-003` fixes go's 1 E3 row) |
+| `DA-E4-006`, cpp | deleted a comment that is part licence and part explanation ("inspired by the PyTorch implementation...") | **rule overreach**: useful text lost | 3 cpp E4 rows |
+| `DA-E4-002`, go | deleted an IBM Apache-2.0 SPDX licence header | **rule correct**: the gold label says clean | 0 |
+| `DA-E4-006`, rust | deleted an MIT licence header | **rule correct**: the gold label says clean | 0 |
+| `DA-F2-001`, java and cpp | dropped files under `LeetCodeSolutions/`, `leetcode/` and similar paths | **rule correct**, but the java and cpp annotators label contest code clean and never used F2 | 0 |
+
+There are two kinds of hit:
+- **Rule faults** (C3 on rust, E3-001 on go, E4-006 on cpp). Switching the rule off in that pack protects good data.
+- **Label disagreements** (E4 headers on go and rust, F2 on java and cpp). The rule does what the disease list asks, but the gold readers called the doc clean.
+
+Switching these rules off keeps the gold doc safe, but it also lets the disease through: 8 java and 17 cpp contest files stay in the data. The team needs to decide whether E4 licence headers and F2 contest code are diseases in every pack. Once decided, either fix the gold labels or keep the switch-off. The harm test cannot make that call: it only reports that a rule touched a doc the readers called clean.
+
+### Sick rows the sheet still leaves unchanged
+
+These are rows where the sheet changes nothing. A row counts as treated if any rule changed it, so this undercounts rows with more than one disease.
+
+| pack | untreated sick rows, by disease |
+|---|---|
+| go | E4 10, F2 1 |
+| rust | E2 2, E1 1 |
+| js-ts | D3 7, E1 3, D1 1, F3 1 |
+| java | C1 20, E1 3, B4 1, E4 1, E3 1 |
+| cpp | E4 13, E1 4, C1 2, B1 1, B4 1, D1 1 |
+
+Most of these have no rule that catches them yet, for example java C1, which is IDE boilerplate other than NetBeans and IntelliJ.
 
 Most rules touch no gold doc at all, because the gold docs do not contain what those rules look for. A gold doc is one that 2 readers marked clean, with no fix or drop:
 
