@@ -116,6 +116,44 @@ class HarmTestCase(unittest.TestCase):
         self.assertIn("documents changed: 2", out)
         self.assertIn("skipped medicine.md block 1", err)
 
+    def test_true_false_detector(self):
+        # True means drop, False means keep: 1 of 200 = 0.50%
+        rc, out, _ = self.run_ht("def cure_e1(t):\n    return t == 'DROPME'\n", "E1")
+        self.assertEqual(rc, 0)
+        self.assertIn("documents dropped: 1", out)
+
+    SHEET = ("# Sheet\n\n```python\nRULE_ID = 'DA-B3-009'\nLANGS = {'go'}\n"
+             "def medicine(doc):\n    if doc['lang_label'] not in LANGS:\n        return ('keep', doc['text'])\n"
+             "    return ('fix', doc['text'].replace('<issue_start>', ''))\n```\n\n"
+             "```python\nRULE_ID = 'DA-H3-009'\nLANGS = {'go', 'rust'}\n"
+             "def medicine(doc):\n    return ('drop' if 'vendor/' in doc['url'] else 'keep', doc['text'])\n```\n")
+
+    def write_pack_with_urls(self, lang):
+        urls = ["x/vendor/a.go" if i == "d005" else "x/a.go" for i in self.texts]
+        pq.write_table(pa.table({"doc_id": list(self.texts), "text": list(self.texts.values()), "url": urls,
+                                 "lang_label": [lang] * len(self.texts)}), self.tmp / "pack.parquet")
+
+    def test_sheet_blocks_are_isolated(self):
+        # both blocks define LANGS and medicine; each RULE_ID keeps its own
+        self.write_pack_with_urls("go")
+        rc, out, _ = self.run_ht(self.SHEET, "DA-B3-009", "sheet.md")
+        self.assertIn("documents changed: 2", out)
+        rc, out, _ = self.run_ht(self.SHEET, "DA-H3-009", "sheet.md")
+        self.assertIn("documents dropped: 1", out)  # the rule reads doc["url"]
+
+    def test_sheet_language_scope(self):
+        self.write_pack_with_urls("rust")  # DA-B3-009 is go only
+        rc, out, _ = self.run_ht(self.SHEET, "DA-B3-009", "sheet.md")
+        self.assertIn("documents changed: 0", out)
+
+    def test_rule_all_runs_each_rule_and_the_sheet(self):
+        self.write_pack_with_urls("go")
+        rc, out, _ = self.run_ht(self.SHEET, "all", "sheet.md")
+        self.assertRegex(out, r"DA-B3-009\s+2\s+0\s+1.00%  PASS")
+        self.assertRegex(out, r"DA-H3-009\s+0\s+1\s+0.50%  PASS")
+        self.assertRegex(out, r"ALL IN ORDER\s+2\s+1\s+1.50%  FAIL")
+        self.assertEqual(rc, 1)
+
     @unittest.skipUnless(RUST_MD.exists(), "amukka's medicine.md is not in this checkout")
     def test_load_amukka_medicine(self):
         with contextlib.redirect_stderr(io.StringIO()):

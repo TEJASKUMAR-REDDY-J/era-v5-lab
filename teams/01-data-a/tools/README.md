@@ -40,6 +40,19 @@ Runs one rule on the gold set. Prints documents changed, documents dropped, the 
 
 To test code that is not in the registry, use `--rules <rules.py or medicine.md> --rule B3`.
 
+**Medicine sheets.** A sheet such as `code-medicines/medicine_code.md` has one rule per ```python block. Each block has its own `RULE_ID = "DA-B3-001"` and a function `medicine(doc)`. Each block runs in its own namespace, so blocks may reuse names. A single rule is found by its ID:
+
+```
+python -I teams/01-data-a/tools/harm_test.py --pack <pack.parquet> --gold <pack_gold.csv> --rules <sheet.md> --rule DA-B3-008
+python -I teams/01-data-a/tools/harm_test.py --pack <pack.parquet> --gold <pack_gold.csv> --rules <sheet.md> --rule all
+```
+
+`--rule all` tests every rule in the file on its own, then the whole file in order. In that last line, `ALL IN ORDER`, a drop ends the document and a fix passes the new text to the next rule. The exit code is the worst result.
+
+Two more kinds of rule are accepted:
+- **Detectors** that return `True` (drop) or `False` (keep).
+- **Rules whose first parameter is named `doc`.** They get `{doc_id, text, url, lang_label}`. `url` and `lang_label` are read from the pack when it has them, otherwise they are `""`. Rules that look at the file path (H3, F2) or at the language (`LANGS`) need this.
+
 ## 3. Report: `rule_report.py`
 
 ```
