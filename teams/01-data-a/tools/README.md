@@ -1,6 +1,6 @@
 # Data A tools: medicine checks
 
-Tools to test the cleaning rules (medicines) from the annotators' `medicine.md` files. All three need `pip install pyarrow`. Run them from the repo root with `python -I`.
+Tools to test the cleaning rules (medicines) from the annotators' `medicine.md` files. Steps 1 to 3 need `pip install pyarrow`. Run them from the repo root with `python -I`.
 
 ## The scripts
 
@@ -11,6 +11,7 @@ Run them in this order. Steps 2 and 3 both use the rules and IDs that step 1 mak
 | 1 | `medicine_extract.py` | one `medicine.md`, or a dir | the rules as a Python file, and a rule ID for each rule |
 | 2 | `harm_test.py` | one pack, one gold file, one rule ID | documents changed, documents dropped, the percent, PASS or FAIL at 1% |
 | 3 | `rule_report.py` | one pack, its gold file, all its rules | `REPORT.md`: harm test of every rule for the pack, and advice on which rules to keep |
+| any time | `registry_view.py` | the registry | `registry.html`: a page to search the rules and see each rule's function |
 
 ## 1. Extract the rules: `medicine_extract.py`
 
@@ -66,6 +67,8 @@ The advice is for a person to check. Nothing records the decision yet.
 | `action` | `fix` or `drop`, as the annotator wrote it |
 | `file` | the rules file that holds the code, relative to the registry |
 | `withdrawn` | `true` if the rule is no longer in the `medicine.md` |
+
+To look at the rules, run `python -I teams/01-data-a/tools/registry_view.py`. It writes `rules/registry.html`, a page you open in a browser: search the rules and expand one to see its function. It does not run the code and needs no `pyarrow`. Run it again after the registry changes and commit the new page. `--show DA-B3-001` prints one rule in the terminal.
 
 To build `spec_v1.md` from it:
 
