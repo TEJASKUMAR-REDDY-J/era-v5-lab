@@ -8,7 +8,7 @@ Run them in this order. Steps 2 and 3 both use the rules and IDs that step 1 mak
 
 | Step | Script | Input | Output |
 |---|---|---|---|
-| 1 | `medicine_extract.py` | one `medicine.md` | the rules as a Python file, and a rule ID for each rule |
+| 1 | `medicine_extract.py` | one `medicine.md`, or a dir | the rules as a Python file, and a rule ID for each rule |
 | 2 | `harm_test.py` | one pack, one gold file, one rule ID | documents changed, documents dropped, the percent, PASS or FAIL at 1% |
 | 3 | `rule_report.py` | one pack, its gold file, all its rules | `REPORT.md`: harm test of every rule for the pack, and advice on which rules to keep |
 
