@@ -4,7 +4,7 @@
   "gold": "en-nemotroncc-synth_gold.csv",
   "gold_sha256": "72216094cbebbf7b913cc16061b202820c1ed9a9710ef6af6a132c5f89910315",
   "gold_count": 96,
-  "rules": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/rules/en-nemotroncc-synth/maheshsv.py",
+  "rules": "./teams/01-data-a/rules/en-nemotroncc-synth/maheshsv.py",
   "rules_file_sha256": "b403328001ee7ac63d581fb263b3e24d66b42e816420d02c3b59ec0517afc439",
   "code_sha256": "b403328001ee7ac63d581fb263b3e24d66b42e816420d02c3b59ec0517afc439",
   "limit_percent": "1",

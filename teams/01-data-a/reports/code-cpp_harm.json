@@ -4,7 +4,7 @@
   "gold": "code-cpp_gold.csv",
   "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
   "gold_count": 120,
-  "rules": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/spec/spec_v1.md",
+  "rules": "./teams/01-data-a/spec/spec_v1.md",
   "rules_file_sha256": "baebedd86510815eab9f1a175f6545ab332d1168c52897527e0e0571ad210fd1",
   "code_sha256": "4f5f92a431070f51d46f6f836ecb0ab6f63603b42bc7dfe7ad1bc65ccf6aee71",
   "limit_percent": "1",

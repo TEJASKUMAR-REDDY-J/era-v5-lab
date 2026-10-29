@@ -4,7 +4,7 @@
   "gold": "code-js-ts_gold.csv",
   "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
   "gold_count": 204,
-  "rules": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/rules/code-js-ts/varshith2000.py",
+  "rules": "./teams/01-data-a/rules/code-js-ts/varshith2000.py",
   "rules_file_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
   "code_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
   "limit_percent": "1",

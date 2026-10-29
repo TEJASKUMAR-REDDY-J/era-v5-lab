@@ -4,7 +4,7 @@
   "gold": "code-java_gold.csv",
   "gold_sha256": "45c626cb871469c45009fd4750db739b9ab6e03d8a725d45140a73e14282275c",
   "gold_count": 134,
-  "rules": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/rules/code-java/vaibh27.py",
+  "rules": "./teams/01-data-a/rules/code-java/vaibh27.py",
   "rules_file_sha256": "39b6dbad5ce68f6c498cd3306534f21a82de63f3ee1cff20121b8231e0eeed64",
   "code_sha256": "39b6dbad5ce68f6c498cd3306534f21a82de63f3ee1cff20121b8231e0eeed64",
   "limit_percent": "1",

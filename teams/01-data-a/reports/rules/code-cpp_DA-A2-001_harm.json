@@ -4,7 +4,7 @@
   "gold": "code-cpp_gold.csv",
   "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
   "gold_count": 120,
-  "rules": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/rules/code-cpp/TharunSivamani.py",
+  "rules": "./teams/01-data-a/rules/code-cpp/TharunSivamani.py",
   "rules_file_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
   "code_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
   "limit_percent": "1",
