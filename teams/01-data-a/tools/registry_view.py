@@ -300,7 +300,8 @@ def main(argv=None) -> int:
         return 0
 
     out = args.out or args.registry.parent / "registry.html"
-    out.write_text(render(rows), encoding="utf-8")
+    with open(out, "w", encoding="utf-8", newline="\n") as f:  # LF on every platform, as medicine_extract.py writes
+        f.write(render(rows))
     broken = [r["id"] for r in rows if "error" in r]
     print(f"{len(rows)} rules ({sum(r['withdrawn'] for r in rows)} withdrawn) from {len({r['pack'] for r in rows})} packs")
     if broken:

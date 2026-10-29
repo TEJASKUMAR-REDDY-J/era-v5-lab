@@ -139,6 +139,39 @@ class HarmTestCase(unittest.TestCase):
         self.assertIn("Timeout", proc.stderr)
         self.assertNotIn("clean document", proc.stderr + proc.stdout)  # a stack trace only, no document text
 
+    def test_debug_names_the_document_a_timeout_ended_the_run_on(self):
+        # The watchdog's stack trace does not say which document hung, so --debug prints it before each call.
+        (self.tmp / "rules.py").write_text(
+            "import time\ndef cure_a1(t):\n    if t == 'DROPME':\n        time.sleep(30)\n    return t\n")
+        script = (f"import sys; sys.path.insert(0, {str(Path(harm_test.__file__).parent)!r})\n"
+                  "import harm_test; harm_test.HAS_ALARM = False\n"
+                  f"sys.exit(harm_test.main(['--pack', {str(self.tmp / 'pack.parquet')!r}, '--gold', "
+                  f"{str(self.tmp / 'gold.csv')!r}, '--rules', {str(self.tmp / 'rules.py')!r}, '--rule', 'A1', "
+                  "'--timeout', '0.5', '--debug']))\n")
+        proc = subprocess.run([sys.executable, "-I", "-c", script], capture_output=True, text=True, timeout=60)
+        self.assertEqual(proc.returncode, 1)
+        lines = [ln for ln in proc.stderr.splitlines() if ln.startswith("debug: calling the rule on")]
+        self.assertEqual(lines[-1], "debug: calling the rule on d002")   # the document whose text is DROPME
+        self.assertLess(proc.stderr.index("debug: calling the rule on d002"), proc.stderr.index("Timeout"))
+        self.assertNotIn("DROPME", proc.stderr + proc.stdout)
+
+    def test_a_rules_file_on_another_drive_has_no_relative_path(self):
+        # Windows: os.path.relpath raises ValueError when the two paths are on different drives
+        saved = harm_test.os.path.relpath
+        def other_drive(*_):
+            raise ValueError("path is on mount 'D:', start on mount 'C:'")
+        harm_test.os.path.relpath = other_drive
+        try:
+            path = harm_test.repo_relative(self.tmp / "rules.py")
+        finally:
+            harm_test.os.path.relpath = saved
+        self.assertEqual(path, (self.tmp / "rules.py").resolve().as_posix())
+
+    def test_the_report_is_written_with_lf_line_endings(self):
+        report = self.tmp / "report.json"
+        self.run_ht("cure_b3 = lambda t: t\n", "B3", "rules.py", "--report", str(report))
+        self.assertNotIn(b"\r", report.read_bytes())
+
     def test_missing_rule(self):
         rc, _, err = self.run_ht("def cure_b3(t):\n    return t\n", "Z9")
         self.assertEqual(rc, 2)

@@ -340,6 +340,24 @@ class IdCase(unittest.TestCase):
         self.assertEqual(sorted(self.entries()), ["DA-B3-002", "DA-B3-003"])
         self.assertNotIn("-> DA-B3-001", out)
 
+    def test_a_rules_file_on_another_drive_is_registered_with_its_full_path(self):
+        # Windows: os.path.relpath raises ValueError when the two paths are on different drives
+        saved = medicine_extract.os.path.relpath
+        def other_drive(*_):
+            raise ValueError("path is on mount 'D:', start on mount 'C:'")
+        medicine_extract.os.path.relpath = other_drive
+        try:
+            rc, _, out = self.run_extract(self.write_medicine("code-rust", "alice", self.b3()))
+        finally:
+            medicine_extract.os.path.relpath = saved
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.entries()["DA-B3-001"]["file"], out.resolve().as_posix())
+
+    def test_the_registry_and_the_rules_file_are_written_with_lf_line_endings(self):
+        _, _, out = self.run_extract(self.write_medicine("code-rust", "alice", self.b3()))
+        for path in (self.registry, out):
+            self.assertNotIn(b"\r", path.read_bytes(), path.name)
+
     def test_registry_paths_use_forward_slashes(self):
         self.registry.parent.mkdir(parents=True)
         self.registry.write_text(json.dumps({"rules": [{"id": "DA-B3-001", "pack": "code-rust", "handle": "alice",
