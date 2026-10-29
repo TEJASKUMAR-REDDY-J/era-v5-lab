@@ -1,4 +1,4 @@
-"""Tests for medicine_extract.py. Run: python -I teams/01-data-a/tools/test_medicine_extract.py"""
+"""Tests for medicine_extract.py. Run: python -I teams/01-data-a/tests/test_medicine_extract.py"""
 import contextlib
 import io
 import json
@@ -10,7 +10,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))  # python -I: not on the path by itself
 import harm_test  # noqa: E402
 import medicine_extract  # noqa: E402
 

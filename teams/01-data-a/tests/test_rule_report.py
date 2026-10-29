@@ -1,4 +1,4 @@
-"""Tests for rule_report.py. Run: python -I teams/01-data-a/tools/test_rule_report.py"""
+"""Tests for rule_report.py. Run: python -I teams/01-data-a/tests/test_rule_report.py"""
 import contextlib
 import io
 import sys
@@ -10,7 +10,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))  # python -I: not on the path by itself
 import medicine_extract  # noqa: E402
 import rule_report  # noqa: E402
 
