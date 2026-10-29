@@ -23,7 +23,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_REGISTRY = HERE.parent / "rules" / "registry.json"
-GENERATED = {"RULES", "RULES_BY_ID", "_student_rules"}  # names the extractor adds: never shown as helpers
+GENERATED = {"RULES", "RULES_BY_ID"}  # names the extractor adds: never shown as helpers
 
 
 # --- reading the source of a rule --------------------------------------------------------------------------------
@@ -40,10 +40,6 @@ def _top_level(body):
 def _segment(src: str, node) -> str:
     """The source text of a node, dedented (a node inside a try: block keeps its indent after the first line)."""
     return textwrap.dedent(" " * node.col_offset + (ast.get_source_segment(src, node) or "")).strip("\n")
-
-
-def _index_value(node):
-    return node.value if node.__class__.__name__ == "Index" else node  # Python 3.8 wraps a subscript in Index
 
 
 def _dict_assigns(tree, name):
@@ -81,20 +77,11 @@ def read_rule(rules_file: Path, rule_id: str) -> dict:
     value = by_id.get(rule_id)
     if value is None:
         return {"error": f"{rule_id} is not in RULES_BY_ID of {rules_file.name}"}
-    label = None
-    if isinstance(value, ast.Subscript) and isinstance(value.value, ast.Name) and value.value.id == "_student_rules":
-        # The rule is an entry of the annotator's own RULES dict (not a named function). The last dict is ours.
-        key = _index_value(value.slice)
-        key = key.value if isinstance(key, ast.Constant) else None
-        for student in reversed(_dict_assigns(tree, "RULES")[:-1]):
-            if key in student:
-                value, label = student[key], f'RULES["{key}"]'
-                break
     if isinstance(value, ast.Name) and value.id in defs:
         main = defs[value.id]
         name = value.id
     else:  # a lambda, or anything else that is written inline
-        main, name = value, label or "<inline>"
+        main, name = value, "<inline>"
 
     # The helpers: module-level names that the rule uses, and the ones those use, in file order.
     wanted, queue = {}, [main]

@@ -12,8 +12,6 @@ import pyarrow.parquet as pq
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import harm_test  # noqa: E402
 
-RUST_MD = Path(__file__).resolve().parents[3] / "diagnosis/submissions/code-rust/amukka/medicine.md"
-
 
 class HarmTestCase(unittest.TestCase):
     def setUp(self):
@@ -127,12 +125,6 @@ class HarmTestCase(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("documents changed: 0", out)
 
-    @unittest.skipUnless(RUST_MD.exists(), "amukka's medicine.md is not in this checkout")
-    def test_load_amukka_medicine(self):
-        with contextlib.redirect_stderr(io.StringIO()):
-            ns, _ = harm_test.load_rules(RUST_MD)
-        self.assertEqual(sorted(ns["RULES"]), ["A2", "B3", "B4", "E1", "E4"])
-        self.assertEqual(ns["RULES"]["B3"]("<reponame>x/y\nfn main() {}\n"), ("fix", "fn main() {}\n"))
 
 
 if __name__ == "__main__":

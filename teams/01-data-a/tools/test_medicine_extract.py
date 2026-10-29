@@ -61,19 +61,18 @@ class ExtractCase(unittest.TestCase):
         self.assertIn("several functions in the section (one, two)", out)
         self.assertIsNone(ns)  # nothing written
 
-    def test_rules_dict_fragments_and_appendix(self):
-        # Mirrors amukka's file: fragments in the sections, the complete code in an appendix, a RULES dict.
+    def test_fragments_are_left_out_and_an_annotators_own_rules_dict_is_ignored(self):
         rc, out, ns = self.extract(md(
             "## Medicine 1", "1. **Disease:** B3, markers", py("MARKER = 1\ntext = MARKER + text"),
+            py("def b3(t):\n    return 'function'"),
             "## Medicine 2", "1. **Disease:** E1, generated", py("if x drop"),
-            "## Appendix", py("import re\nMARKER = re.compile('<m>')\ndef b3(t):\n    return MARKER.sub('', t)\n"
-                              "RULES = {'B3': b3, 'E1': lambda t: ('drop', '')}")))
+            "## Appendix", py("RULES = {'B3': lambda t: 'dict', 'E1': lambda t: ('drop', '')}")))
         self.assertEqual(rc, 0)
-        self.assertEqual(sorted(ns["RULES"]), ["B3", "E1"])
-        self.assertEqual(ns["RULES"]["B3"]("a<m>b"), "ab")
-        self.assertEqual(ns["RULES"]["E1"]("x"), ("drop", ""))  # a lambda in RULES is kept
+        self.assertEqual(sorted(ns["RULES"]), ["B3"])                   # E1 has no function in its section
+        self.assertEqual(ns["RULES"]["B3"]("x"), "function")            # the annotator's dict is not read
         self.assertIn("left out: block 1, fragment", out)
-        self.assertIn("left out: block 2, syntax error", out)
+        self.assertIn("left out: block 3, syntax error", out)
+        self.assertIn("E1: no function found for this section", out)
 
     def test_support_block_that_fails_does_not_break_the_file(self):
         rc, out, ns = self.extract(md("**Disease:** A1, junk", py("PATTERN = re.compile('x')"),  # `re` never imported

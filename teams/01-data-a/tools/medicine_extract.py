@@ -18,15 +18,15 @@ The medicine.md is only read, never run. The steps:
   1. Each "**Disease:** <code>" line starts a medicine section. A section ends at the next one, or at an
      "Appendix" heading.
   2. Every ```python block in the file is read with ast:
-       code      defines a function (or a RULES dict). It goes into the rules file as it is.
+       code      defines a function. It goes into the rules file as it is.
        support   only imports and UPPER_CASE constants. It goes in too, inside try/except.
        fragment  anything else (a code line that needs a variable from elsewhere, a syntax error). Left out.
   3. For each disease code the rule is the first of:
-       - the RULES dict entry for that code
        - a function named cure_<code> (for example cure_b3)
        - the only public function (no leading underscore) in that section
      Anything else is reported, and nothing is guessed.
-  4. The rules file ends with RULES = {"B3": <function>, ...} and RULES_BY_ID = {"DB-B3-001": RULES["B3"], ...}.
+  4. The rules file ends with RULES = {"B3": <function>, ...} and RULES_BY_ID = {"DB-B3-001": <function>, ...}.
+     A RULES dict written inside a medicine.md is not read: the file always gets its own.
   5. Each rule gets an ID: <team>-<code>-<number>. The team is DA for the Data A packs (English, code, math,
      science) and DB for every other pack (Indic, cadj-*). The number counts up for each team and code. The ID
      goes into rules/registry.json with the pack, the handle and the file. When you run the extractor again, a
@@ -38,8 +38,8 @@ The medicine.md is only read, never run. The steps:
        python -I harm_test.py --pack <pack.parquet> --gold <gold.csv> --rule DB-B3-001
   A path outside diagnosis/submissions/<pack_id>/<handle>/ has no pack or handle, so it gets no IDs.
 
-Two medicines for one code: the RULES dict and the name cure_<code> can only point to one function, so they are
-used for the first section of a code. A later section of the same code needs the only-function rule: put its
+Two medicines for one code: the name cure_<code> can only point to one function, so it is used for the first
+section of a code. A later section of the same code needs the only-function rule: put its
 function in that section, and give it a name that no earlier rule uses.
 """
 import argparse
@@ -75,7 +75,6 @@ class Block:
         self.section = None   # index into the sections list, or None
         self.kind = "fragment"
         self.funcs = []       # names of functions defined at the top level of the block
-        self.rules_map = {}   # code -> function name (None if the RULES value is not a plain name)
         self._analyse()
 
     def _analyse(self):
@@ -96,11 +95,6 @@ class Block:
                 if isinstance(node.value, ast.Lambda):
                     self.funcs.extend(names)
                     defining = True
-                elif names == ["RULES"] and isinstance(node.value, ast.Dict):
-                    defining = True
-                    for k, v in zip(node.value.keys, node.value.values):
-                        if isinstance(k, ast.Constant) and isinstance(k.value, str):
-                            self.rules_map[k.value.upper()] = v.id if isinstance(v, ast.Name) else None
                 elif not all(CONST_NAME.match(n) for n in names):
                     support_only = False
             elif isinstance(node, (ast.Import, ast.ImportFrom)):
@@ -138,23 +132,17 @@ def read_medicine(src: str):
 def resolve(sections, blocks):
     """Return ([rule], [notes]). A rule is {code, n, expr, how, action}; n counts the sections of one code.
 
-    expr is Python that names the rule's function. The RULES dict and cure_<code> serve the first section of
-    a code only. A later section needs a function of its own, not already used by an earlier rule.
+    expr is Python that names the rule's function. The name cure_<code> serves the first section of a code
+    only. A later section needs a function of its own, not already used by an earlier rule.
     """
     code_blocks = [b for b in blocks if b.kind == "code"]
-    rules_map = {}
-    for b in code_blocks:
-        rules_map.update(b.rules_map)
     funcs = {n.lower(): n for b in code_blocks for n in b.funcs}
     chosen, notes, seen, claimed = [], [], {}, set()
     for si, (_, _, code, action) in enumerate(sections):
         n = seen[code] = seen.get(code, 0) + 1
         label = code if n == 1 else f"{code} (medicine {n})"
         expr = how = None
-        if n == 1 and code in rules_map:
-            expr = rules_map[code] or f'_student_rules["{code}"]'
-            how = "RULES dict"
-        elif n == 1 and f"cure_{code.lower()}" in funcs:
+        if n == 1 and f"cure_{code.lower()}" in funcs:
             expr, how = funcs[f"cure_{code.lower()}"], f"function cure_{code.lower()}"
         else:
             publics = sorted({f for b in code_blocks if b.section == si for f in b.funcs if not f.startswith("_")} - claimed)
@@ -162,7 +150,7 @@ def resolve(sections, blocks):
                 expr, how = publics[0], "the only function in the section"
             elif publics:
                 notes.append(f"{label}: several functions in the section ({', '.join(publics)}); "
-                             f"name the rule cure_{code.lower()} or add it to RULES")
+                             f"name the rule cure_{code.lower()}")
             else:
                 notes.append(f"{label}: no function found for this section")
         if expr:
@@ -229,7 +217,6 @@ def render(source_name: str, blocks, chosen, ids=None) -> str:
         elif b.kind == "support":
             out.append(f"# --- block {b.index} (imports and constants; ignored if it does not run) ---\n"
                        f"try:\n{textwrap.indent(text, '    ')}except Exception:\n    pass\n")
-    out.append('_student_rules = RULES if isinstance(globals().get("RULES"), dict) else {}')
     first = {}
     for r in chosen:
         first.setdefault(r["code"], r["expr"])  # RULES has one function for each code; the others are only in RULES_BY_ID
