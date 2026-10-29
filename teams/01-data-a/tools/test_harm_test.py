@@ -110,6 +110,18 @@ class HarmTestCase(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertIn("RuleTimeout", out)
 
+    def test_runs_without_sigalrm_with_a_warning(self):
+        # Windows has no SIGALRM: the test still runs, without the per-document limit, and says so
+        saved = harm_test.HAS_ALARM
+        harm_test.HAS_ALARM = False
+        try:
+            rc, out, err = self.run_ht("def cure_b3(t):\n    return t.replace('<issue_start>', '')\n", "B3")
+        finally:
+            harm_test.HAS_ALARM = saved
+        self.assertEqual(rc, 0)
+        self.assertIn("documents changed: 2", out)
+        self.assertIn("no per-document timeout on this platform", err)
+
     def test_missing_rule(self):
         rc, _, err = self.run_ht("def cure_b3(t):\n    return t\n", "Z9")
         self.assertEqual(rc, 2)

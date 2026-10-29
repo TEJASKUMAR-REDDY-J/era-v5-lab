@@ -614,8 +614,9 @@ def main(argv=None) -> int:
             raise Fatal("--timeout must be finite and greater than zero")
         if args.show < 0:
             raise Fatal("--show must be nonnegative")
-        if not HAS_ALARM:
-            raise Fatal("per-document timeout unsupported on this platform; use Linux/macOS")
+        if not HAS_ALARM:  # Windows has no SIGALRM: run without the per-document limit instead of refusing to run
+            print(f"warning: no per-document timeout on this platform; --timeout {args.timeout:g} is not applied "
+                  "(a rule that hangs will hang the test). Use Linux/macOS for the timeout.", file=sys.stderr)
         code = args.rule.strip().upper()
         if args.rules is None and (code == "ALL" or not RULE_ID.fullmatch(code)):
             raise Fatal("--rule all or disease-code tests require --rules")
