@@ -1,0 +1,27 @@
+{
+  "pack": "code-cpp.parquet",
+  "pack_sha256": "2aa25660b81ccaea5e153ab30c0abd80df2a0cf42531421094c5ff9c96401bd5",
+  "gold": "code-cpp_gold.csv",
+  "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
+  "gold_count": 120,
+  "rules": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/rules/code-cpp/TharunSivamani.py",
+  "rules_file_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
+  "code_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
+  "limit_percent": "1",
+  "status": "PASS",
+  "results": [
+    {
+      "rule": "DA-A1-001",
+      "changed": 0,
+      "dropped": 0,
+      "affected_unique": 0,
+      "errors": 0,
+      "error_types": [],
+      "percent": "0.000000",
+      "result": "PASS",
+      "changed_ids": [],
+      "dropped_ids": [],
+      "affected_ids": []
+    }
+  ]
+}

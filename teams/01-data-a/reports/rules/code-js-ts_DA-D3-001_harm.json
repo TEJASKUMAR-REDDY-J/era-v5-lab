@@ -1,0 +1,27 @@
+{
+  "pack": "code-js-ts.parquet",
+  "pack_sha256": "4aa4dea19a83b8db922156838b6772e107f39c4ce6af76bf19b3008a57b27018",
+  "gold": "code-js-ts_gold.csv",
+  "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
+  "gold_count": 204,
+  "rules": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/rules/code-js-ts/varshith2000.py",
+  "rules_file_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
+  "code_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
+  "limit_percent": "1",
+  "status": "PASS",
+  "results": [
+    {
+      "rule": "DA-D3-001",
+      "changed": 0,
+      "dropped": 0,
+      "affected_unique": 0,
+      "errors": 0,
+      "error_types": [],
+      "percent": "0.000000",
+      "result": "PASS",
+      "changed_ids": [],
+      "dropped_ids": [],
+      "affected_ids": []
+    }
+  ]
+}

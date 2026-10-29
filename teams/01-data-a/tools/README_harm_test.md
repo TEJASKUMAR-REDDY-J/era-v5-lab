@@ -4,7 +4,7 @@ Tools to test the cleaning rules (medicines) from the annotators' `medicine.md` 
 
 ## The scripts
 
-Run them in this order. Steps 2 and 3 can use the rules and IDs that step 1 makes; step 2 can also load a rules file directly.
+Run them in this order. Steps 2 and 3 can use the rules and IDs that step 1 makes; step 2 can also load a rules file directly. Step 4 audits registered rules against the draft parent Spec v1 and refreshed gold sets.
 
 | Step | Script | Input | Output |
 |---|---|---|---|
@@ -12,6 +12,7 @@ Run them in this order. Steps 2 and 3 can use the rules and IDs that step 1 make
 | 1 | `medicine_extract.py` | one `medicine.md`, or a directory (eg submissions dir) | the rules as a Python file, and a rule ID for each rule |
 | 2 | `harm_test.py` | one pack, one gold file, one rule ID | documents changed, documents dropped, the percent, PASS or FAIL at 1% |
 | 3 | `rule_report.py` | one pack, its gold file, all its rules | `REPORT.md`: harm test of every rule for the pack, and advice on which rules to keep |
+| 4 | `run_harm_suite.py` | draft Spec v1, registry, G1 pack list, original Parquet files, refreshed gold CSVs | per-rule JSON evidence, per-pack coverage/status summary, run metadata |
 | any time | `registry_view.py` | the registry | `registry.html`: a page to search the rules and see each rule's function |
 
 ## 0. Fetch the medicines: `fetch_medicines.py`
@@ -138,6 +139,42 @@ The advice is for a person to check. Nothing records the decision yet.
 
 Exit code: 0 done, 2 the report could not be made.
 
+## 4. Run the Spec v1 harm suite: `run_harm_suite.py`
+
+Run the **batch audit** after collecting/extracting medicines and generating the draft parent Spec v1. Unlike `harm_test.py --rule all`, this script evaluates **individual active registry rules** for each applicable pack; it does **not** execute the `spec_v1.md` itself. The parent spec contains review-only fenced `text` code examples, not executable `python` rule blocks. The suite reads its medicine inventory, proposal statuses, and conflict ledger, then maps candidate rules from `rules/registry.json` by pack, contributor, and disease code.
+
+From the repository root, first inspect the planned coverage (does not execute contributor code):
+
+```bash
+uv run python teams/01-data-a/tools/run_harm_suite.py \
+  --parquet-dir /path/to/original-packs --dry-run
+```
+
+Then run harm tests against the original Parquet files and current official gold CSVs:
+
+```bash
+uv run python teams/01-data-a/tools/run_harm_suite.py \
+  --parquet-dir /path/to/original-packs
+```
+
+| Option | Meaning |
+|---|---|
+| `--parquet-dir <folder>` | original pack files named `<pack_id>.parquet` (**required**) |
+| `--gold-dir <folder>` | official gold CSV directory; default `teams/01-data-a/gold` |
+| `--report-dir <folder>` | output directory; default `teams/01-data-a/reports` |
+| `--spec <file>` | draft parent specification; default `teams/01-data-a/spec/spec_v1.md` |
+| `--registry <file>` | executable rule-ID registry; default `teams/01-data-a/rules/registry.json` |
+| `--pack-ids <file>` | core G1 pack list; default `teams/01-data-a/g1_pack_ids.txt` |
+| `--limit <percent>` | maximum individual-rule harm percentage; default `1` |
+| `--timeout <seconds>` | time limit for each rule/document call; default `5` |
+| `--dry-run` | show coverage and statuses without running any medicine code |
+
+**Outputs:** `reports/g1_harm_summary.json` records each pack's scope, proposed versus registered coverage, unresolved conflicts, rule results, and reason for incomplete status. `reports/g1_harm_metadata.json` records Spec/registry hashes, G2 status, and combined-pipeline status. Per-rule reports are written to `reports/rules/<pack_id>_<RULE_ID>_harm.json` with gold/pack hashes and affected document IDs, not document text. The suite also includes the CADJ packs referenced in Spec v1, marked `SPEC_EXTRA` rather than part of the core G1 pack list.
+
+**Interpretation:** Individual rules report `PASS`, `FAIL`, or `ERROR` as `harm_status`; pack-level `status` is a separate review/coverage state. A pack may be `NOT_EVALUATED` (missing input), `SPEC_STALE` (submission differs from Spec v1), `PENDING_RULES`, `PARTIAL_COVERAGE`, `BLOCKED_CONFLICT`, `HARM_FAIL`, `ERROR`, `DRY_RUN`, or `PENDING_APPROVAL`. A technical PASS is **not** medicine approval. Missing or unmatched proposals are reported rather than counted as PASS, and conflicting candidates are **not** combined or ordered automatically.
+
+**Exit codes:** `1` means the G1 release audit remains **INCOMPLETE**, including successful dry-run audits; that is expected while Spec v1 is a draft, G2 is pending, and no combined pipeline has been approved. `2` indicates invalid suite-level inputs. Check the JSON and printed per-pack statuses rather than treating exit code `1` alone as a test failure. For individual rule failures, review their per-rule JSON reports. The suite runs contributor Python through `harm_test.py`: review the generated rules before execution.
+
 ## The registry and Spec v1
 
 `teams/01-data-a/rules/registry.json` has one entry for every rule that the extractor found:
@@ -167,7 +204,7 @@ To build the **draft parent medicine** from all collected submissions, run `pyth
 4. Integrate the Indic rules from G2 **when that team completes its handoff** (currently pending).
 5. Decide the order the rules run. The registry does not hold an order, so the team decides it.
 
-The generated `spec_v1.md` is a **draft**: reviewers must resolve clashes and verify harm on regenerated official gold sets before approving any executable pipeline.
+The generated `spec_v1.md` is a **draft**: reviewers must resolve clashes and verify harm on regenerated official gold sets before approving any executable pipeline. Use the `run_harm_suite.py` batch audit above to collect current per-rule evidence and identify missing coverage; it does not approve conflicts or run the combined pipeline.
 
 ## Writing a medicine.md so the extractor can read it
 

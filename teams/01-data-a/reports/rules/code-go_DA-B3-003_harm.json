@@ -1,0 +1,27 @@
+{
+  "pack": "code-go.parquet",
+  "pack_sha256": "30fc352199a6b3773d76a692420d25469835e8668ded2cfe8a6be09d71958661",
+  "gold": "code-go_gold.csv",
+  "gold_sha256": "81942db337e2e191b15b916941a2cf4160d1f581296c58b07167be1660c677a6",
+  "gold_count": 163,
+  "rules": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/rules/code-go/TEJASKUMAR-REDDY-J.py",
+  "rules_file_sha256": "8fa7dfaab8ffaddd9f705456c76f0050e8277d7c219e842fc3e2fcaa52bb5c48",
+  "code_sha256": "8fa7dfaab8ffaddd9f705456c76f0050e8277d7c219e842fc3e2fcaa52bb5c48",
+  "limit_percent": "1",
+  "status": "PASS",
+  "results": [
+    {
+      "rule": "DA-B3-003",
+      "changed": 0,
+      "dropped": 0,
+      "affected_unique": 0,
+      "errors": 0,
+      "error_types": [],
+      "percent": "0.000000",
+      "result": "PASS",
+      "changed_ids": [],
+      "dropped_ids": [],
+      "affected_ids": []
+    }
+  ]
+}
