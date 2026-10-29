@@ -74,7 +74,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 def repo_relative(path: Path) -> str:
     """Serialize rule sources relative to the repository root."""
-    return Path(os.path.relpath(Path(path).resolve(), REPO_ROOT)).as_posix()
+    try:
+        return Path(os.path.relpath(Path(path).resolve(), REPO_ROOT)).as_posix()
+    except ValueError:  # Windows: the file is on another drive than the repository, so there is no relative path
+        return Path(path).resolve().as_posix()
 
 FENCE = medicine_extract.FENCE  # a fenced python block, possibly indented inside a list item
 HAS_ALARM = hasattr(signal, "setitimer")
@@ -446,6 +449,7 @@ def _invoke(rule, doc, timeout):
     if HAS_ALARM:
         signal.setitimer(signal.ITIMER_REAL, timeout)
     elif WATCHDOG_OUT is not None:  # no SIGALRM (Windows): faulthandler's own thread ends the run if the call hangs
+        debug(f"calling the rule on {doc.get('doc_id', '?')}")  # the last line before a timeout names the document
         faulthandler.dump_traceback_later(timeout, exit=True, file=WATCHDOG_OUT)
     try:
         out = rule(working) if takes_doc(rule) else rule(working['text'])
@@ -555,7 +559,7 @@ def _write_report(args, rules_path, digest, count, limit, status, results):
               "rules_file_sha256": sha256_file(rules_path), "code_sha256": digest,
               "limit_percent": str(limit), "status": status, "results": results}
     args.report.parent.mkdir(parents=True, exist_ok=True)
-    args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    medicine_extract.write_text_lf(args.report, json.dumps(report, indent=2) + "\n")
 
 
 def main_all(args, limit) -> int:
@@ -626,7 +630,8 @@ def main(argv=None) -> int:
             raise Fatal("--show must be nonnegative")
         if not HAS_ALARM:  # Windows has no SIGALRM: the faulthandler watchdog enforces --timeout instead
             print(f"note: no SIGALRM on this platform; a rule call over --timeout {args.timeout:g}s ends the whole "
-                  "test (exit code 1) instead of being reported for one document.", file=sys.stderr)
+                  "test (exit code 1) instead of being reported for one document. Add --debug to see which "
+                  "document it was.", file=sys.stderr)
         code = args.rule.strip().upper()
         if args.rules is None and (code == "ALL" or not RULE_ID.fullmatch(code)):
             raise Fatal("--rule all or disease-code tests require --rules")

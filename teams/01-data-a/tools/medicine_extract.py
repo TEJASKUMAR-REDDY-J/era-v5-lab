@@ -209,6 +209,13 @@ def find_clashes(sections, blocks):
     return messages
 
 
+def write_text_lf(path: Path, text: str):
+    """Write UTF-8 text with LF line endings on every platform. Path.write_text writes CRLF on Windows, so the
+    registry and the rules files made there would differ, line by line, from the ones made on Linux."""
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+
+
 def read_rules(src: str) -> Extracted:
     """Read a medicine.md and pick the rule of each section. Nothing is run."""
     sections, blocks = read_medicine(src)
@@ -274,7 +281,7 @@ def sheet_ids(team_dir: Path) -> frozenset:
 def save_registry(path: Path, entries):
     path.parent.mkdir(parents=True, exist_ok=True)
     entries = sorted(entries, key=lambda e: e["id"])
-    path.write_text(json.dumps({"rules": entries}, indent=2) + "\n", encoding="utf-8")
+    write_text_lf(path, json.dumps({"rules": entries}, indent=2) + "\n")
 
 
 def assign_ids(entries, pack: str, handle: str, rules, file_rel: str, reserved=frozenset(), code_sha256=None):
@@ -365,7 +372,10 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path, clash
     ids = None
     if found and entries is not None:
         # as_posix: the registry is shared, so its paths use "/" on every platform (Windows gives "\\")
-        file_rel = Path(os.path.relpath(out.resolve(), registry.resolve().parent)).as_posix()
+        try:
+            file_rel = Path(os.path.relpath(out.resolve(), registry.resolve().parent)).as_posix()
+        except ValueError:  # Windows: the two files are on different drives, so there is no relative path
+            file_rel = out.resolve().as_posix()
         ids = assign_ids(entries, found[0], found[1], chosen, file_rel,
                          reserved=sheet_ids(registry.resolve().parent.parent),
                          code_sha256=fingerprint(render(medicine.name, blocks, chosen)))
@@ -387,7 +397,7 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path, clash
             print("  note: without IDs only the first rule of each code is in the file")
 
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render(medicine.name, blocks, chosen, ids), encoding="utf-8")
+    write_text_lf(out, render(medicine.name, blocks, chosen, ids))
     print(f"written: {out}")
     return 0
 
