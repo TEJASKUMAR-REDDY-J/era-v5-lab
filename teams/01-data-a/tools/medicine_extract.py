@@ -52,9 +52,9 @@ import textwrap
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))  # python -I does not put the script folder on the path
-import harm_test  # noqa: E402  (one definition of the code-fence regex)
 
+# A fenced python block, possibly indented inside a list item. The closing fence must have the same indent.
+FENCE = re.compile(r"^([ \t]*)```(?:python|py)[ \t]*\n(.*?)^\1```[ \t]*$", re.S | re.M)
 DISEASE = re.compile(r"\*\*Disease:?\*\*:?[ \t]*`?([A-H][1-9])\b")
 APPENDIX = re.compile(r"^#{1,6}[^\n]*appendix", re.I | re.M)
 CONST_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
@@ -127,7 +127,7 @@ def read_medicine(src: str):
         line = ACTION.search(src, pos, end)
         word = ACTION_WORD.search(line.group(1)) if line else None  # the first one: "fix the text. No document is dropped."
         sections.append((pos, end, code, word.group(1).lower() if word else None))
-    blocks = [Block(i, textwrap.dedent(m.group(2)), m.start()) for i, m in enumerate(harm_test.FENCE.finditer(src), 1)]
+    blocks = [Block(i, textwrap.dedent(m.group(2)), m.start()) for i, m in enumerate(FENCE.finditer(src), 1)]
     for b in blocks:
         for si, (start, end, _, _) in enumerate(sections):
             if start <= b.pos < end:
