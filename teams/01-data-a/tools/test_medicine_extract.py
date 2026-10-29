@@ -49,6 +49,15 @@ class ExtractCase(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual(ns["RULES"]["B3"]("a<x>b"), "ab")      # the medicine.md never imports re
 
+    def test_medicine_code_name_wins_over_helpers(self):
+        rc, out, ns = self.extract(md("**Disease:** B3, markers", py(
+            "def strip_header(t):\n    return t.replace('<h>', '')\n\n"
+            "def _fix_regex(t):\n    return t.replace('<x>', '')\n\n"
+            "def medicine_b3(t):\n    return _fix_regex(strip_header(t))")))
+        self.assertEqual(rc, 0)
+        self.assertIn("function medicine_b3", out)
+        self.assertEqual(ns["RULES"]["B3"]("a<x>b<h>"), "ab")
+
     def test_any_function_name_when_it_is_the_only_one_in_the_section(self):
         rc, out, ns = self.extract(md("**Disease:** A1, junk", py("def strip_junk(t):\n    return t.strip()")))
         self.assertEqual(rc, 0)
@@ -61,19 +70,18 @@ class ExtractCase(unittest.TestCase):
         self.assertIn("several functions in the section (one, two)", out)
         self.assertIsNone(ns)  # nothing written
 
-    def test_rules_dict_fragments_and_appendix(self):
-        # Mirrors amukka's file: fragments in the sections, the complete code in an appendix, a RULES dict.
+    def test_fragments_are_left_out_and_an_annotators_own_rules_dict_is_ignored(self):
         rc, out, ns = self.extract(md(
             "## Medicine 1", "1. **Disease:** B3, markers", py("MARKER = 1\ntext = MARKER + text"),
+            py("def b3(t):\n    return 'function'"),
             "## Medicine 2", "1. **Disease:** E1, generated", py("if x drop"),
-            "## Appendix", py("import re\nMARKER = re.compile('<m>')\ndef b3(t):\n    return MARKER.sub('', t)\n"
-                              "RULES = {'B3': b3, 'E1': lambda t: ('drop', '')}")))
+            "## Appendix", py("RULES = {'B3': lambda t: 'dict', 'E1': lambda t: ('drop', '')}")))
         self.assertEqual(rc, 0)
-        self.assertEqual(sorted(ns["RULES"]), ["B3", "E1"])
-        self.assertEqual(ns["RULES"]["B3"]("a<m>b"), "ab")
-        self.assertEqual(ns["RULES"]["E1"]("x"), ("drop", ""))  # a lambda in RULES is kept
+        self.assertEqual(sorted(ns["RULES"]), ["B3"])                   # E1 has no function in its section
+        self.assertEqual(ns["RULES"]["B3"]("x"), "function")            # the annotator's dict is not read
         self.assertIn("left out: block 1, fragment", out)
-        self.assertIn("left out: block 2, syntax error", out)
+        self.assertIn("left out: block 3, syntax error", out)
+        self.assertIn("E1: no function found for this section", out)
 
     def test_support_block_that_fails_does_not_break_the_file(self):
         rc, out, ns = self.extract(md("**Disease:** A1, junk", py("PATTERN = re.compile('x')"),  # `re` never imported
@@ -106,6 +114,103 @@ class ExtractCase(unittest.TestCase):
         self.assertIsNone(medicine_extract.default_out(Path("/tmp/x/medicine.md")))
         p = Path("/r/diagnosis/submissions/code-rust/amukka/medicine.md")
         self.assertEqual(medicine_extract.default_out(p).parts[-3:], ("rules", "code-rust", "amukka.py"))
+
+
+class SharedReaderCase(unittest.TestCase):
+    """rules_from_markdown is the one reader of a medicine.md: the extractor's file and harm_test's code are the same."""
+
+    TEXT = md("**Disease:** B3, markers", py("def medicine_b3(t):\n    return t.replace('<m>', '')"),
+              "**Disease:** E1, generated", py("def helper(t):\n    return t\n\ndef cure_e1(t):\n    return ('drop', '')"),
+              "**Disease:** A1, nothing")
+
+    def test_returns_the_rules_the_notes_and_the_code(self):
+        found, code = medicine_extract.rules_from_markdown(self.TEXT)
+        self.assertEqual([(r["code"], r["expr"]) for r in found.chosen], [("B3", "medicine_b3"), ("E1", "cure_e1")])
+        self.assertEqual(found.notes, ["A1: no function found for this section"])
+        self.assertEqual(len(found.sections), 3)
+        self.assertIn("import re", code)
+        self.assertIn('"B3": medicine_b3', code)
+        self.assertNotIn("RULES_BY_ID", code)                      # no IDs here
+
+    def test_the_code_is_never_run(self):
+        marker = Path(tempfile.mkdtemp()) / "ran"
+        text = md("**Disease:** A1, x", py(f"open({str(marker)!r}, 'w').write('x')\ndef medicine_a1(t):\n    return t"))
+        _, code = medicine_extract.rules_from_markdown(text)
+        self.assertFalse(marker.exists())
+        self.assertIn("def medicine_a1", code)
+
+    def test_the_extractor_writes_the_same_code(self):
+        tmp = Path(tempfile.mkdtemp())
+        src, out = tmp / "medicine.md", tmp / "rules.py"
+        src.write_text(self.TEXT)
+        with contextlib.redirect_stdout(io.StringIO()):
+            medicine_extract.main([str(src), "--out", str(out)])            # a path with no pack: no IDs
+        self.assertEqual(out.read_text(), medicine_extract.rules_from_markdown(self.TEXT, "medicine.md")[1])
+
+
+class FingerprintCase(unittest.TestCase):
+    def test_comments_spacing_and_the_header_do_not_count(self):
+        a = medicine_extract.rules_from_markdown(md("**Disease:** B3, x", py("def medicine_b3(t):\n    return t")), "a.md")[1]
+        b = medicine_extract.rules_from_markdown(md("**Disease:** B3, y", py("# note\ndef medicine_b3( t ):\n    return t  # ok")), "b.md")[1]
+        c = medicine_extract.rules_from_markdown(md("**Disease:** B3, x", py("def medicine_b3(t):\n    return t + ' '")), "a.md")[1]
+        self.assertEqual(medicine_extract.fingerprint(a), medicine_extract.fingerprint(b))
+        self.assertNotEqual(medicine_extract.fingerprint(a), medicine_extract.fingerprint(c))
+
+    def test_the_registry_keeps_the_fingerprint_that_harm_test_prints(self):
+        tmp = Path(tempfile.mkdtemp())
+        src = tmp / "submissions" / "code-rust" / "alice" / "medicine.md"
+        src.parent.mkdir(parents=True)
+        src.write_text(md("**Disease:** B3, x", py("def medicine_b3(t):\n    return t")))
+        reg = tmp / "rules" / "registry.json"
+        with contextlib.redirect_stdout(io.StringIO()):
+            medicine_extract.main([str(src), "--registry", str(reg)])
+        entry = json.loads(reg.read_text())["rules"][0]
+        self.assertEqual(entry["code_sha256"], harm_test.load_rules(src)[1])
+
+
+class ClashCase(unittest.TestCase):
+    """A name defined with different code in two blocks: the last one would win for every rule."""
+
+    def clashes(self, *sections):
+        text = md(*[x for code, py_code in sections for x in (f"**Disease:** {code}, x", py(py_code))])
+        return medicine_extract.read_rules(text).clashes
+
+    def test_the_same_helper_copied_into_two_sections_is_fine(self):
+        helper = "def _strip(t):\n    return t.strip()\n"
+        self.assertEqual(self.clashes(("B3", helper + "def medicine_b3(t):\n    return _strip(t)"),
+                                      ("E1", helper + "def medicine_e1(t):\n    return _strip(t)")), [])
+
+    def test_formatting_and_comments_do_not_count_as_different(self):
+        self.assertEqual(self.clashes(("B3", "def _h(t):\n    return t.strip()  # one"),
+                                      ("E1", "def _h( t ):\n    # two\n    return t.strip()")), [])
+
+    def test_same_name_with_different_code_is_reported(self):
+        got = self.clashes(("B3", "def _strip(t):\n    return t.replace('<m>', '')"),
+                           ("E1", "def _strip(t):\n    return t.replace('<h>', '')"))
+        self.assertEqual(len(got), 1)
+        self.assertIn("_strip is defined with different code in block 1 (B3), block 2 (E1)", got[0])
+        self.assertIn("the last one is used by every rule", got[0])
+
+    def test_constants_and_imports_count_too(self):
+        got = self.clashes(("B3", "import re\nMARKER = re.compile('<m>')"),
+                           ("E1", "import regex as re\nMARKER = re.compile('<h>')"))
+        self.assertEqual(sorted(g.split(" ")[0] for g in got), ["MARKER", "re"])
+
+    def test_a_name_changed_inside_one_block_is_not_a_clash(self):
+        self.assertEqual(self.clashes(("B3", "X = 1\nX = 2\ndef medicine_b3(t):\n    return t")), [])
+
+    def test_the_extractor_warns_and_still_writes(self):
+        text = md("**Disease:** B3, x", py("def _s(t):\n    return 'a'\ndef medicine_b3(t):\n    return _s(t)"),
+                  "**Disease:** E1, y", py("def _s(t):\n    return 'b'\ndef medicine_e1(t):\n    return _s(t)"))
+        tmp = Path(tempfile.mkdtemp())
+        src, out = tmp / "medicine.md", tmp / "rules.py"
+        src.write_text(text)
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            rc = medicine_extract.main([str(src), "--out", str(out)])
+        self.assertEqual(rc, 0)
+        self.assertIn("warning: _s is defined with different code", stdout.getvalue())
+        self.assertTrue(out.exists())
 
 
 class IdCase(unittest.TestCase):
@@ -182,7 +287,7 @@ class IdCase(unittest.TestCase):
             self.assertEqual(harm_test.main(argv + ["--rule", "DA-B3-009"]), 2)   # not in the registry
             self.assertEqual(harm_test.main(argv + ["--rule", "B3"]), 2)           # a code needs --rules
         self.assertIn("not in the registry", err.getvalue())
-        self.assertIn("give --rules", err.getvalue())
+        self.assertIn("require --rules", err.getvalue())
 
     def test_path_outside_submissions_gets_no_ids(self):
         src = self.tmp / "medicine.md"

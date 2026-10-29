@@ -18,15 +18,15 @@ The medicine.md is only read, never run. The steps:
   1. Each "**Disease:** <code>" line starts a medicine section. A section ends at the next one, or at an
      "Appendix" heading.
   2. Every ```python block in the file is read with ast:
-       code      defines a function (or a RULES dict). It goes into the rules file as it is.
+       code      defines a function. It goes into the rules file as it is.
        support   only imports and UPPER_CASE constants. It goes in too, inside try/except.
        fragment  anything else (a code line that needs a variable from elsewhere, a syntax error). Left out.
   3. For each disease code the rule is the first of:
-       - the RULES dict entry for that code
-       - a function named cure_<code> (for example cure_b3)
+       - a function named medicine_<code> (for example medicine_b3), or cure_<code>
        - the only public function (no leading underscore) in that section
      Anything else is reported, and nothing is guessed.
-  4. The rules file ends with RULES = {"B3": <function>, ...} and RULES_BY_ID = {"DB-B3-001": RULES["B3"], ...}.
+  4. The rules file ends with RULES = {"B3": <function>, ...} and RULES_BY_ID = {"DB-B3-001": <function>, ...}.
+     A RULES dict written inside a medicine.md is not read: the file always gets its own.
   5. Each rule gets an ID: <team>-<code>-<number>. The team is DA for the Data A packs (English, code, math,
      science) and DB for every other pack (Indic, cadj-*). The number counts up for each team and code. The ID
      goes into rules/registry.json with the pack, the handle and the file. When you run the extractor again, a
@@ -38,23 +38,25 @@ The medicine.md is only read, never run. The steps:
        python -I harm_test.py --pack <pack.parquet> --gold <gold.csv> --rule DB-B3-001
   A path outside diagnosis/submissions/<pack_id>/<handle>/ has no pack or handle, so it gets no IDs.
 
-Two medicines for one code: the RULES dict and the name cure_<code> can only point to one function, so they are
+Two medicines for one code: the name medicine_<code> (or cure_<code>) can only point to one function, so it is
 used for the first section of a code. A later section of the same code needs the only-function rule: put its
 function in that section, and give it a name that no earlier rule uses.
 """
 import argparse
 import ast
+import hashlib
 import json
 import os
 import re
 import sys
 import textwrap
 from pathlib import Path
+from typing import NamedTuple
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))  # python -I does not put the script folder on the path
-import harm_test  # noqa: E402  (one definition of the code-fence regex)
 
+# A fenced python block, possibly indented inside a list item. The closing fence must have the same indent.
+FENCE = re.compile(r"^([ \t]*)```(?:python|py)[ \t]*\n(.*?)^\1```[ \t]*$", re.S | re.M)
 DISEASE = re.compile(r"\*\*Disease:?\*\*:?[ \t]*`?([A-H][1-9])\b")
 APPENDIX = re.compile(r"^#{1,6}[^\n]*appendix", re.I | re.M)
 CONST_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
@@ -75,7 +77,6 @@ class Block:
         self.section = None   # index into the sections list, or None
         self.kind = "fragment"
         self.funcs = []       # names of functions defined at the top level of the block
-        self.rules_map = {}   # code -> function name (None if the RULES value is not a plain name)
         self._analyse()
 
     def _analyse(self):
@@ -96,11 +97,6 @@ class Block:
                 if isinstance(node.value, ast.Lambda):
                     self.funcs.extend(names)
                     defining = True
-                elif names == ["RULES"] and isinstance(node.value, ast.Dict):
-                    defining = True
-                    for k, v in zip(node.value.keys, node.value.values):
-                        if isinstance(k, ast.Constant) and isinstance(k.value, str):
-                            self.rules_map[k.value.upper()] = v.id if isinstance(v, ast.Name) else None
                 elif not all(CONST_NAME.match(n) for n in names):
                     support_only = False
             elif isinstance(node, (ast.Import, ast.ImportFrom)):
@@ -127,7 +123,7 @@ def read_medicine(src: str):
         line = ACTION.search(src, pos, end)
         word = ACTION_WORD.search(line.group(1)) if line else None  # the first one: "fix the text. No document is dropped."
         sections.append((pos, end, code, word.group(1).lower() if word else None))
-    blocks = [Block(i, textwrap.dedent(m.group(2)), m.start()) for i, m in enumerate(harm_test.FENCE.finditer(src), 1)]
+    blocks = [Block(i, textwrap.dedent(m.group(2)), m.start()) for i, m in enumerate(FENCE.finditer(src), 1)]
     for b in blocks:
         for si, (start, end, _, _) in enumerate(sections):
             if start <= b.pos < end:
@@ -138,37 +134,105 @@ def read_medicine(src: str):
 def resolve(sections, blocks):
     """Return ([rule], [notes]). A rule is {code, n, expr, how, action}; n counts the sections of one code.
 
-    expr is Python that names the rule's function. The RULES dict and cure_<code> serve the first section of
-    a code only. A later section needs a function of its own, not already used by an earlier rule.
+    expr is Python that names the rule's function. The name medicine_<code> (or cure_<code>) serves the first
+    section of a code only. A later section needs a function of its own, not already used by an earlier rule.
     """
     code_blocks = [b for b in blocks if b.kind == "code"]
-    rules_map = {}
-    for b in code_blocks:
-        rules_map.update(b.rules_map)
     funcs = {n.lower(): n for b in code_blocks for n in b.funcs}
     chosen, notes, seen, claimed = [], [], {}, set()
     for si, (_, _, code, action) in enumerate(sections):
         n = seen[code] = seen.get(code, 0) + 1
         label = code if n == 1 else f"{code} (medicine {n})"
         expr = how = None
-        if n == 1 and code in rules_map:
-            expr = rules_map[code] or f'_student_rules["{code}"]'
-            how = "RULES dict"
-        elif n == 1 and f"cure_{code.lower()}" in funcs:
-            expr, how = funcs[f"cure_{code.lower()}"], f"function cure_{code.lower()}"
+        named = [f"{p}_{code.lower()}" for p in ("medicine", "cure") if n == 1 and f"{p}_{code.lower()}" in funcs]
+        if named:
+            expr, how = funcs[named[0]], f"function {named[0]}"
         else:
             publics = sorted({f for b in code_blocks if b.section == si for f in b.funcs if not f.startswith("_")} - claimed)
             if len(publics) == 1:
                 expr, how = publics[0], "the only function in the section"
             elif publics:
                 notes.append(f"{label}: several functions in the section ({', '.join(publics)}); "
-                             f"name the rule cure_{code.lower()} or add it to RULES")
+                             f"name the rule medicine_{code.lower()}")
             else:
                 notes.append(f"{label}: no function found for this section")
         if expr:
             chosen.append({"code": code, "n": n, "expr": expr, "how": how, "action": action})
             claimed.add(expr)
     return chosen, notes
+
+
+class Extracted(NamedTuple):
+    sections: list   # (start, end, code, action) for each "**Disease:**" section
+    blocks: list     # every python block, as a Block
+    chosen: list     # the rules found: {code, n, expr, how, action}
+    notes: list      # why a section gave no rule
+    clashes: list    # names that two blocks define with different code (the last one wins for every rule)
+
+
+def _bound_names(node):
+    """The names a top-level statement defines: a function, a class, an assignment or an import."""
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return [node.name]
+    if isinstance(node, ast.Assign):
+        return [t.id for t in node.targets if isinstance(t, ast.Name)]
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        return [node.target.id]
+    if isinstance(node, (ast.Import, ast.ImportFrom)):
+        return [(a.asname or a.name).split(".")[0] for a in node.names]
+    return []
+
+
+def find_clashes(sections, blocks):
+    """Messages for each name that two or more blocks define with different code.
+
+    All blocks end up in one module, so a name means its last definition for every rule. The same helper copied into
+    several sections is fine; a name with different code in different sections silently changes the earlier rules.
+    """
+    versions = {}  # name -> [(block, dump of the code)]
+    for b in blocks:
+        if b.kind not in ("code", "support"):
+            continue
+        here = {}
+        for node in ast.parse(b.text).body:
+            for name in _bound_names(node):
+                here[name] = ast.dump(node)  # no line numbers: formatting and comments do not count
+        for name, dump in here.items():
+            versions.setdefault(name, []).append((b, dump))
+    messages = []
+    for name, found in versions.items():
+        if len({dump for _, dump in found}) > 1:
+            where = ", ".join(f"block {b.index} ({sections[b.section][2] if b.section is not None else 'outside the sections'})"
+                              for b, _ in found)
+            messages.append(f"{name} is defined with different code in {where}; the last one is used by every rule. "
+                            f"Rename one of them")
+    return messages
+
+
+def read_rules(src: str) -> Extracted:
+    """Read a medicine.md and pick the rule of each section. Nothing is run."""
+    sections, blocks = read_medicine(src)
+    chosen, notes = resolve(sections, blocks)
+    return Extracted(sections, blocks, chosen, notes, find_clashes(sections, blocks))
+
+
+def fingerprint(code: str) -> str:
+    """sha256 of the code's syntax tree. Comments, blank lines, spacing and the header docstring do not change it;
+    changing what the code does, or the order of the blocks, does."""
+    tree = ast.parse(code)
+    if tree.body and isinstance(tree.body[0], ast.Expr) and isinstance(getattr(tree.body[0], "value", None), ast.Constant):
+        tree.body = tree.body[1:]  # the header says which file it came from
+    return hashlib.sha256(ast.dump(tree).encode("utf-8")).hexdigest()
+
+
+def rules_from_markdown(src: str, name: str = "medicine.md"):
+    """Return (Extracted, code): the rules found in a medicine.md, and the text of the rules file for them.
+
+    The code has RULES only (no IDs, so one function for each code). This is the one place that reads a
+    medicine.md: the extractor writes the code to a file, and harm_test.py can run it in memory.
+    """
+    found = read_rules(src)
+    return found, render(name, found.blocks, found.chosen)
 
 
 def origin(path: Path):
@@ -213,12 +277,13 @@ def save_registry(path: Path, entries):
     path.write_text(json.dumps({"rules": entries}, indent=2) + "\n", encoding="utf-8")
 
 
-def assign_ids(entries, pack: str, handle: str, rules, file_rel: str, reserved=frozenset()):
+def assign_ids(entries, pack: str, handle: str, rules, file_rel: str, reserved=frozenset(), code_sha256=None):
     """Return the rule ID of each rule in `rules`, in order. New entries are added to the registry list.
 
     A (pack, handle, code, n) that is in the registry keeps its ID. A new one takes the next number for its
     team and code, skipping the IDs in `reserved` (used by the medicine sheets). Rules of this pack and handle
-    that are no longer in the medicine.md are marked withdrawn.
+    that are no longer in the medicine.md are marked withdrawn. `code_sha256` is the fingerprint of the
+    medicine.md's code (see fingerprint); every rule of the file keeps it.
     """
     prefix = "DA" if pack in DATA_A_PACKS else "DB"
     mine = {(e["code"], e.get("n", 1)): e for e in entries if e["pack"] == pack and e["handle"] == handle}
@@ -235,6 +300,8 @@ def assign_ids(entries, pack: str, handle: str, rules, file_rel: str, reserved=f
                  "code": r["code"], "n": r["n"]}
             entries.append(e)
         e["n"], e["file"], e["action"], e["withdrawn"] = r["n"], file_rel, r["action"], False
+        if code_sha256:
+            e["code_sha256"] = code_sha256
         ids.append(e["id"])
     return ids
 
@@ -250,7 +317,6 @@ def render(source_name: str, blocks, chosen, ids=None) -> str:
         elif b.kind == "support":
             out.append(f"# --- block {b.index} (imports and constants; ignored if it does not run) ---\n"
                        f"try:\n{textwrap.indent(text, '    ')}except Exception:\n    pass\n")
-    out.append('_student_rules = RULES if isinstance(globals().get("RULES"), dict) else {}')
     first = {}
     for r in chosen:
         first.setdefault(r["code"], r["expr"])  # RULES has one function for each code; the others are only in RULES_BY_ID
@@ -270,11 +336,12 @@ def default_out(path: Path, base: Path = DEFAULT_REGISTRY.parent):
     return rules_path(found[0], found[1], base) if found else None
 
 
-def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> int:
+def extract_one(medicine: Path, found, out: Path, entries, registry: Path, clashed=None) -> int:
     """Turn one medicine.md into the rules file `out`. Return 0 if done, 1 if no rule could be made, 2 if unreadable.
 
     `found` is (pack_id, handle), or None. `entries` is the registry list (changed in place, saved by the caller),
-    or None: the rules then get no IDs.
+    or None: the rules then get no IDs. `clashed`, if given, gets `found` added when two blocks define a name
+    with different code.
     """
     try:
         src = medicine.read_text(encoding="utf-8")
@@ -282,11 +349,10 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> in
         print(f"error: cannot read {medicine}: {getattr(e, 'strerror', None) or e}", file=sys.stderr)
         return 2
 
-    sections, blocks = read_medicine(src)
+    sections, blocks, chosen, notes, clashes = read_rules(src)
     if not sections:
         print("error: no '**Disease:** <code>' line found, so there is no medicine section", file=sys.stderr)
         return 1
-    chosen, notes = resolve(sections, blocks)
 
     print(f"{medicine.name}: {len(sections)} sections, {len(blocks)} python blocks "
           f"({sum(b.kind == 'code' for b in blocks)} code, {sum(b.kind == 'support' for b in blocks)} support)")
@@ -301,7 +367,8 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> in
         # as_posix: the registry is shared, so its paths use "/" on every platform (Windows gives "\\")
         file_rel = Path(os.path.relpath(out.resolve(), registry.resolve().parent)).as_posix()
         ids = assign_ids(entries, found[0], found[1], chosen, file_rel,
-                         reserved=sheet_ids(registry.resolve().parent.parent))
+                         reserved=sheet_ids(registry.resolve().parent.parent),
+                         code_sha256=fingerprint(render(medicine.name, blocks, chosen)))
     for i, r in enumerate(chosen):
         print(f"  {r['code']}: {r['expr']}   (from {r['how']}, action {r['action'] or 'not stated'})"
               + (f"   -> {ids[i]}" if ids else ""))
@@ -310,6 +377,10 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> in
             print(f"  left out: block {b.index}, {b.kind}")
     for n in notes:
         print(f"  note: {n}")
+    for c in clashes:
+        print(f"  warning: {c}")
+    if clashes and clashed is not None:
+        clashed.append(found)
     if ids is None:
         print("  note: the path has no pack and handle, so the rules get no IDs and the registry is not changed")
         if any(r["n"] > 1 for r in chosen):
@@ -356,16 +427,18 @@ def main(argv=None) -> int:
         print(f"error: no <pack_id>/<handle>/medicine.md under {args.dir}", file=sys.stderr)
         return 1
     entries = load_registry(args.registry)
-    status = {}
+    status, clashed = {}, []
     for path in files:
         pack, handle = path.parent.parent.name, path.parent.name
         print(f"\n== {pack}/{handle} ==")
-        status[(pack, handle)] = extract_one(path, (pack, handle), rules_path(pack, handle, args.registry.parent), entries, args.registry)
+        status[(pack, handle)] = extract_one(path, (pack, handle), rules_path(pack, handle, args.registry.parent), entries, args.registry, clashed)
     save_registry(args.registry, entries)
     failed = [k for k, rc in status.items() if rc]
     print(f"\n{len(status) - len(failed)} of {len(status)} medicine.md files done. Registry: {args.registry}")
     for pack, handle in failed:
         print(f"  no rules: {pack}/{handle}")
+    for pack, handle in clashed:
+        print(f"  same name, different code in two sections (see the warning above): {pack}/{handle}")
     return 1 if failed else 0
 
 

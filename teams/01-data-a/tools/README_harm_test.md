@@ -1,5 +1,53 @@
 # Data A tools: medicine checks
 
+## For annotators: test your own medicine.md
+
+Before you commit your `medicine.md`, check that each rule changes at most 1% of the clean (gold) documents of your pack.
+
+**You need**
+- Your pack's Parquet file (the one you annotated) and its gold file, `teams/01-data-a/gold/<pack_id>_gold.csv` (ask the Data A team if it is not there yet).
+- Your `medicine.md`.
+- Python 3.10 or newer Linux or macOS, and `pip install pyarrow`.
+
+**Run** (from the repo root; `B3` is the disease code of the rule you want to test)
+
+```
+python -I teams/01-data-a/tools/harm_test.py \
+  --pack <your_pack>.parquet \
+  --gold teams/01-data-a/gold/<pack_id>_gold.csv \
+  --rules diagnosis/submissions/<pack_id>/<your-handle>/medicine.md \
+  --rule B3
+```
+
+Use `--rule all` to test every section of your file, and then all of them together in file order. You do not need a rule ID.
+
+**Read the result**
+- `documents changed` and `documents dropped`: how many gold documents your rule touched. Together they must be 1% or less of the gold set. The last line is `result: PASS` or `result: FAIL`.
+- If it fails, add `--show 10` to list the first 10 `doc_id`s, or `--debug` to list every document that was changed, dropped or crashed, with the length and the first offset that differs. Your fix then needs to leave those documents alone. Text is never printed.
+- Exit code: 0 PASS, 1 FAIL, 2 the test could not run (the message says why).
+
+**Your `medicine.md` must have**
+- One `**Disease:** <code>` section for each disease code.
+- In it, a ```` ```python ```` block with one function that takes the text and returns the new text. The name `medicine_<code>` (for example `medicine_b3`) is a suggestion, not a requirement: you can keep the names you already have. The function is found by that name (or `cure_<code>`), or else it is the only function in the section whose name does not start with `_`. So if the section has other functions, start their names with `_`. `re` is already imported.
+- Every python block must run on its own. Remove or complete a snippet that does not.
+- The same name must not be defined with different code in two blocks.
+
+**If the test stops with an error**
+
+| Message | What to do |
+|---|---|
+| `2 sections for B3 ...` | Keep one section for the code. Put both fixes in one function, using helpers. |
+| `block N is a fragment ...` or `has a syntax error` | Complete the block or remove it from the file. |
+| `no rule for B3`, or `no rule could be matched` | The section has no function, or has several whose names do not start with `_` and none is named `medicine_b3`. Rename the helpers with a leading `_`, or name the main function `medicine_b3`. |
+| `_x is defined with different code ...` | Rename one of the two helpers. |
+| `no '**Disease:** <code>' line found` | Add the `**Disease:**` line to each section. |
+
+The test runs the code in your `medicine.md`. Do not run it on files you have not read.
+
+The rest of this file is for the Data A team.
+
+---
+
 Tools to test the cleaning rules (medicines) from the annotators' `medicine.md` files. Steps 1 to 3 need `pip install pyarrow`. Run them from the repo root with `python -I`.
 
 ## The scripts
@@ -65,7 +113,7 @@ python -I teams/01-data-a/tools/medicine_extract.py --dir teams/01-data-a/medici
 
 Exit code: 0 done, 1 no rule could be made (with `--dir`: for at least one file), 2 the command could not run.
 
-The extractor finds the function for a code in this order: the `RULES = {"B3": fn}` dict, a function named `cure_b3`, the only function in the section. If none fits, it says so and writes nothing for that rule.
+The extractor finds the function for a code in this order: a function named `medicine_b3` (or `cure_b3`), then the only public function in the section. If none fits, it says so and writes nothing for that rule. 
 
 **Rule IDs** look like `DA-B3-001`: team (`DA` for the Data A packs, `DB` for all others), disease code, number. A rule keeps its ID when you run the extractor again. A rule removed from a `medicine.md` is marked `withdrawn`, and its ID is not reused.
 
@@ -80,7 +128,7 @@ Runs one rule on the gold set. Prints documents changed, documents dropped, the 
 **Where the cleaning code comes from.** `harm_test.py` is a **test runner**, not a collection of hardcoded cleaning rules. It loads executable Python supplied by annotators in one of two ways:
 
 1. **By rule ID (registry):** With `--rule DA-B3-001` and no `--rules`, it looks up the ID in `teams/01-data-a/rules/registry.json`. The registry points to a generated `teams/01-data-a/rules/<pack_id>/<handle>.py` file written by `medicine_extract.py` from an annotator's `medicine.md`. The runner loads that file and selects the matching `RULES_BY_ID` entry.
-2. **By explicit file:** With `--rules <rules.py or medicine.md> --rule B3` (or a full rule ID), it loads the supplied file directly, without consulting the registry. A Markdown sheet can contain separate executable `RULE_ID` / `medicine(doc)` blocks; Python files can define `RULES_BY_ID`, `RULES`, or `cure_<code>`.
+2. **By explicit file:** With `--rules <rules.py or medicine.md> --rule B3` (or a full rule ID), it loads the supplied file directly, without consulting the registry. A Markdown sheet can contain separate executable `RULE_ID` / `medicine(doc)` blocks; A plain `medicine.md` (one `**Disease:**` section per code) is read by the same code as `medicine_extract.py`, so the rules that run are the rules the extractor writes to `rules/<pack_id>/<handle>.py`. A fragment (a block that does not run on its own) or a block with a syntax error stops the test: fix or remove it. The extractor leaves such a block out and reports it. Two sections for one code, or a name defined with different code in two blocks, is an error too. Python files can define `RULES_BY_ID`, `RULES`, or `cure_<code>`.
 
 **The data comes from different files:** `--pack` supplies the original Parquet documents; `--gold` supplies independently reviewed clean `doc_id`s (with `reader_1` and `reader_2`). Neither is a source of cleaning functions. `harm_test.py` does **not** discover or test all files under `medicines/submissions` automatically; `--rule all` runs only the rules in the **one file** given by `--rules`. The extractor and `rule_report.py` handle multi-submission workflows.
 
@@ -93,6 +141,7 @@ Runs one rule on the gold set. Prints documents changed, documents dropped, the 
 | `--registry <file>` | where to look up a rule ID. Default: `rules/registry.json` |
 | `--limit <percent>` | the failing limit, as a percent of the gold set. Default `1` |
 | `--show <N>` | also list the first N `doc_id`s that were changed or dropped. Default `0` |
+| `--debug` | print on stderr what the test does (gold and pack sizes, the rules file, the function chosen for each section) and one line for each gold document that was changed, dropped or crashed: its `doc_id`, the kind of change, the lengths and the first offset that differs. Never the text |
 | `--timeout <seconds>` | the time allowed for one document. Default `5` |
 | `--report <file>` | optional JSON report with source hashes, counts, rule results, and affected IDs (no raw text) |
 
@@ -187,6 +236,7 @@ uv run python teams/01-data-a/tools/run_harm_suite.py \
 | `action` | `fix` or `drop`, as the annotator wrote it |
 | `file` | the rules file that holds the code, relative to the registry |
 | `withdrawn` | `true` if the rule is no longer in the `medicine.md` |
+| `code_sha256` | fingerprint of the code in the `medicine.md` when it was extracted. `harm_test.py` prints the same value as `code sha256` for a plain `medicine.md`, so you can check that the code you run is the code the annotator tested. Comments, blank lines and spacing do not change it |
 
 To look at the rules, run `python -I teams/01-data-a/tools/registry_view.py`. It writes `rules/registry.html`, a page you open in a browser: search the rules and expand one to see its function. It does not run the code and needs no `pyarrow`. Run it again after the registry changes and commit the new page. `--show DA-B3-001` prints one rule in the terminal.
 
@@ -208,11 +258,11 @@ The generated `spec_v1.md` is a **draft**: reviewers must resolve clashes and ve
 
 ## Writing a medicine.md so the extractor can read it
 
-- Put `**Disease:** <code>` and `**Action:** fix` (or `drop`) in each section.
-- Put the Python in a ```` ```python ```` block in that section.
-- Optional - Name the function `cure_<code>` (for example `cure_b3`). It takes the text and returns the new text.
+- Put `**Disease:** <code>` and `**Action:** fix` (or `drop`) in each section. Use one section for each disease code.
+- Put the Python in a ```` ```python ```` block in that section. Every python block must run on its own: complete it, or remove it from the file.
+- Name the main function `medicine_<code>` (for example `medicine_b3`; `cure_b3` also works). This is a suggestion, not a requirement: if the section has only one function whose name does not start with `_`, any name works. It takes the text and returns the new text. Do not name it just `medicine`: every section would then define the same name.
 - To drop a document, return `("drop", "")`. To fix, return a string, or `("fix", new_text)`.
-- A second medicine for the same code goes in its own section, with a function that has its own name.
+- **Two fixes for one disease code** (for example a regex replacement and removing header lines): write one section and one main function. Put each fix in a helper function in the same code block, name it with a leading `_` (for example `_strip_header`), and call the helpers from `medicine_<code>`. Helpers are copied into the rules file with the rule and get no ID of their own.
 
 ## Notes
 

@@ -12,8 +12,6 @@ import pyarrow.parquet as pq
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import harm_test  # noqa: E402
 
-RUST_MD = Path(__file__).resolve().parents[3] / "diagnosis/submissions/code-rust/amukka/medicine.md"
-
 
 class HarmTestCase(unittest.TestCase):
     def setUp(self):
@@ -54,6 +52,27 @@ class HarmTestCase(unittest.TestCase):
         self.assertIn("documents changed: 2", out)
         self.assertIn("documents dropped: 1", out)
         self.assertIn("result: FAIL", out)
+
+    def test_debug_lists_the_documents_that_did_not_pass_without_their_text(self):
+        src = ("RULES = {'X': lambda t: ('drop', '') if t == 'DROPME' else "
+               "('fix', t.replace('<issue_start> ', ''))}\n")
+        rc, out, err = self.run_ht(src, "x", "rules.py", "--debug")
+        self.assertEqual(rc, 1)
+        self.assertIn("debug: gold: 200 doc_ids from gold.csv", err)
+        self.assertIn("debug: X: 3 gold documents did not pass", err)
+        self.assertIn("  d000  changed  29 -> 15 characters, first difference at offset 0", err)
+        self.assertIn("  d002  dropped  (6 characters)", err)
+        self.assertNotIn("marked document", err + out)            # ids and offsets only, never text
+        rc, out, err = self.run_ht(src, "x")                       # nothing extra without --debug
+        self.assertNotIn("debug:", err)
+
+    def test_debug_names_the_error_of_a_crashing_rule_and_works_with_rule_all(self):
+        src = "def medicine_b3(t):\n    return 1 / 0 if t == 'DROPME' else t\n"
+        md = "**Disease:** B3, x\n```python\n" + src + "```\n"
+        rc, _, err = self.run_ht(md, "all", "medicine.md", "--debug")
+        self.assertEqual(rc, 2)
+        self.assertIn("debug: section B3: rule medicine_b3 (from function medicine_b3)", err)
+        self.assertIn("  d002  error ZeroDivisionError", err)
 
     def test_limit_option(self):
         rc, out, _ = self.run_ht("cure_a1 = lambda t: t.upper()\n", "A1", "rules.py", "--limit", "100")
@@ -108,6 +127,12 @@ class HarmTestCase(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertIn("duplicate", err)
 
+    FENCE = "```"
+
+    def plain_md(self, *sections):
+        """A plain medicine.md: (code, python) for each section."""
+        return "".join(f"**Disease:** {code}, x\n{self.FENCE}python\n{src}\n{self.FENCE}\n" for code, src in sections)
+
     def test_markdown_rejects_nonrunnable_python_fragments(self):
         md = ("# Medicine\n\n- fragment:\n  ```python\n  text = MARKER.sub('', text)\n  ```\n\n"
               "```python\nimport re\n\ndef cure_b3(text):\n    return re.sub('<issue_start>', '', text)\n```\n")
@@ -115,12 +140,66 @@ class HarmTestCase(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertIn("medicine.md block 1", err)
 
-    @unittest.skipUnless(RUST_MD.exists(), "amukka's medicine.md is not in this checkout")
-    def test_load_amukka_medicine(self):
-        with contextlib.redirect_stderr(io.StringIO()):
-            ns, _ = harm_test.load_rules(RUST_MD)
-        self.assertEqual(sorted(ns["RULES"]), ["A2", "B3", "B4", "E1", "E4"])
-        self.assertEqual(ns["RULES"]["B3"]("<reponame>x/y\nfn main() {}\n"), ("fix", "fn main() {}\n"))
+    def test_markdown_rejects_a_block_with_a_syntax_error(self):
+        md = self.plain_md(("B3", "def cure_b3(text) return text"))
+        rc, _, err = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual(rc, 2)
+        self.assertIn("medicine.md block 1 has a syntax error", err)
+
+    def test_markdown_function_names_other_than_cure_are_found(self):
+        md = self.plain_md(("B3", "def _strip(text):\n    return text.replace('<issue_start> ', '')\n\n"
+                                  "def medicine_b3(text):\n    return _strip(text)"))
+        rc, out, _ = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual((rc, "documents changed: 2" in out), (0, True))
+
+    def test_markdown_without_a_disease_line_is_an_error(self):
+        rc, _, err = self.run_ht("```python\ndef cure_b3(text):\n    return text\n```\n", "B3", "medicine.md")
+        self.assertEqual(rc, 2)
+        self.assertIn("no '**Disease:** <code>' line found", err)
+
+    def test_markdown_same_name_with_different_code_is_an_error(self):
+        md = self.plain_md(("B3", "def _s(t):\n    return 'a'\ndef medicine_b3(t):\n    return _s(t)"),
+                           ("B4", "def _s(t):\n    return 'b'\ndef medicine_b4(t):\n    return _s(t)"))
+        rc, _, err = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual(rc, 2)
+        self.assertIn("_s is defined with different code", err)
+
+    def test_rule_all_on_a_plain_markdown(self):
+        md = self.plain_md(("B3", "def medicine_b3(t):\n    return t.replace('<issue_start> ', '')"),
+                           ("E1", "def medicine_e1(t):\n    return t == 'DROPME'"))
+        rc, out, _ = self.run_ht(md, "all", "medicine.md", "--limit", "5")      # 3 of 200 documents: over 1%, under 5%
+        self.assertEqual(rc, 0)
+        self.assertIn("B3", out)
+        self.assertIn("E1", out)
+        self.assertIn("ALL IN ORDER", out)
+
+    def test_the_harm_test_runs_the_code_the_extractor_writes(self):
+        md = self.plain_md(("B3", "def medicine_b3(t):\n    return t"))
+        (self.tmp / "medicine.md").write_text(md)
+        _, digest = harm_test.load_rules(self.tmp / "medicine.md")
+        code = harm_test.medicine_extract.rules_from_markdown(md, "medicine.md")[1]
+        self.assertEqual(digest, harm_test.medicine_extract.fingerprint(code))
+
+    def test_the_code_sha256_ignores_comments_and_spacing_but_not_code(self):
+        def digest(src):
+            (self.tmp / "medicine.md").write_text(self.plain_md(("B3", src)))
+            return harm_test.load_rules(self.tmp / "medicine.md")[1]
+        base = digest("def medicine_b3(t):\n    return t.strip()")
+        self.assertEqual(base, digest("# strips\ndef medicine_b3( t ):\n\n    return t.strip()   # done\n"))
+        self.assertNotEqual(base, digest("def medicine_b3(t):\n    return t.lstrip()"))
+
+    def test_two_sections_for_one_code_stop_the_test(self):
+        md = ("**Disease:** B3, markers\n```python\ndef cure_b3(text):\n    return text.replace('<issue_start> ', '')\n```\n"
+              "**Disease:** B3, more markers\n```python\ndef other(text):\n    return text\n```\n"
+              "**Disease:** B4, tags\n```python\ndef cure_b4(text):\n    return text\n```\n")
+        rc, out, err = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual(rc, 2)
+        self.assertIn("2 sections for B3 in medicine.md, so I can't tell which to test", err)
+        self.assertNotIn("documents changed", out)
+        rc, out, _ = self.run_ht(md, "B4", "medicine.md")      # one section for B4: still tested
+        self.assertEqual(rc, 0)
+        self.assertIn("documents changed: 0", out)
+
 
 
 if __name__ == "__main__":
