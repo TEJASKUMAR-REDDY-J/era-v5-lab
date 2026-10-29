@@ -44,6 +44,7 @@ import hashlib
 import inspect
 import json
 import math
+import os
 import re
 import signal
 import sys
@@ -55,6 +56,13 @@ ACTIONS = ("keep", "fix", "drop")
 RULE_ID = re.compile(r"^D[AB]-[A-H][1-9]-\d{3}$")
 RULE_ID_RE = RULE_ID
 DEFAULT_REGISTRY = Path(__file__).resolve().parent.parent / "rules" / "registry.json"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def repo_relative(path: Path) -> str:
+    """Serialize rule sources relative to the repository root."""
+    return Path(os.path.relpath(Path(path).resolve(), REPO_ROOT)).as_posix()
+
 # A fenced block, possibly indented inside a list item. The closing fence must have the same indent.
 FENCE = re.compile(r"^([ \t]*)```(?:python|py)[ \t]*\n(.*?)^\1```[ \t]*$", re.S | re.M)
 HAS_ALARM = hasattr(signal, "setitimer")
@@ -431,7 +439,7 @@ def _write_report(args, rules_path, digest, count, limit, status, results):
         return
     report = {"pack": args.pack.name, "pack_sha256": sha256_file(args.pack),
               "gold": args.gold.name, "gold_sha256": sha256_file(args.gold),
-              "gold_count": count, "rules": str(rules_path),
+              "gold_count": count, "rules": repo_relative(rules_path),
               "rules_file_sha256": sha256_file(rules_path), "code_sha256": digest,
               "limit_percent": str(limit), "status": status, "results": results}
     args.report.parent.mkdir(parents=True, exist_ok=True)

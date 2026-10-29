@@ -230,3 +230,33 @@ def test_real_spec_format_if_present():
     info = runner.read_spec(parent)
     assert info['inventory']
     assert info['proposals']
+
+
+def test_json_paths_are_repo_relative(harness, monkeypatch):
+    mock_success(monkeypatch)
+    assert execute(harness) == 1
+    metadata = json.loads((harness.reports / 'g1_harm_metadata.json').read_text())
+    assert metadata['spec'] == runner.repo_relative(harness.spec)
+    assert metadata['registry'] == runner.repo_relative(harness.registry)
+    assert not Path(metadata['spec']).is_absolute()
+    assert not Path(metadata['registry']).is_absolute()
+    rows = records(harness)
+    for record in rows.values():
+        for rule in record['rules']:
+            if 'report' in rule:
+                expected = harness.reports / 'rules' / (record['pack_id'] + '_' + rule['id'] + '_harm.json')
+                assert rule['report'] == runner.repo_relative(expected)
+                assert not Path(rule['report']).is_absolute()
+    # The original Parquet folder lives outside the repository.
+    reason = rows['math-megamath']['reason']
+    assert runner.repo_relative(harness.originals / 'math-megamath.parquet') in reason
+    assert all(not Path(value).is_absolute() for value in reason.removeprefix('Missing input: ').split(', '))
+
+
+def test_repo_relative_paths_include_outside_files(tmp_path):
+    internal = runner.ROOT / 'teams' / '01-data-a' / 'spec' / 'spec_v1.md'
+    assert runner.repo_relative(internal) == 'teams/01-data-a/spec/spec_v1.md'
+    external = tmp_path / 'original-packs' / 'code-go.parquet'
+    rel = runner.repo_relative(external)
+    assert not Path(rel).is_absolute()
+    assert (runner.ROOT / rel).resolve() == external.resolve()

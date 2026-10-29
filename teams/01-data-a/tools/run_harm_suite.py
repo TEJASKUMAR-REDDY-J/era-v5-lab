@@ -21,6 +21,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -42,6 +43,11 @@ CONFLICT_ROW = re.compile(
     r'^\|\s*([\w-]+)\s*\|\s*([A-H][1-9])\s*\|\s*\d+\s*\|\s*(BLOCKED|DUPLICATE)\s*\|', re.M)
 RULE_ID = re.compile(r'^D[AB]-[A-H][1-9]-\d{3}$')
 EXIT = {'PASS': 0, 'FAIL': 1, 'ERROR': 2}
+
+
+def repo_relative(path: Path) -> str:
+    """Serialize paths relative to the repository, including external inputs."""
+    return Path(os.path.relpath(Path(path).resolve(), ROOT)).as_posix()
 
 
 def sha256(path: Path) -> str:
@@ -151,7 +157,7 @@ def check_report(path: Path, rc: int, id_: str, pack: str, gold: Path, parquet: 
     return {'harm_status': status, 'changed': changed, 'dropped': dropped,
             'errors': errors, 'percent': item['percent'], 'gold_count': n,
             'gold_sha256': data['gold_sha256'], 'pack_sha256': data['pack_sha256'],
-            'rules_file_sha256': data['rules_file_sha256'], 'report': str(path)}
+            'rules_file_sha256': data['rules_file_sha256'], 'report': repo_relative(path)}
 
 
 def run(parquet_dir: Path, report_dir: Path, spec: Path,
@@ -208,7 +214,7 @@ def run(parquet_dir: Path, report_dir: Path, spec: Path,
         record['proposed_rules'] = sum(len(states) for states in proposed.values())
         record['mapped_rules'] = len(pack_entries)
         record['unextracted_proposals'] = unextracted
-        missing = [str(path) for path in (parquet, gold) if not path.is_file()]
+        missing = [repo_relative(path) for path in (parquet, gold) if not path.is_file()]
         if drift.get(pack):
             record.update(status='SPEC_STALE', reason='; '.join(drift[pack]))
         elif missing and not dry_run:
@@ -259,8 +265,8 @@ def run(parquet_dir: Path, report_dir: Path, spec: Path,
 
     (report_dir / 'g1_harm_summary.json').write_text(json.dumps(results, indent=2) + '\n', encoding='utf-8')
     (report_dir / 'g1_harm_metadata.json').write_text(json.dumps({
-        'spec': str(spec), 'spec_sha256': info['sha256'],
-        'registry': str(registry), 'registry_sha256': sha256(registry),
+        'spec': repo_relative(spec), 'spec_sha256': info['sha256'],
+        'registry': repo_relative(registry), 'registry_sha256': sha256(registry),
         'g1_pack_count': len(g1_packs), 'spec_extra_pack_count': len(spec_packs - set(g1_packs)),
         'out_of_spec_registry_rule_ids': sorted(out_of_spec),
         'g2_status': 'PENDING', 'combined_pipeline': 'NOT_RUN',
