@@ -1,5 +1,53 @@
 # Data A tools: medicine checks
 
+## For annotators: test your own medicine.md
+
+Before you commit your `medicine.md`, check that each rule changes at most 1% of the clean (gold) documents of your pack.
+
+**You need**
+- Your pack's Parquet file (the one you annotated) and its gold file, `teams/01-data-a/gold/<pack_id>_gold.csv` (ask the Data A team if it is not there yet).
+- Your `medicine.md`.
+- Python 3.10 or newer Linux or macOS, and `pip install pyarrow`.
+
+**Run** (from the repo root; `B3` is the disease code of the rule you want to test)
+
+```
+python -I teams/01-data-a/tools/harm_test.py \
+  --pack <your_pack>.parquet \
+  --gold teams/01-data-a/gold/<pack_id>_gold.csv \
+  --rules diagnosis/submissions/<pack_id>/<your-handle>/medicine.md \
+  --rule B3
+```
+
+Use `--rule all` to test every section of your file, and then all of them together in file order. You do not need a rule ID.
+
+**Read the result**
+- `documents changed` and `documents dropped`: how many gold documents your rule touched. Together they must be 1% or less of the gold set. The last line is `result: PASS` or `result: FAIL`.
+- If it fails, add `--show 10` to list the first 10 `doc_id`s, or `--debug` to list every document that was changed, dropped or crashed, with the length and the first offset that differs. Your fix then needs to leave those documents alone. Text is never printed.
+- Exit code: 0 PASS, 1 FAIL, 2 the test could not run (the message says why).
+
+**Your `medicine.md` must have**
+- One `**Disease:** <code>` section for each disease code.
+- In it, a ```` ```python ```` block with one function that takes the text and returns the new text. The name `medicine_<code>` (for example `medicine_b3`) is a suggestion, not a requirement: you can keep the names you already have. The function is found by that name (or `cure_<code>`), or else it is the only function in the section whose name does not start with `_`. So if the section has other functions, start their names with `_`. `re` is already imported.
+- Every python block must run on its own. Remove or complete a snippet that does not.
+- The same name must not be defined with different code in two blocks.
+
+**If the test stops with an error**
+
+| Message | What to do |
+|---|---|
+| `2 sections for B3 ...` | Keep one section for the code. Put both fixes in one function, using helpers. |
+| `block N is a fragment ...` or `has a syntax error` | Complete the block or remove it from the file. |
+| `no rule for B3`, or `no rule could be matched` | The section has no function, or has several whose names do not start with `_` and none is named `medicine_b3`. Rename the helpers with a leading `_`, or name the main function `medicine_b3`. |
+| `_x is defined with different code ...` | Rename one of the two helpers. |
+| `no '**Disease:** <code>' line found` | Add the `**Disease:**` line to each section. |
+
+The test runs the code in your `medicine.md`. Do not run it on files you have not read.
+
+The rest of this file is for the Data A team.
+
+---
+
 Tools to test the cleaning rules (medicines) from the annotators' `medicine.md` files. Steps 1 to 3 need `pip install pyarrow`. Run them from the repo root with `python -I`.
 
 ## The scripts
@@ -212,7 +260,7 @@ The generated `spec_v1.md` is a **draft**: reviewers must resolve clashes and ve
 
 - Put `**Disease:** <code>` and `**Action:** fix` (or `drop`) in each section. Use one section for each disease code.
 - Put the Python in a ```` ```python ```` block in that section. Every python block must run on its own: complete it, or remove it from the file.
-- Name the main function `medicine_<code>` (for example `medicine_b3`; `cure_b3` also works). It takes the text and returns the new text. Do not name it just `medicine`: every section would then define the same name.
+- Name the main function `medicine_<code>` (for example `medicine_b3`; `cure_b3` also works). This is a suggestion, not a requirement: if the section has only one function whose name does not start with `_`, any name works. It takes the text and returns the new text. Do not name it just `medicine`: every section would then define the same name.
 - To drop a document, return `("drop", "")`. To fix, return a string, or `("fix", new_text)`.
 - **Two fixes for one disease code** (for example a regex replacement and removing header lines): write one section and one main function. Put each fix in a helper function in the same code block, name it with a leading `_` (for example `_strip_header`), and call the helpers from `medicine_<code>`. Helpers are copied into the rules file with the rule and get no ID of their own.
 
