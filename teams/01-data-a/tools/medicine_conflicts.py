@@ -203,7 +203,7 @@ def read_sheet_rules(path: Path) -> list:
     RULE_ID, CODE, ACTION, ORIGIN (the pack) and AUTHOR (the annotator), and medicine(doc). Each block is read
     with ast, on its own, as harm_test.py runs it. Returned in the form of registry entries, with "missing" set."""
     rules, seen = [], {}
-    for m in medicine_extract.harm_test.FENCE.finditer(path.read_text(encoding="utf-8")):
+    for m in medicine_extract.FENCE.finditer(path.read_text(encoding="utf-8")):
         text = textwrap.dedent(m.group(2))
         try:
             tree = ast.parse(text)

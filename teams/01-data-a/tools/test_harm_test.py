@@ -106,12 +106,54 @@ class HarmTestCase(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertIn("duplicate", err)
 
-    def test_markdown_rejects_nonrunnable_python_fragments(self):
-        md = ("# Medicine\n\n- fragment:\n  ```python\n  text = MARKER.sub('', text)\n  ```\n\n"
-              "```python\nimport re\n\ndef cure_b3(text):\n    return re.sub('<issue_start>', '', text)\n```\n")
-        rc, out, err = self.run_ht(md, "B3", "medicine.md")
+    FENCE = "```"
+
+    def plain_md(self, *sections):
+        """A plain medicine.md: (code, python) for each section."""
+        return "".join(f"**Disease:** {code}, x\n{self.FENCE}python\n{src}\n{self.FENCE}\n" for code, src in sections)
+
+    def test_markdown_skips_fragments_and_reports_them(self):
+        md = ("- fragment:\n  ```python\n  text = MARKER.sub('', text)\n  ```\n\n"
+              + self.plain_md(("B3", "def cure_b3(text):\n    return re.sub('<issue_start> ', '', text)")))
+        rc, out, err = self.run_ht(md, "B3", "medicine.md")      # `re` is never imported in the medicine.md
+        self.assertEqual(rc, 0)
+        self.assertIn("warning: medicine.md block 1 left out (fragment)", err)
+        self.assertIn("documents changed: 2", out)
+
+    def test_markdown_function_names_other_than_cure_are_found(self):
+        md = self.plain_md(("B3", "def _strip(text):\n    return text.replace('<issue_start> ', '')\n\n"
+                                  "def medicine_b3(text):\n    return _strip(text)"))
+        rc, out, _ = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual((rc, "documents changed: 2" in out), (0, True))
+
+    def test_markdown_without_a_disease_line_is_an_error(self):
+        rc, _, err = self.run_ht("```python\ndef cure_b3(text):\n    return text\n```\n", "B3", "medicine.md")
         self.assertEqual(rc, 2)
-        self.assertIn("medicine.md block 1", err)
+        self.assertIn("no '**Disease:** <code>' line found", err)
+
+    def test_markdown_same_name_with_different_code_is_an_error(self):
+        md = self.plain_md(("B3", "def _s(t):\n    return 'a'\ndef medicine_b3(t):\n    return _s(t)"),
+                           ("B4", "def _s(t):\n    return 'b'\ndef medicine_b4(t):\n    return _s(t)"))
+        rc, _, err = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual(rc, 2)
+        self.assertIn("_s is defined with different code", err)
+
+    def test_rule_all_on_a_plain_markdown(self):
+        md = self.plain_md(("B3", "def medicine_b3(t):\n    return t.replace('<issue_start> ', '')"),
+                           ("E1", "def medicine_e1(t):\n    return t == 'DROPME'"))
+        rc, out, _ = self.run_ht(md, "all", "medicine.md", "--limit", "5")      # 3 of 200 documents: over 1%, under 5%
+        self.assertEqual(rc, 0)
+        self.assertIn("B3", out)
+        self.assertIn("E1", out)
+        self.assertIn("ALL IN ORDER", out)
+
+    def test_the_harm_test_runs_the_code_the_extractor_writes(self):
+        import hashlib
+        md = self.plain_md(("B3", "def medicine_b3(t):\n    return t"))
+        (self.tmp / "medicine.md").write_text(md)
+        _, digest = harm_test.load_rules(self.tmp / "medicine.md")
+        code = harm_test.medicine_extract.rules_from_markdown(md, "medicine.md")[1]
+        self.assertEqual(digest, hashlib.sha256(code.encode()).hexdigest())
 
     def test_two_sections_for_one_code_stop_the_test(self):
         md = ("**Disease:** B3, markers\n```python\ndef cure_b3(text):\n    return text.replace('<issue_start> ', '')\n```\n"

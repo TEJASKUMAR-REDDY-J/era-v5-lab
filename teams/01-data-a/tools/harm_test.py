@@ -15,7 +15,12 @@ Usage:
     --show N    also list the first N changed or dropped doc_ids (ids only, never text)
     --timeout   seconds allowed for one rule call on one document (default 5)
 
-Inside a rules file the rule is found in one of three ways:
+A plain medicine.md (one "**Disease:** <code>" section for each code) is read by medicine_extract.py, the same code
+that writes rules/<pack_id>/<handle>.py, so the rules that run here are the rules the team runs. A fragment or a
+broken block is left out and reported. Two sections for one code, a name that two blocks define with different code, or
+no section at all is an error. The rule of a section is medicine_<code>, cure_<code> or its only public function.
+
+Inside a rules .py file the rule is found in one of three ways:
     RULES_BY_ID = {"DA-B3-001": fn}   written by medicine_extract.py (used for a rule ID)
     RULES = {"B3": fn}                fn(text) -> ("keep" | "fix" | "drop", new_text)   (the shared format)
     def cure_b3(text): ...            returns the new text as a str
@@ -52,6 +57,9 @@ import textwrap
 from fractions import Fraction
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # python -I does not put the script folder on the path
+import medicine_extract  # noqa: E402  (reads a plain medicine.md: the same code the team's extractor uses)
+
 ACTIONS = ("keep", "fix", "drop")
 RULE_ID = re.compile(r"^D[AB]-[A-H][1-9]-\d{3}$")
 RULE_ID_RE = RULE_ID
@@ -63,8 +71,7 @@ def repo_relative(path: Path) -> str:
     """Serialize rule sources relative to the repository root."""
     return Path(os.path.relpath(Path(path).resolve(), REPO_ROOT)).as_posix()
 
-# A fenced block, possibly indented inside a list item. The closing fence must have the same indent.
-FENCE = re.compile(r"^([ \t]*)```(?:python|py)[ \t]*\n(.*?)^\1```[ \t]*$", re.S | re.M)
+FENCE = medicine_extract.FENCE  # a fenced python block, possibly indented inside a list item
 HAS_ALARM = hasattr(signal, "setitimer")
 
 
@@ -120,6 +127,48 @@ def _code_assignment_names(code: str):
     return names
 
 
+def _is_sheet(blocks) -> bool:
+    """True if a block sets RULE_ID or defines medicine(): a medicine sheet, one rule in each block."""
+    for block in blocks:
+        try:
+            tree = ast.parse(block)
+        except SyntaxError:
+            continue
+        for node in tree.body:
+            if isinstance(node, ast.FunctionDef) and node.name == "medicine":
+                return True
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
+            if any(isinstance(t, ast.Name) and t.id == "RULE_ID" for t in targets):
+                return True
+    return False
+
+
+def load_medicine_md(path: Path, src: str):
+    """A plain medicine.md (one "**Disease:**" section for each code): the rules are found by medicine_extract.py.
+
+    Fragments and broken blocks are left out and reported, not fatal. The rules run from the same code that the
+    extractor writes to rules/<pack_id>/<handle>.py (without the IDs).
+    """
+    found, code = medicine_extract.rules_from_markdown(src, path.name)
+    if not found.sections:
+        raise Fatal(f"{path.name}: no '**Disease:** <code>' line found, so there is no medicine section")
+    for b in found.blocks:
+        if b.kind in ("fragment", "syntax error"):
+            print(f"warning: {path.name} block {b.index} left out ({b.kind})", file=sys.stderr)
+    for note in found.notes:
+        print(f"warning: {note}", file=sys.stderr)
+    if found.clashes:
+        raise Fatal(f"{path.name}: " + "; ".join(found.clashes))
+    if not found.chosen:
+        raise Fatal(f"{path.name}: no rule could be matched to a disease code")
+    ns = {"__name__": "rules"}
+    try:
+        exec(compile(code, path.name, "exec"), ns)
+    except Exception as e:
+        raise Fatal(f"{path.name}: {type(e).__name__}: {e}") from e
+    return ns, hashlib.sha256(code.encode("utf-8")).hexdigest()
+
+
 def load_rules(path: Path):
     """Run all executable rule blocks; reject skipped/overwritten definitions."""
     try:
@@ -130,6 +179,8 @@ def load_rules(path: Path):
     blocks = [textwrap.dedent(m.group(2)) for m in FENCE.finditer(src)] if is_md else [src]
     if not blocks:
         raise Fatal(f"{path}: no executable python blocks")
+    if is_md and not _is_sheet(blocks):
+        return load_medicine_md(path, src)
     ns = {"__name__": "rules"}
     declared = {}
     for i, block in enumerate(blocks, 1):
@@ -198,10 +249,6 @@ def load_rules(path: Path):
         raise Fatal("RULES_BY_ID includes invalid rule ID")
     return ns, hashlib.sha256("\n".join(blocks).encode("utf-8")).hexdigest()
 
-# The same line medicine_extract.py reads as the start of a medicine section.
-SECTION_CODE = re.compile(r"\*\*Disease:?\*\*:?[ \t]*`?([A-H][1-9])\b")
-
-
 def check_one_section(path: Path, code: str):
     """A disease code names one rule only if the medicine.md has one section for it."""
     if path.suffix.lower() != ".md":
@@ -210,7 +257,7 @@ def check_one_section(path: Path, code: str):
         src = path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as e:
         raise Fatal(f"cannot read rules file {path}: {e}") from e
-    n = SECTION_CODE.findall(src).count(code)
+    n = sum(1 for s in medicine_extract.read_rules(src).sections if s[2] == code)
     if n > 1:
         raise Fatal(f"{n} sections for {code} in {path.name}, so I can't tell which to test. "
                     f"Keep one section for each disease code.")
