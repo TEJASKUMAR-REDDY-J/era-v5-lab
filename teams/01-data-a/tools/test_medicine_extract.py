@@ -182,7 +182,7 @@ class IdCase(unittest.TestCase):
             self.assertEqual(harm_test.main(argv + ["--rule", "DA-B3-009"]), 2)   # not in the registry
             self.assertEqual(harm_test.main(argv + ["--rule", "B3"]), 2)           # a code needs --rules
         self.assertIn("not in the registry", err.getvalue())
-        self.assertIn("give --rules", err.getvalue())
+        self.assertIn("require --rules", err.getvalue())
 
     def test_path_outside_submissions_gets_no_ids(self):
         src = self.tmp / "medicine.md"

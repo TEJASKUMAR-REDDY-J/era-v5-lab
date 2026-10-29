@@ -115,6 +115,18 @@ class HarmTestCase(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertIn("medicine.md block 1", err)
 
+    def test_two_sections_for_one_code_stop_the_test(self):
+        md = ("**Disease:** B3, markers\n```python\ndef cure_b3(text):\n    return text.replace('<issue_start> ', '')\n```\n"
+              "**Disease:** B3, more markers\n```python\ndef other(text):\n    return text\n```\n"
+              "**Disease:** B4, tags\n```python\ndef cure_b4(text):\n    return text\n```\n")
+        rc, out, err = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual(rc, 2)
+        self.assertIn("2 sections for B3 in medicine.md, so I can't tell which to test", err)
+        self.assertNotIn("documents changed", out)
+        rc, out, _ = self.run_ht(md, "B4", "medicine.md")      # one section for B4: still tested
+        self.assertEqual(rc, 0)
+        self.assertIn("documents changed: 0", out)
+
     @unittest.skipUnless(RUST_MD.exists(), "amukka's medicine.md is not in this checkout")
     def test_load_amukka_medicine(self):
         with contextlib.redirect_stderr(io.StringIO()):

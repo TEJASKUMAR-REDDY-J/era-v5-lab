@@ -198,6 +198,24 @@ def load_rules(path: Path):
         raise Fatal("RULES_BY_ID includes invalid rule ID")
     return ns, hashlib.sha256("\n".join(blocks).encode("utf-8")).hexdigest()
 
+# The same line medicine_extract.py reads as the start of a medicine section.
+SECTION_CODE = re.compile(r"\*\*Disease:?\*\*:?[ \t]*`?([A-H][1-9])\b")
+
+
+def check_one_section(path: Path, code: str):
+    """A disease code names one rule only if the medicine.md has one section for it."""
+    if path.suffix.lower() != ".md":
+        return
+    try:
+        src = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as e:
+        raise Fatal(f"cannot read rules file {path}: {e}") from e
+    n = SECTION_CODE.findall(src).count(code)
+    if n > 1:
+        raise Fatal(f"{n} sections for {code} in {path.name}, so I can't tell which to test. "
+                    f"Keep one section for each disease code.")
+
+
 def registry_file_for(rule_id: str, registry: Path) -> Path:
     """Find the rule file, rejecting duplicates and unsafe/withdrawn paths."""
     try:
@@ -512,6 +530,8 @@ def main(argv=None) -> int:
 
         ids = read_gold(args.gold)
         texts = read_pack_docs(args.pack, ids)
+        if args.rules and not RULE_ID.fullmatch(code):
+            check_one_section(args.rules, code)
         rules_path = args.rules or registry_file_for(code, args.registry)
         ns, digest = load_rules(rules_path)
         rule = find_rule(ns, code)
