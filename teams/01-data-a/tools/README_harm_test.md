@@ -65,7 +65,7 @@ python -I teams/01-data-a/tools/medicine_extract.py --dir teams/01-data-a/medici
 
 Exit code: 0 done, 1 no rule could be made (with `--dir`: for at least one file), 2 the command could not run.
 
-The extractor finds the function for a code in this order: a function named `cure_b3`, then the only function in the section. If none fits, it says so and writes nothing for that rule. 
+The extractor finds the function for a code in this order: a function named `medicine_b3` (or `cure_b3`), then the only public function in the section. If none fits, it says so and writes nothing for that rule. 
 
 **Rule IDs** look like `DA-B3-001`: team (`DA` for the Data A packs, `DB` for all others), disease code, number. A rule keeps its ID when you run the extractor again. A rule removed from a `medicine.md` is marked `withdrawn`, and its ID is not reused.
 
@@ -208,11 +208,11 @@ The generated `spec_v1.md` is a **draft**: reviewers must resolve clashes and ve
 
 ## Writing a medicine.md so the extractor can read it
 
-- Put `**Disease:** <code>` and `**Action:** fix` (or `drop`) in each section.
+- Put `**Disease:** <code>` and `**Action:** fix` (or `drop`) in each section. Use one section for each disease code.
 - Put the Python in a ```` ```python ```` block in that section.
-- Optional - Name the function `cure_<code>` (for example `cure_b3`). It takes the text and returns the new text.
+- Name the main function `medicine_<code>` (for example `medicine_b3`; `cure_b3` also works). It takes the text and returns the new text. Do not name it just `medicine`: every section would then define the same name.
 - To drop a document, return `("drop", "")`. To fix, return a string, or `("fix", new_text)`.
-- A second medicine for the same code goes in its own section, with a function that has its own name.
+- **Two fixes for one disease code** (for example a regex replacement and removing header lines): write one section and one main function. Put each fix in a helper function in the same code block, name it with a leading `_` (for example `_strip_header`), and call the helpers from `medicine_<code>`. Helpers are copied into the rules file with the rule and get no ID of their own.
 
 ## Notes
 

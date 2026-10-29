@@ -22,7 +22,7 @@ The medicine.md is only read, never run. The steps:
        support   only imports and UPPER_CASE constants. It goes in too, inside try/except.
        fragment  anything else (a code line that needs a variable from elsewhere, a syntax error). Left out.
   3. For each disease code the rule is the first of:
-       - a function named cure_<code> (for example cure_b3)
+       - a function named medicine_<code> (for example medicine_b3), or cure_<code>
        - the only public function (no leading underscore) in that section
      Anything else is reported, and nothing is guessed.
   4. The rules file ends with RULES = {"B3": <function>, ...} and RULES_BY_ID = {"DB-B3-001": <function>, ...}.
@@ -38,8 +38,8 @@ The medicine.md is only read, never run. The steps:
        python -I harm_test.py --pack <pack.parquet> --gold <gold.csv> --rule DB-B3-001
   A path outside diagnosis/submissions/<pack_id>/<handle>/ has no pack or handle, so it gets no IDs.
 
-Two medicines for one code: the name cure_<code> can only point to one function, so it is used for the first
-section of a code. A later section of the same code needs the only-function rule: put its
+Two medicines for one code: the name medicine_<code> (or cure_<code>) can only point to one function, so it is
+used for the first section of a code. A later section of the same code needs the only-function rule: put its
 function in that section, and give it a name that no earlier rule uses.
 """
 import argparse
@@ -50,6 +50,7 @@ import re
 import sys
 import textwrap
 from pathlib import Path
+from typing import NamedTuple
 
 HERE = Path(__file__).resolve().parent
 
@@ -132,8 +133,8 @@ def read_medicine(src: str):
 def resolve(sections, blocks):
     """Return ([rule], [notes]). A rule is {code, n, expr, how, action}; n counts the sections of one code.
 
-    expr is Python that names the rule's function. The name cure_<code> serves the first section of a code
-    only. A later section needs a function of its own, not already used by an earlier rule.
+    expr is Python that names the rule's function. The name medicine_<code> (or cure_<code>) serves the first
+    section of a code only. A later section needs a function of its own, not already used by an earlier rule.
     """
     code_blocks = [b for b in blocks if b.kind == "code"]
     funcs = {n.lower(): n for b in code_blocks for n in b.funcs}
@@ -142,21 +143,46 @@ def resolve(sections, blocks):
         n = seen[code] = seen.get(code, 0) + 1
         label = code if n == 1 else f"{code} (medicine {n})"
         expr = how = None
-        if n == 1 and f"cure_{code.lower()}" in funcs:
-            expr, how = funcs[f"cure_{code.lower()}"], f"function cure_{code.lower()}"
+        named = [f"{p}_{code.lower()}" for p in ("medicine", "cure") if n == 1 and f"{p}_{code.lower()}" in funcs]
+        if named:
+            expr, how = funcs[named[0]], f"function {named[0]}"
         else:
             publics = sorted({f for b in code_blocks if b.section == si for f in b.funcs if not f.startswith("_")} - claimed)
             if len(publics) == 1:
                 expr, how = publics[0], "the only function in the section"
             elif publics:
                 notes.append(f"{label}: several functions in the section ({', '.join(publics)}); "
-                             f"name the rule cure_{code.lower()}")
+                             f"name the rule medicine_{code.lower()}")
             else:
                 notes.append(f"{label}: no function found for this section")
         if expr:
             chosen.append({"code": code, "n": n, "expr": expr, "how": how, "action": action})
             claimed.add(expr)
     return chosen, notes
+
+
+class Extracted(NamedTuple):
+    sections: list   # (start, end, code, action) for each "**Disease:**" section
+    blocks: list     # every python block, as a Block
+    chosen: list     # the rules found: {code, n, expr, how, action}
+    notes: list      # why a section gave no rule
+
+
+def read_rules(src: str) -> Extracted:
+    """Read a medicine.md and pick the rule of each section. Nothing is run."""
+    sections, blocks = read_medicine(src)
+    chosen, notes = resolve(sections, blocks)
+    return Extracted(sections, blocks, chosen, notes)
+
+
+def rules_from_markdown(src: str, name: str = "medicine.md"):
+    """Return (Extracted, code): the rules found in a medicine.md, and the text of the rules file for them.
+
+    The code has RULES only (no IDs, so one function for each code). This is the one place that reads a
+    medicine.md: the extractor writes the code to a file, and harm_test.py can run it in memory.
+    """
+    found = read_rules(src)
+    return found, render(name, found.blocks, found.chosen)
 
 
 def origin(path: Path):
@@ -248,11 +274,10 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> in
         print(f"error: cannot read {medicine}: {getattr(e, 'strerror', None) or e}", file=sys.stderr)
         return 2
 
-    sections, blocks = read_medicine(src)
+    sections, blocks, chosen, notes = read_rules(src)
     if not sections:
         print("error: no '**Disease:** <code>' line found, so there is no medicine section", file=sys.stderr)
         return 1
-    chosen, notes = resolve(sections, blocks)
 
     print(f"{medicine.name}: {len(sections)} sections, {len(blocks)} python blocks "
           f"({sum(b.kind == 'code' for b in blocks)} code, {sum(b.kind == 'support' for b in blocks)} support)")

@@ -49,6 +49,15 @@ class ExtractCase(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual(ns["RULES"]["B3"]("a<x>b"), "ab")      # the medicine.md never imports re
 
+    def test_medicine_code_name_wins_over_helpers(self):
+        rc, out, ns = self.extract(md("**Disease:** B3, markers", py(
+            "def strip_header(t):\n    return t.replace('<h>', '')\n\n"
+            "def _fix_regex(t):\n    return t.replace('<x>', '')\n\n"
+            "def medicine_b3(t):\n    return _fix_regex(strip_header(t))")))
+        self.assertEqual(rc, 0)
+        self.assertIn("function medicine_b3", out)
+        self.assertEqual(ns["RULES"]["B3"]("a<x>b<h>"), "ab")
+
     def test_any_function_name_when_it_is_the_only_one_in_the_section(self):
         rc, out, ns = self.extract(md("**Disease:** A1, junk", py("def strip_junk(t):\n    return t.strip()")))
         self.assertEqual(rc, 0)
@@ -105,6 +114,38 @@ class ExtractCase(unittest.TestCase):
         self.assertIsNone(medicine_extract.default_out(Path("/tmp/x/medicine.md")))
         p = Path("/r/diagnosis/submissions/code-rust/amukka/medicine.md")
         self.assertEqual(medicine_extract.default_out(p).parts[-3:], ("rules", "code-rust", "amukka.py"))
+
+
+class SharedReaderCase(unittest.TestCase):
+    """rules_from_markdown is the one reader of a medicine.md: the extractor's file and harm_test's code are the same."""
+
+    TEXT = md("**Disease:** B3, markers", py("def medicine_b3(t):\n    return t.replace('<m>', '')"),
+              "**Disease:** E1, generated", py("def helper(t):\n    return t\n\ndef cure_e1(t):\n    return ('drop', '')"),
+              "**Disease:** A1, nothing")
+
+    def test_returns_the_rules_the_notes_and_the_code(self):
+        found, code = medicine_extract.rules_from_markdown(self.TEXT)
+        self.assertEqual([(r["code"], r["expr"]) for r in found.chosen], [("B3", "medicine_b3"), ("E1", "cure_e1")])
+        self.assertEqual(found.notes, ["A1: no function found for this section"])
+        self.assertEqual(len(found.sections), 3)
+        self.assertIn("import re", code)
+        self.assertIn('"B3": medicine_b3', code)
+        self.assertNotIn("RULES_BY_ID", code)                      # no IDs here
+
+    def test_the_code_is_never_run(self):
+        marker = Path(tempfile.mkdtemp()) / "ran"
+        text = md("**Disease:** A1, x", py(f"open({str(marker)!r}, 'w').write('x')\ndef medicine_a1(t):\n    return t"))
+        _, code = medicine_extract.rules_from_markdown(text)
+        self.assertFalse(marker.exists())
+        self.assertIn("def medicine_a1", code)
+
+    def test_the_extractor_writes_the_same_code(self):
+        tmp = Path(tempfile.mkdtemp())
+        src, out = tmp / "medicine.md", tmp / "rules.py"
+        src.write_text(self.TEXT)
+        with contextlib.redirect_stdout(io.StringIO()):
+            medicine_extract.main([str(src), "--out", str(out)])            # a path with no pack: no IDs
+        self.assertEqual(out.read_text(), medicine_extract.rules_from_markdown(self.TEXT, "medicine.md")[1])
 
 
 class IdCase(unittest.TestCase):
