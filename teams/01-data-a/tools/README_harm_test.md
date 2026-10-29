@@ -4,7 +4,7 @@ Tools to test the cleaning rules (medicines) from the annotators' `medicine.md` 
 
 ## The scripts
 
-Run them in this order. Steps 2 and 3 both use the rules and IDs that step 1 makes.
+Run them in this order. Steps 2 and 3 can use the rules and IDs that step 1 makes; step 2 can also load a rules file directly.
 
 | Step | Script | Input | Output |
 |---|---|---|---|
@@ -74,9 +74,14 @@ The extractor finds the function for a code in this order: the `RULES = {"B3": f
 python -I teams/01-data-a/tools/harm_test.py --pack <pack.parquet> --gold <pack_gold.csv> --rule DA-B3-001
 ```
 
-Runs one rule on the gold set. Prints documents changed, documents dropped, the percent, and PASS or FAIL (changed + dropped must be 1% or less of the gold set). The exit code is 0 for PASS, 1 for FAIL and 2 if the test could not run.
+Runs one rule on the gold set. Prints documents changed, documents dropped, the percent, and PASS or FAIL (changed + dropped must be 1% or less of the gold set). The exit code is 0 for PASS, 1 for FAIL and 2 for invalid inputs or rule errors.
 
-To test code that is not in the registry, use `--rules <rules.py or medicine.md> --rule B3`.
+**Where the cleaning code comes from.** `harm_test.py` is a **test runner**, not a collection of hardcoded cleaning rules. It loads executable Python supplied by annotators in one of two ways:
+
+1. **By rule ID (registry):** With `--rule DA-B3-001` and no `--rules`, it looks up the ID in `teams/01-data-a/rules/registry.json`. The registry points to a generated `teams/01-data-a/rules/<pack_id>/<handle>.py` file written by `medicine_extract.py` from an annotator's `medicine.md`. The runner loads that file and selects the matching `RULES_BY_ID` entry.
+2. **By explicit file:** With `--rules <rules.py or medicine.md> --rule B3` (or a full rule ID), it loads the supplied file directly, without consulting the registry. A Markdown sheet can contain separate executable `RULE_ID` / `medicine(doc)` blocks; Python files can define `RULES_BY_ID`, `RULES`, or `cure_<code>`.
+
+**The data comes from different files:** `--pack` supplies the original Parquet documents; `--gold` supplies independently reviewed clean `doc_id`s (with `reader_1` and `reader_2`). Neither is a source of cleaning functions. `harm_test.py` does **not** discover or test all files under `medicines/submissions` automatically; `--rule all` runs only the rules in the **one file** given by `--rules`. The extractor and `rule_report.py` handle multi-submission workflows.
 
 | Option | Meaning |
 |---|---|
@@ -88,6 +93,7 @@ To test code that is not in the registry, use `--rules <rules.py or medicine.md>
 | `--limit <percent>` | the failing limit, as a percent of the gold set. Default `1` |
 | `--show <N>` | also list the first N `doc_id`s that were changed or dropped. Default `0` |
 | `--timeout <seconds>` | the time allowed for one document. Default `5` |
+| `--report <file>` | optional JSON report with source hashes, counts, rule results, and affected IDs (no raw text) |
 
 **Medicine sheets.** A sheet such as `code-medicines/medicine_code.md` has one rule per ```python block. Each block has its own `RULE_ID = "DA-B3-001"` and a function `medicine(doc)`. Each block runs in its own namespace, so blocks may reuse names. A single rule is found by its ID:
 
@@ -96,11 +102,13 @@ python -I teams/01-data-a/tools/harm_test.py --pack <pack.parquet> --gold <pack_
 python -I teams/01-data-a/tools/harm_test.py --pack <pack.parquet> --gold <pack_gold.csv> --rules <sheet.md> --rule all
 ```
 
-`--rule all` tests every rule in the file on its own, then the whole file in order. In that last line, `ALL IN ORDER`, a drop ends the document and a fix passes the new text to the next rule. The exit code is the worst result.
+`--rule all` tests every rule in the supplied file on its own, then the whole file in order. In that last line, `ALL IN ORDER`, a drop ends the document and a fix passes the new text to the next rule. The exit code is the worst result. Not every annotator's Markdown examples are executable rules; malformed Python blocks are errors, not silently skipped.
 
 Two more kinds of rule are accepted:
 - **Detectors** that return `True` (drop) or `False` (keep).
-- **Rules whose first parameter is named `doc`.** They get `{doc_id, text, url, lang_label}`. `url` and `lang_label` are read from the pack when it has them, otherwise they are `""`. Rules that look at the file path (H3, F2) or at the language (`LANGS`) need this.
+- **Rules whose first parameter is named `doc`.** They get the document dictionary (`doc_id`, `text`, and available `url` / `lang_label` metadata). If a medicine requires metadata that the pack lacks, the test reports an error rather than treating the missing value as empty. Rules that look at the file path (H3, F2) or at the language (`LANGS`) need this.
+
+**Safety checks:** malformed/duplicate gold IDs, missing Parquet gold documents, missing required metadata, incomplete/duplicate executable rule definitions, exceptions, and in-place document mutations must not produce a PASS. The runner executes trusted Python from the specified rules file: review the code before running it.
 
 ## 3. Report: `rule_report.py`
 
@@ -151,15 +159,15 @@ To look at the rules, run `python -I teams/01-data-a/tools/registry_view.py`. It
 | `--out <file>` | where to write the page. Default: `registry.html` next to the registry |
 | `--show <rule ID>` | print the source of one rule in the terminal, and write no page |
 
-To build `spec_v1.md` from it:
+To build the **draft parent medicine** from all collected submissions, run `python teams/01-data-a/spec/build_spec_v1.py`. This recursively reads `teams/01-data-a/medicines/submissions/<pack_id>/<handle>/medicine.md` and writes `spec/spec_v1.md`, `spec/spec_v1_sources.csv`, and `spec/spec_v1_conflicts.csv`. It **does not execute** contributor code or automatically approve conflicting medicines. Before freezing the specification:
 
 1. Run the extractor on every `medicine.md`, then `rule_report.py` for every pack.
 2. Take the rules that are not withdrawn, PASS the harm test, and that the report advises to KEEP.
 3. For each one, write the ID, the code, the action (from the registry), the rule in words (the **Medicine** text in that annotator's `medicine.md`), the rule in code (the function in `file`), and the harm test result (from the report).
-4. Add the Indic rules from G2.
+4. Integrate the Indic rules from G2 **when that team completes its handoff** (currently pending).
 5. Decide the order the rules run. The registry does not hold an order, so the team decides it.
 
-Nothing writes `spec_v1.md` automatically yet.
+The generated `spec_v1.md` is a **draft**: reviewers must resolve clashes and verify harm on regenerated official gold sets before approving any executable pipeline.
 
 ## Writing a medicine.md so the extractor can read it
 
@@ -172,7 +180,8 @@ Nothing writes `spec_v1.md` automatically yet.
 ## Notes
 
 - The tools **run the annotators' code** (`harm_test.py`, `rule_report.py`). Read it first.
-- Gold files go in `teams/01-data-a/gold/<pack_id>_gold.csv`: doc-ids only, no text. A `_DUMMY` gold file is for testing.
+- Gold files go in `teams/01-data-a/gold/<pack_id>_gold.csv`: `doc_id`, `reader_1`, `reader_2` (no raw text). A `_DUMMY` gold file is for testing.
 - The pack Parquet files are not in the repo.
+- **Regression-test code is different from medicine code:** `test_harm_test.py` and `test_medicine_extract.py` create small synthetic rules, mock/test Parquet rows, and gold CSV fixtures to check the **harness**. Their pytest PASS results do **not** establish that annotators' real cleaning rules pass the 1% harm test. For real harm results, run `harm_test.py` with the relevant medicine/registered rule, original pack Parquet, and refreshed official gold CSV.
 - Tests: `python -I teams/01-data-a/tools/test_harm_test.py` (and `test_medicine_extract.py`, `test_rule_report.py`, `test_fetch_medicines.py`, `test_registry_view.py`).
 - `registry.json` is shared. Decide who runs the extractor and commits it, to avoid merge conflicts.
