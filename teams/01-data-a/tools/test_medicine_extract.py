@@ -226,6 +226,24 @@ class IdCase(unittest.TestCase):
         self.assertEqual({k: (v["n"], v["file"]) for k, v in self.entries().items()},
                          {"DA-B3-001": (1, "code-rust/alice.py"), "DA-B3-002": (2, "code-rust/alice.py")})
 
+    def test_new_ids_skip_ids_used_in_medicine_sheets(self):
+        # a team sheet (<team>/*-medicines/*.md) already numbers its own B3 rule DA-B3-001
+        sheet = self.tmp / "code-medicines" / "medicine_code.md"
+        sheet.parent.mkdir(parents=True)
+        sheet.write_text(py('RULE_ID = "DA-B3-001"\nCODE = "B3"\ndef medicine(doc):\n    return ("keep", doc["text"])'))
+        _, out, _ = self.run_extract(self.write_medicine("code-rust", "alice", self.two_b3()))
+        self.assertEqual(sorted(self.entries()), ["DA-B3-002", "DA-B3-003"])
+        self.assertNotIn("-> DA-B3-001", out)
+
+    def test_registry_paths_use_forward_slashes(self):
+        self.registry.parent.mkdir(parents=True)
+        self.registry.write_text(json.dumps({"rules": [{"id": "DA-B3-001", "pack": "code-rust", "handle": "alice",
+                                                        "code": "B3", "n": 1, "file": "code-rust\\alice.py",
+                                                        "withdrawn": False}]}))
+        self.run_extract(self.write_medicine("code-rust", "alice", self.two_b3()))
+        self.assertTrue(all("\\" not in e["file"] for e in self.entries().values()))
+        self.assertEqual(self.entries()["DA-B3-001"]["file"], "code-rust/alice.py")
+
 
 class DirCase(unittest.TestCase):
     """--dir: many medicine.md files, one run, one registry."""

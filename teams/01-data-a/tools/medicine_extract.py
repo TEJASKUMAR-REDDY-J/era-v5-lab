@@ -183,9 +183,28 @@ def load_registry(path: Path):
     if not path.exists():
         return []
     try:
-        return json.loads(path.read_text(encoding="utf-8"))["rules"]
+        entries = json.loads(path.read_text(encoding="utf-8"))["rules"]
     except (OSError, ValueError, KeyError) as e:
         raise SystemExit(f"error: cannot read the registry {path}: {e}")
+    for e in entries:  # a registry written on Windows before the as_posix fix has backslash paths
+        if "file" in e:
+            e["file"] = e["file"].replace("\\", "/")
+    return entries
+
+
+SHEET_ID = re.compile(r'(?m)^RULE_ID\s*=\s*["\'](D[AB]-[A-H][1-9]-\d{3})["\']')
+
+
+def sheet_ids(team_dir: Path) -> frozenset:
+    """Rule IDs that the team's medicine sheets (<team>/*-medicines/*.md) use. New registry IDs skip them, so a
+    sheet's hand-numbered rule and a newly extracted rule never share an ID."""
+    ids = set()
+    for sheet in sorted(team_dir.glob("*-medicines/*.md")):
+        try:
+            ids.update(SHEET_ID.findall(sheet.read_text(encoding="utf-8")))
+        except (OSError, UnicodeDecodeError):
+            pass
+    return frozenset(ids)
 
 
 def save_registry(path: Path, entries):
@@ -194,11 +213,12 @@ def save_registry(path: Path, entries):
     path.write_text(json.dumps({"rules": entries}, indent=2) + "\n", encoding="utf-8")
 
 
-def assign_ids(entries, pack: str, handle: str, rules, file_rel: str):
+def assign_ids(entries, pack: str, handle: str, rules, file_rel: str, reserved=frozenset()):
     """Return the rule ID of each rule in `rules`, in order. New entries are added to the registry list.
 
     A (pack, handle, code, n) that is in the registry keeps its ID. A new one takes the next number for its
-    team and code. Rules of this pack and handle that are no longer in the medicine.md are marked withdrawn.
+    team and code, skipping the IDs in `reserved` (used by the medicine sheets). Rules of this pack and handle
+    that are no longer in the medicine.md are marked withdrawn.
     """
     prefix = "DA" if pack in DATA_A_PACKS else "DB"
     mine = {(e["code"], e.get("n", 1)): e for e in entries if e["pack"] == pack and e["handle"] == handle}
@@ -209,7 +229,8 @@ def assign_ids(entries, pack: str, handle: str, rules, file_rel: str):
     for r in rules:
         e = mine.get((r["code"], r["n"]))
         if e is None:
-            used = [int(x["id"].rsplit("-", 1)[1]) for x in entries if x["id"].startswith(f"{prefix}-{r['code']}-")]
+            head = f"{prefix}-{r['code']}-"
+            used = [int(i.rsplit("-", 1)[1]) for i in [x["id"] for x in entries] + list(reserved) if i.startswith(head)]
             e = {"id": f"{prefix}-{r['code']}-{max(used, default=0) + 1:03d}", "pack": pack, "handle": handle,
                  "code": r["code"], "n": r["n"]}
             entries.append(e)
@@ -277,8 +298,10 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> in
 
     ids = None
     if found and entries is not None:
-        file_rel = os.path.relpath(out.resolve(), registry.resolve().parent)
-        ids = assign_ids(entries, found[0], found[1], chosen, file_rel)
+        # as_posix: the registry is shared, so its paths use "/" on every platform (Windows gives "\\")
+        file_rel = Path(os.path.relpath(out.resolve(), registry.resolve().parent)).as_posix()
+        ids = assign_ids(entries, found[0], found[1], chosen, file_rel,
+                         reserved=sheet_ids(registry.resolve().parent.parent))
     for i, r in enumerate(chosen):
         print(f"  {r['code']}: {r['expr']}   (from {r['how']}, action {r['action'] or 'not stated'})"
               + (f"   -> {ids[i]}" if ids else ""))
