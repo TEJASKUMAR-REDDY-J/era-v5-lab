@@ -1,8 +1,10 @@
 """Tests for harm_test.py. Run: python -I teams/01-data-a/tools/test_harm_test.py."""
 import contextlib
 import io
+import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -109,6 +111,33 @@ class HarmTestCase(unittest.TestCase):
         rc, out, _ = self.run_ht(src, "A1", "rules.py", "--timeout", "0.01")
         self.assertEqual(rc, 2)
         self.assertIn("RuleTimeout", out)
+
+    def test_runs_without_sigalrm_with_a_warning(self):
+        # Windows has no SIGALRM: the test still runs, without the per-document limit, and says so
+        saved = harm_test.HAS_ALARM
+        harm_test.HAS_ALARM = False
+        try:
+            rc, out, err = self.run_ht("def cure_b3(t):\n    return t.replace('<issue_start>', '')\n", "B3")
+        finally:
+            harm_test.HAS_ALARM = saved
+        self.assertEqual(rc, 0)
+        self.assertIn("documents changed: 2", out)
+        self.assertIn("no SIGALRM on this platform", err)
+
+    def test_watchdog_stops_a_hanging_rule_without_sigalrm(self):
+        # Without SIGALRM the faulthandler watchdog ends the run at --timeout. It exits the process, so run it in one.
+        (self.tmp / "rules.py").write_text("import time\ndef cure_a1(t):\n    time.sleep(30)\n    return t\n")
+        script = (f"import sys; sys.path.insert(0, {str(Path(harm_test.__file__).parent)!r})\n"
+                  "import harm_test; harm_test.HAS_ALARM = False\n"
+                  f"sys.exit(harm_test.main(['--pack', {str(self.tmp / 'pack.parquet')!r}, '--gold', "
+                  f"{str(self.tmp / 'gold.csv')!r}, '--rules', {str(self.tmp / 'rules.py')!r}, '--rule', 'A1', "
+                  "'--timeout', '0.5']))\n")
+        start = time.monotonic()
+        proc = subprocess.run([sys.executable, "-I", "-c", script], capture_output=True, text=True, timeout=60)
+        self.assertLess(time.monotonic() - start, 20)  # stopped at the limit, not after the 30 s sleep
+        self.assertEqual(proc.returncode, 1)  # never a PASS
+        self.assertIn("Timeout", proc.stderr)
+        self.assertNotIn("clean document", proc.stderr + proc.stdout)  # a stack trace only, no document text
 
     def test_missing_rule(self):
         rc, _, err = self.run_ht("def cure_b3(t):\n    return t\n", "Z9")
