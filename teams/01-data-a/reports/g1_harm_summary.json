@@ -1,0 +1,1165 @@
+[
+  {
+    "pack_id": "code-cpp",
+    "scope": "G1",
+    "spec_sections": 5,
+    "conflicts": [],
+    "rules": [
+      {
+        "id": "DA-A1-001",
+        "handle": "TharunSivamani",
+        "disease": "A1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 120,
+        "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
+        "pack_sha256": "2aa25660b81ccaea5e153ab30c0abd80df2a0cf42531421094c5ff9c96401bd5",
+        "rules_file_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
+        "report": "./teams/01-data-a/reports/rules/code-cpp_DA-A1-001_harm.json"
+      },
+      {
+        "id": "DA-A2-001",
+        "handle": "TharunSivamani",
+        "disease": "A2",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 120,
+        "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
+        "pack_sha256": "2aa25660b81ccaea5e153ab30c0abd80df2a0cf42531421094c5ff9c96401bd5",
+        "rules_file_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
+        "report": "./teams/01-data-a/reports/rules/code-cpp_DA-A2-001_harm.json"
+      },
+      {
+        "id": "DA-B3-001",
+        "handle": "TharunSivamani",
+        "disease": "B3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 120,
+        "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
+        "pack_sha256": "2aa25660b81ccaea5e153ab30c0abd80df2a0cf42531421094c5ff9c96401bd5",
+        "rules_file_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
+        "report": "./teams/01-data-a/reports/rules/code-cpp_DA-B3-001_harm.json"
+      },
+      {
+        "id": "DA-B4-001",
+        "handle": "TharunSivamani",
+        "disease": "B4",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 120,
+        "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
+        "pack_sha256": "2aa25660b81ccaea5e153ab30c0abd80df2a0cf42531421094c5ff9c96401bd5",
+        "rules_file_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
+        "report": "./teams/01-data-a/reports/rules/code-cpp_DA-B4-001_harm.json"
+      },
+      {
+        "id": "DA-E4-001",
+        "handle": "TharunSivamani",
+        "disease": "E4",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 120,
+        "percent": "0.000000",
+        "gold_count": 120,
+        "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
+        "pack_sha256": "2aa25660b81ccaea5e153ab30c0abd80df2a0cf42531421094c5ff9c96401bd5",
+        "rules_file_sha256": "653f2c7c1c1a3cd205839eec352a0b4b08a7c8f3c63fe2195a021a6808c4e919",
+        "report": "./teams/01-data-a/reports/rules/code-cpp_DA-E4-001_harm.json"
+      }
+    ],
+    "proposed_rules": 5,
+    "mapped_rules": 5,
+    "unextracted_proposals": [],
+    "status": "ERROR",
+    "reason": "One or more rule harm tests could not be validated"
+  },
+  {
+    "pack_id": "code-go",
+    "scope": "G1",
+    "spec_sections": 19,
+    "conflicts": [
+      "B3",
+      "B4",
+      "E1",
+      "E2",
+      "E4"
+    ],
+    "rules": [
+      {
+        "id": "DA-B3-002",
+        "handle": "RaviNaik",
+        "disease": "B3",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-B3-003",
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "B3",
+        "spec_status": "BLOCKED",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 163,
+        "gold_sha256": "81942db337e2e191b15b916941a2cf4160d1f581296c58b07167be1660c677a6",
+        "pack_sha256": "30fc352199a6b3773d76a692420d25469835e8668ded2cfe8a6be09d71958661",
+        "rules_file_sha256": "8fa7dfaab8ffaddd9f705456c76f0050e8277d7c219e842fc3e2fcaa52bb5c48",
+        "report": "./teams/01-data-a/reports/rules/code-go_DA-B3-003_harm.json"
+      },
+      {
+        "id": "DA-E1-001",
+        "handle": "RaviNaik",
+        "disease": "E1",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-E2-001",
+        "handle": "RaviNaik",
+        "disease": "E2",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      }
+    ],
+    "proposed_rules": 19,
+    "mapped_rules": 4,
+    "unextracted_proposals": [
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "A2",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "A4",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "A6",
+        "count": 1
+      },
+      {
+        "handle": "RaviNaik",
+        "disease": "B4",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "B4",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "C1",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "C3",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "E1",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "E2",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "E3",
+        "count": 1
+      },
+      {
+        "handle": "RaviNaik",
+        "disease": "E4",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "E4",
+        "count": 2
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "F2",
+        "count": 1
+      },
+      {
+        "handle": "TEJASKUMAR-REDDY-J",
+        "disease": "H3",
+        "count": 1
+      }
+    ],
+    "status": "ERROR",
+    "reason": "One or more rule harm tests could not be validated"
+  },
+  {
+    "pack_id": "code-java",
+    "scope": "G1",
+    "spec_sections": 9,
+    "conflicts": [
+      "A2",
+      "B3",
+      "B4",
+      "E4"
+    ],
+    "rules": [
+      {
+        "id": "DA-A2-002",
+        "handle": "curioustushar",
+        "disease": "A2",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-A2-003",
+        "handle": "vaibh27",
+        "disease": "A2",
+        "spec_status": "BLOCKED",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 134,
+        "gold_sha256": "45c626cb871469c45009fd4750db739b9ab6e03d8a725d45140a73e14282275c",
+        "pack_sha256": "739dc95cdb4241847b051e8c55f5a723a4597919c62f9d6e4ebb9a957d445b00",
+        "rules_file_sha256": "39b6dbad5ce68f6c498cd3306534f21a82de63f3ee1cff20121b8231e0eeed64",
+        "report": "./teams/01-data-a/reports/rules/code-java_DA-A2-003_harm.json"
+      },
+      {
+        "id": "DA-B3-004",
+        "handle": "curioustushar",
+        "disease": "B3",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-B3-005",
+        "handle": "vaibh27",
+        "disease": "B3",
+        "spec_status": "BLOCKED",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 134,
+        "gold_sha256": "45c626cb871469c45009fd4750db739b9ab6e03d8a725d45140a73e14282275c",
+        "pack_sha256": "739dc95cdb4241847b051e8c55f5a723a4597919c62f9d6e4ebb9a957d445b00",
+        "rules_file_sha256": "39b6dbad5ce68f6c498cd3306534f21a82de63f3ee1cff20121b8231e0eeed64",
+        "report": "./teams/01-data-a/reports/rules/code-java_DA-B3-005_harm.json"
+      },
+      {
+        "id": "DA-B4-002",
+        "handle": "curioustushar",
+        "disease": "B4",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-B4-003",
+        "handle": "vaibh27",
+        "disease": "B4",
+        "spec_status": "BLOCKED",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 134,
+        "gold_sha256": "45c626cb871469c45009fd4750db739b9ab6e03d8a725d45140a73e14282275c",
+        "pack_sha256": "739dc95cdb4241847b051e8c55f5a723a4597919c62f9d6e4ebb9a957d445b00",
+        "rules_file_sha256": "39b6dbad5ce68f6c498cd3306534f21a82de63f3ee1cff20121b8231e0eeed64",
+        "report": "./teams/01-data-a/reports/rules/code-java_DA-B4-003_harm.json"
+      },
+      {
+        "id": "DA-C1-001",
+        "handle": "curioustushar",
+        "disease": "C1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-E4-002",
+        "handle": "curioustushar",
+        "disease": "E4",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-E4-003",
+        "handle": "vaibh27",
+        "disease": "E4",
+        "spec_status": "BLOCKED",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 134,
+        "gold_sha256": "45c626cb871469c45009fd4750db739b9ab6e03d8a725d45140a73e14282275c",
+        "pack_sha256": "739dc95cdb4241847b051e8c55f5a723a4597919c62f9d6e4ebb9a957d445b00",
+        "rules_file_sha256": "39b6dbad5ce68f6c498cd3306534f21a82de63f3ee1cff20121b8231e0eeed64",
+        "report": "./teams/01-data-a/reports/rules/code-java_DA-E4-003_harm.json"
+      }
+    ],
+    "proposed_rules": 9,
+    "mapped_rules": 9,
+    "unextracted_proposals": [],
+    "status": "ERROR",
+    "reason": "One or more rule harm tests could not be validated"
+  },
+  {
+    "pack_id": "code-js-ts",
+    "scope": "G1",
+    "spec_sections": 8,
+    "conflicts": [],
+    "rules": [
+      {
+        "id": "DA-A2-004",
+        "handle": "varshith2000",
+        "disease": "A2",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 204,
+        "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
+        "pack_sha256": "4aa4dea19a83b8db922156838b6772e107f39c4ce6af76bf19b3008a57b27018",
+        "rules_file_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
+        "report": "./teams/01-data-a/reports/rules/code-js-ts_DA-A2-004_harm.json"
+      },
+      {
+        "id": "DA-B2-001",
+        "handle": "varshith2000",
+        "disease": "B2",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 204,
+        "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
+        "pack_sha256": "4aa4dea19a83b8db922156838b6772e107f39c4ce6af76bf19b3008a57b27018",
+        "rules_file_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
+        "report": "./teams/01-data-a/reports/rules/code-js-ts_DA-B2-001_harm.json"
+      },
+      {
+        "id": "DA-B4-004",
+        "handle": "varshith2000",
+        "disease": "B4",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 204,
+        "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
+        "pack_sha256": "4aa4dea19a83b8db922156838b6772e107f39c4ce6af76bf19b3008a57b27018",
+        "rules_file_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
+        "report": "./teams/01-data-a/reports/rules/code-js-ts_DA-B4-004_harm.json"
+      },
+      {
+        "id": "DA-D3-001",
+        "handle": "varshith2000",
+        "disease": "D3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 204,
+        "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
+        "pack_sha256": "4aa4dea19a83b8db922156838b6772e107f39c4ce6af76bf19b3008a57b27018",
+        "rules_file_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
+        "report": "./teams/01-data-a/reports/rules/code-js-ts_DA-D3-001_harm.json"
+      },
+      {
+        "id": "DA-E1-002",
+        "handle": "varshith2000",
+        "disease": "E1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 204,
+        "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
+        "pack_sha256": "4aa4dea19a83b8db922156838b6772e107f39c4ce6af76bf19b3008a57b27018",
+        "rules_file_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
+        "report": "./teams/01-data-a/reports/rules/code-js-ts_DA-E1-002_harm.json"
+      },
+      {
+        "id": "DA-E3-001",
+        "handle": "varshith2000",
+        "disease": "E3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 1,
+        "errors": 0,
+        "percent": "0.490196",
+        "gold_count": 204,
+        "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
+        "pack_sha256": "4aa4dea19a83b8db922156838b6772e107f39c4ce6af76bf19b3008a57b27018",
+        "rules_file_sha256": "972163d905c077cf95f5377fbb568d6deb25376ed9c9d3c7c2312fc2cb831a65",
+        "report": "./teams/01-data-a/reports/rules/code-js-ts_DA-E3-001_harm.json"
+      }
+    ],
+    "proposed_rules": 8,
+    "mapped_rules": 6,
+    "unextracted_proposals": [
+      {
+        "handle": "AjaySnl",
+        "disease": "B3",
+        "count": 1
+      },
+      {
+        "handle": "varshith2000",
+        "disease": "E4",
+        "count": 1
+      }
+    ],
+    "status": "PARTIAL_COVERAGE",
+    "reason": "Some medicine proposals have no active registry implementation"
+  },
+  {
+    "pack_id": "code-python",
+    "scope": "G1",
+    "spec_sections": 11,
+    "conflicts": [],
+    "rules": [
+      {
+        "id": "DA-A1-002",
+        "handle": "saitej123",
+        "disease": "A1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-A2-005",
+        "handle": "saitej123",
+        "disease": "A2",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-A3-001",
+        "handle": "saitej123",
+        "disease": "A3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-A4-001",
+        "handle": "saitej123",
+        "disease": "A4",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-B1-001",
+        "handle": "saitej123",
+        "disease": "B1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-B3-006",
+        "handle": "saitej123",
+        "disease": "B3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-C2-001",
+        "handle": "saitej123",
+        "disease": "C2",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-E1-003",
+        "handle": "saitej123",
+        "disease": "E1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-E2-002",
+        "handle": "saitej123",
+        "disease": "E2",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-E3-002",
+        "handle": "saitej123",
+        "disease": "E3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      },
+      {
+        "id": "DA-F1-001",
+        "handle": "saitej123",
+        "disease": "F1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "reason": "ValueError"
+      }
+    ],
+    "proposed_rules": 11,
+    "mapped_rules": 11,
+    "unextracted_proposals": [],
+    "status": "ERROR",
+    "reason": "One or more rule harm tests could not be validated"
+  },
+  {
+    "pack_id": "code-rust",
+    "scope": "G1",
+    "spec_sections": 5,
+    "conflicts": [],
+    "rules": [
+      {
+        "id": "DA-A2-006",
+        "handle": "amukka",
+        "disease": "A2",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 78,
+        "gold_sha256": "2fbb0779f2da11fb888da093ba55f9b609ecef250f56790903f7c2854bf09c96",
+        "pack_sha256": "c5822b7df0e76a6bbca95ea6d73a94f19970fe8a71e5645e9205195193a227e5",
+        "rules_file_sha256": "6ea42baf35e7b56f8d1c325bed9159ab40c87ae720dc91d34f190f5bd1cf73b9",
+        "report": "./teams/01-data-a/reports/rules/code-rust_DA-A2-006_harm.json"
+      },
+      {
+        "id": "DA-B3-007",
+        "handle": "amukka",
+        "disease": "B3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 78,
+        "gold_sha256": "2fbb0779f2da11fb888da093ba55f9b609ecef250f56790903f7c2854bf09c96",
+        "pack_sha256": "c5822b7df0e76a6bbca95ea6d73a94f19970fe8a71e5645e9205195193a227e5",
+        "rules_file_sha256": "6ea42baf35e7b56f8d1c325bed9159ab40c87ae720dc91d34f190f5bd1cf73b9",
+        "report": "./teams/01-data-a/reports/rules/code-rust_DA-B3-007_harm.json"
+      },
+      {
+        "id": "DA-B4-005",
+        "handle": "amukka",
+        "disease": "B4",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 78,
+        "gold_sha256": "2fbb0779f2da11fb888da093ba55f9b609ecef250f56790903f7c2854bf09c96",
+        "pack_sha256": "c5822b7df0e76a6bbca95ea6d73a94f19970fe8a71e5645e9205195193a227e5",
+        "rules_file_sha256": "6ea42baf35e7b56f8d1c325bed9159ab40c87ae720dc91d34f190f5bd1cf73b9",
+        "report": "./teams/01-data-a/reports/rules/code-rust_DA-B4-005_harm.json"
+      },
+      {
+        "id": "DA-E1-004",
+        "handle": "amukka",
+        "disease": "E1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 78,
+        "gold_sha256": "2fbb0779f2da11fb888da093ba55f9b609ecef250f56790903f7c2854bf09c96",
+        "pack_sha256": "c5822b7df0e76a6bbca95ea6d73a94f19970fe8a71e5645e9205195193a227e5",
+        "rules_file_sha256": "6ea42baf35e7b56f8d1c325bed9159ab40c87ae720dc91d34f190f5bd1cf73b9",
+        "report": "./teams/01-data-a/reports/rules/code-rust_DA-E1-004_harm.json"
+      },
+      {
+        "id": "DA-E4-004",
+        "handle": "amukka",
+        "disease": "E4",
+        "spec_status": "CANDIDATE",
+        "harm_status": "PASS",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 0,
+        "percent": "0.000000",
+        "gold_count": 78,
+        "gold_sha256": "2fbb0779f2da11fb888da093ba55f9b609ecef250f56790903f7c2854bf09c96",
+        "pack_sha256": "c5822b7df0e76a6bbca95ea6d73a94f19970fe8a71e5645e9205195193a227e5",
+        "rules_file_sha256": "6ea42baf35e7b56f8d1c325bed9159ab40c87ae720dc91d34f190f5bd1cf73b9",
+        "report": "./teams/01-data-a/reports/rules/code-rust_DA-E4-004_harm.json"
+      }
+    ],
+    "proposed_rules": 5,
+    "mapped_rules": 5,
+    "unextracted_proposals": [],
+    "status": "PENDING_APPROVAL",
+    "reason": "Individual rules passed, but parent Spec v1 remains NOT APPROVED"
+  },
+  {
+    "pack_id": "en-dclm",
+    "scope": "G1",
+    "spec_sections": 8,
+    "conflicts": [],
+    "rules": [
+      {
+        "id": "DA-A1-003",
+        "handle": "shekar-maker",
+        "disease": "A1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 62,
+        "percent": "0.000000",
+        "gold_count": 62,
+        "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+        "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+        "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+        "report": "./teams/01-data-a/reports/rules/en-dclm_DA-A1-003_harm.json"
+      },
+      {
+        "id": "DA-A3-002",
+        "handle": "shekar-maker",
+        "disease": "A3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 62,
+        "percent": "0.000000",
+        "gold_count": 62,
+        "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+        "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+        "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+        "report": "./teams/01-data-a/reports/rules/en-dclm_DA-A3-002_harm.json"
+      },
+      {
+        "id": "DA-B4-006",
+        "handle": "shekar-maker",
+        "disease": "B4",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 62,
+        "percent": "0.000000",
+        "gold_count": 62,
+        "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+        "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+        "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+        "report": "./teams/01-data-a/reports/rules/en-dclm_DA-B4-006_harm.json"
+      },
+      {
+        "id": "DA-C1-002",
+        "handle": "shekar-maker",
+        "disease": "C1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 62,
+        "percent": "0.000000",
+        "gold_count": 62,
+        "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+        "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+        "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+        "report": "./teams/01-data-a/reports/rules/en-dclm_DA-C1-002_harm.json"
+      },
+      {
+        "id": "DA-C2-002",
+        "handle": "shekar-maker",
+        "disease": "C2",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 62,
+        "percent": "0.000000",
+        "gold_count": 62,
+        "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+        "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+        "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+        "report": "./teams/01-data-a/reports/rules/en-dclm_DA-C2-002_harm.json"
+      },
+      {
+        "id": "DA-C3-001",
+        "handle": "shekar-maker",
+        "disease": "C3",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 62,
+        "percent": "0.000000",
+        "gold_count": 62,
+        "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+        "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+        "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+        "report": "./teams/01-data-a/reports/rules/en-dclm_DA-C3-001_harm.json"
+      },
+      {
+        "id": "DA-C5-001",
+        "handle": "shekar-maker",
+        "disease": "C5",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 62,
+        "percent": "0.000000",
+        "gold_count": 62,
+        "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+        "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+        "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+        "report": "./teams/01-data-a/reports/rules/en-dclm_DA-C5-001_harm.json"
+      },
+      {
+        "id": "DA-F1-002",
+        "handle": "shekar-maker",
+        "disease": "F1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 62,
+        "percent": "0.000000",
+        "gold_count": 62,
+        "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+        "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+        "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+        "report": "./teams/01-data-a/reports/rules/en-dclm_DA-F1-002_harm.json"
+      }
+    ],
+    "proposed_rules": 8,
+    "mapped_rules": 8,
+    "unextracted_proposals": [],
+    "status": "ERROR",
+    "reason": "One or more rule harm tests could not be validated"
+  },
+  {
+    "pack_id": "en-fineweb-edu",
+    "scope": "G1",
+    "spec_sections": 5,
+    "conflicts": [],
+    "rules": [],
+    "proposed_rules": 5,
+    "mapped_rules": 0,
+    "unextracted_proposals": [
+      {
+        "handle": "deepjyotisaha",
+        "disease": "B4",
+        "count": 1
+      },
+      {
+        "handle": "deepjyotisaha",
+        "disease": "C1",
+        "count": 1
+      },
+      {
+        "handle": "deepjyotisaha",
+        "disease": "C3",
+        "count": 1
+      },
+      {
+        "handle": "deepjyotisaha",
+        "disease": "D3",
+        "count": 1
+      },
+      {
+        "handle": "deepjyotisaha",
+        "disease": "F1",
+        "count": 1
+      }
+    ],
+    "status": "PENDING_RULES",
+    "reason": "No active registry rules matched to Spec v1 medicine proposals"
+  },
+  {
+    "pack_id": "en-nemotroncc",
+    "scope": "G1",
+    "spec_sections": 0,
+    "conflicts": [],
+    "rules": [],
+    "proposed_rules": 0,
+    "mapped_rules": 0,
+    "unextracted_proposals": [],
+    "status": "PENDING_RULES",
+    "reason": "No active registry rules matched to Spec v1 medicine proposals"
+  },
+  {
+    "pack_id": "en-nemotroncc-synth",
+    "scope": "G1",
+    "spec_sections": 12,
+    "conflicts": [
+      "B4",
+      "C3",
+      "C4"
+    ],
+    "rules": [
+      {
+        "id": "DA-B4-007",
+        "handle": "maheshsv",
+        "disease": "B4",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 96,
+        "percent": "0.000000",
+        "gold_count": 96,
+        "gold_sha256": "72216094cbebbf7b913cc16061b202820c1ed9a9710ef6af6a132c5f89910315",
+        "pack_sha256": "0f1c3a9866ada7fb5ea2a244135d9766375351bec366c13cd9c5abfb3d82573c",
+        "rules_file_sha256": "b403328001ee7ac63d581fb263b3e24d66b42e816420d02c3b59ec0517afc439",
+        "report": "./teams/01-data-a/reports/rules/en-nemotroncc-synth_DA-B4-007_harm.json"
+      },
+      {
+        "id": "DA-B4-008",
+        "handle": "maheshsv",
+        "disease": "B4",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 96,
+        "percent": "0.000000",
+        "gold_count": 96,
+        "gold_sha256": "72216094cbebbf7b913cc16061b202820c1ed9a9710ef6af6a132c5f89910315",
+        "pack_sha256": "0f1c3a9866ada7fb5ea2a244135d9766375351bec366c13cd9c5abfb3d82573c",
+        "rules_file_sha256": "b403328001ee7ac63d581fb263b3e24d66b42e816420d02c3b59ec0517afc439",
+        "report": "./teams/01-data-a/reports/rules/en-nemotroncc-synth_DA-B4-008_harm.json"
+      },
+      {
+        "id": "DA-B5-001",
+        "handle": "maheshsv",
+        "disease": "B5",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 96,
+        "percent": "0.000000",
+        "gold_count": 96,
+        "gold_sha256": "72216094cbebbf7b913cc16061b202820c1ed9a9710ef6af6a132c5f89910315",
+        "pack_sha256": "0f1c3a9866ada7fb5ea2a244135d9766375351bec366c13cd9c5abfb3d82573c",
+        "rules_file_sha256": "b403328001ee7ac63d581fb263b3e24d66b42e816420d02c3b59ec0517afc439",
+        "report": "./teams/01-data-a/reports/rules/en-nemotroncc-synth_DA-B5-001_harm.json"
+      },
+      {
+        "id": "DA-C1-003",
+        "handle": "maheshsv",
+        "disease": "C1",
+        "spec_status": "CANDIDATE",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 96,
+        "percent": "0.000000",
+        "gold_count": 96,
+        "gold_sha256": "72216094cbebbf7b913cc16061b202820c1ed9a9710ef6af6a132c5f89910315",
+        "pack_sha256": "0f1c3a9866ada7fb5ea2a244135d9766375351bec366c13cd9c5abfb3d82573c",
+        "rules_file_sha256": "b403328001ee7ac63d581fb263b3e24d66b42e816420d02c3b59ec0517afc439",
+        "report": "./teams/01-data-a/reports/rules/en-nemotroncc-synth_DA-C1-003_harm.json"
+      },
+      {
+        "id": "DA-C4-001",
+        "handle": "maheshsv",
+        "disease": "C4",
+        "spec_status": "BLOCKED",
+        "harm_status": "ERROR",
+        "changed": 0,
+        "dropped": 0,
+        "errors": 96,
+        "percent": "0.000000",
+        "gold_count": 96,
+        "gold_sha256": "72216094cbebbf7b913cc16061b202820c1ed9a9710ef6af6a132c5f89910315",
+        "pack_sha256": "0f1c3a9866ada7fb5ea2a244135d9766375351bec366c13cd9c5abfb3d82573c",
+        "rules_file_sha256": "b403328001ee7ac63d581fb263b3e24d66b42e816420d02c3b59ec0517afc439",
+        "report": "./teams/01-data-a/reports/rules/en-nemotroncc-synth_DA-C4-001_harm.json"
+      }
+    ],
+    "proposed_rules": 12,
+    "mapped_rules": 5,
+    "unextracted_proposals": [
+      {
+        "handle": "AJJAPUSIVA",
+        "disease": "B4",
+        "count": 1
+      },
+      {
+        "handle": "AJJAPUSIVA",
+        "disease": "C3",
+        "count": 1
+      },
+      {
+        "handle": "maheshsv",
+        "disease": "C3",
+        "count": 1
+      },
+      {
+        "handle": "AJJAPUSIVA",
+        "disease": "C4",
+        "count": 2
+      },
+      {
+        "handle": "maheshsv",
+        "disease": "C5",
+        "count": 1
+      },
+      {
+        "handle": "AJJAPUSIVA",
+        "disease": "UNCLASSIFIED",
+        "count": 1
+      }
+    ],
+    "status": "ERROR",
+    "reason": "One or more rule harm tests could not be validated"
+  },
+  {
+    "pack_id": "math-finemath",
+    "scope": "G1",
+    "spec_sections": 15,
+    "conflicts": [],
+    "rules": [],
+    "proposed_rules": 15,
+    "mapped_rules": 0,
+    "unextracted_proposals": [
+      {
+        "handle": "SomaKorada07",
+        "disease": "A1",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "A3",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "A5",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "A6",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "B2",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "B4",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "B5",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "C1",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "C2",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "C3",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "C4",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "C5",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "D3",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "D4",
+        "count": 1
+      },
+      {
+        "handle": "SomaKorada07",
+        "disease": "F1",
+        "count": 1
+      }
+    ],
+    "status": "PENDING_RULES",
+    "reason": "No active registry rules matched to Spec v1 medicine proposals"
+  },
+  {
+    "pack_id": "math-megamath",
+    "scope": "G1",
+    "spec_sections": 0,
+    "conflicts": [],
+    "rules": [],
+    "proposed_rules": 0,
+    "mapped_rules": 0,
+    "unextracted_proposals": [],
+    "status": "PENDING_RULES",
+    "reason": "No active registry rules matched to Spec v1 medicine proposals"
+  },
+  {
+    "pack_id": "sci-finepdfs",
+    "scope": "G1",
+    "spec_sections": 8,
+    "conflicts": [],
+    "rules": [],
+    "proposed_rules": 8,
+    "mapped_rules": 0,
+    "unextracted_proposals": [
+      {
+        "handle": "jssunil",
+        "disease": "A6",
+        "count": 1
+      },
+      {
+        "handle": "jssunil",
+        "disease": "B2",
+        "count": 1
+      },
+      {
+        "handle": "jssunil",
+        "disease": "B4",
+        "count": 1
+      },
+      {
+        "handle": "jssunil",
+        "disease": "C1",
+        "count": 1
+      },
+      {
+        "handle": "jssunil",
+        "disease": "C3",
+        "count": 1
+      },
+      {
+        "handle": "jssunil",
+        "disease": "C4",
+        "count": 1
+      },
+      {
+        "handle": "jssunil",
+        "disease": "D1",
+        "count": 1
+      },
+      {
+        "handle": "jssunil",
+        "disease": "F1",
+        "count": 1
+      }
+    ],
+    "status": "PENDING_RULES",
+    "reason": "No active registry rules matched to Spec v1 medicine proposals"
+  },
+  {
+    "pack_id": "cadj-commits",
+    "scope": "SPEC_EXTRA",
+    "spec_sections": 2,
+    "conflicts": [
+      "F1"
+    ],
+    "rules": [],
+    "proposed_rules": 2,
+    "mapped_rules": 1,
+    "unextracted_proposals": [
+      {
+        "handle": "sureshmantha",
+        "disease": "F1",
+        "count": 1
+      }
+    ],
+    "status": "SPEC_STALE",
+    "reason": "kunal2016: medicine.md missing; pradeep-kumar-gs: medicine.md missing; sureshmantha: medicine.md missing"
+  },
+  {
+    "pack_id": "cadj-stackexchange",
+    "scope": "SPEC_EXTRA",
+    "spec_sections": 2,
+    "conflicts": [],
+    "rules": [],
+    "proposed_rules": 2,
+    "mapped_rules": 2,
+    "unextracted_proposals": [],
+    "status": "SPEC_STALE",
+    "reason": "smitasasindran: medicine.md missing"
+  }
+]

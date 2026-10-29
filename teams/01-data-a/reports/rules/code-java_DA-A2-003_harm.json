@@ -1,0 +1,27 @@
+{
+  "pack": "code-java.parquet",
+  "pack_sha256": "739dc95cdb4241847b051e8c55f5a723a4597919c62f9d6e4ebb9a957d445b00",
+  "gold": "code-java_gold.csv",
+  "gold_sha256": "45c626cb871469c45009fd4750db739b9ab6e03d8a725d45140a73e14282275c",
+  "gold_count": 134,
+  "rules": "./teams/01-data-a/rules/code-java/vaibh27.py",
+  "rules_file_sha256": "39b6dbad5ce68f6c498cd3306534f21a82de63f3ee1cff20121b8231e0eeed64",
+  "code_sha256": "39b6dbad5ce68f6c498cd3306534f21a82de63f3ee1cff20121b8231e0eeed64",
+  "limit_percent": "1",
+  "status": "PASS",
+  "results": [
+    {
+      "rule": "DA-A2-003",
+      "changed": 0,
+      "dropped": 0,
+      "affected_unique": 0,
+      "errors": 0,
+      "error_types": [],
+      "percent": "0.000000",
+      "result": "PASS",
+      "changed_ids": [],
+      "dropped_ids": [],
+      "affected_ids": []
+    }
+  ]
+}

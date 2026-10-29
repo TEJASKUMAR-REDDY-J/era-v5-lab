@@ -381,9 +381,8 @@ def build_gold(
             try:
                 parsed_votes = parse_labels(submission, warnings)
             except (ValueError, csv.Error) as exc:
-                skipped_files += 1
-                warnings.append(f"Skipping {submission.source}: {exc}")
-                continue
+                # Invalid submissions must not silently reduce gold membership.
+                raise ValueError(f"{submission.source}: invalid labels CSV: {exc}") from exc
             file_count += 1
             for doc_id, vote in parsed_votes.items():
                 review_votes[doc_id][submission.handle] = vote

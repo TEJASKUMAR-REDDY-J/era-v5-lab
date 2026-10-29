@@ -1,0 +1,29 @@
+{
+  "pack": "en-dclm.parquet",
+  "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+  "gold": "en-dclm_gold.csv",
+  "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+  "gold_count": 62,
+  "rules": "./teams/01-data-a/rules/en-dclm/shekar-maker.py",
+  "rules_file_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+  "code_sha256": "ed7f2f692c581cd7ff1f5a4994d438310d3252a3c85749bafdc3e22174ce41b4",
+  "limit_percent": "1",
+  "status": "ERROR",
+  "results": [
+    {
+      "rule": "DA-C1-002",
+      "changed": 0,
+      "dropped": 0,
+      "affected_unique": 0,
+      "errors": 62,
+      "error_types": [
+        "TypeError"
+      ],
+      "percent": "0.000000",
+      "result": "ERROR",
+      "changed_ids": [],
+      "dropped_ids": [],
+      "affected_ids": []
+    }
+  ]
+}
