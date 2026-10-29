@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 HERE = Path(__file__).resolve().parent
-MODULE = HERE / 'run_harm_suite.py'
+MODULE = HERE.parent / 'tools' / 'run_harm_suite.py'
 spec = importlib.util.spec_from_file_location('run_harm_suite', MODULE)
 runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)

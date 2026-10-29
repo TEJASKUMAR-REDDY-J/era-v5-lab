@@ -270,5 +270,5 @@ The generated `spec_v1.md` is a **draft**: reviewers must resolve clashes and ve
 - Gold files go in `teams/01-data-a/gold/<pack_id>_gold.csv`: `doc_id`, `reader_1`, `reader_2` (no raw text). A `_DUMMY` gold file is for testing.
 - The pack Parquet files are not in the repo.
 - **Regression-test code is different from medicine code:** `test_harm_test.py` and `test_medicine_extract.py` create small synthetic rules, mock/test Parquet rows, and gold CSV fixtures to check the **harness**. Their pytest PASS results do **not** establish that annotators' real cleaning rules pass the 1% harm test. For real harm results, run `harm_test.py` with the relevant medicine/registered rule, original pack Parquet, and refreshed official gold CSV.
-- Tests: `python -I teams/01-data-a/tools/test_harm_test.py` (and `test_medicine_extract.py`, `test_rule_report.py`, `test_fetch_medicines.py`, `test_registry_view.py`).
+- Tests are in `teams/01-data-a/tests/`. Run one with `python -I teams/01-data-a/tests/test_harm_test.py` (and `test_medicine_extract.py`, `test_rule_report.py`, `test_fetch_medicines.py`, `test_registry_view.py`). `test_run_harm_suite.py` needs pytest.
 - `registry.json` is shared. Decide who runs the extractor and commits it, to avoid merge conflicts.
