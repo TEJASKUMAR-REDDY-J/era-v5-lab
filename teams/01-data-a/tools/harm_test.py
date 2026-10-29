@@ -5,7 +5,7 @@ Usage:
     python -I harm_test.py --pack <pack.parquet> --gold <pack_gold.csv> --rules <rules.py|medicine.md> --rule <CODE>
 
     --pack      the pack Parquet file (columns doc_id, text are read)
-    --gold      the gold CSV (column doc_id; reader_1 and reader_2 are ignored)
+    --gold      the gold CSV (doc_id, reader_1, reader_2; distinct nonempty reviewers required)
     --rule      a rule ID such as DA-B3-001 (DA = Data A, DB = Data B, then the disease code and a number),
                 or a disease code such as B3 when --rules is given
     --rules     a .py file, or a medicine.md file whose ```python blocks hold the code. Not needed for a rule ID:
@@ -26,21 +26,24 @@ reuse names, and the rule is found by its RULE_ID. --rule all then tests every r
 whole sheet in file order (a drop ends a document, a fix passes the new text to the next rule).
 
 A rule may also return True (drop) or False (keep). A rule whose first parameter is named doc gets a dict with
-doc_id, text, url and lang_label (url and lang_label are read when the pack has them, else ""), not the text.
+doc_id, text, url and lang_label (url and lang_label are read when the pack has them; required metadata cannot be missing), not the text.
 
 A document is "changed" when the rule returns text that differs from the input (compared byte for byte, no
 normalisation). It is "dropped" when the rule returns the action "drop". Each document counts once.
-PASS means (changed + dropped) is at most --limit percent of the gold documents.
+PASS requires no errors and (changed + dropped) at most --limit percent of the gold documents.
 
 Exit code: 0 = PASS, 1 = FAIL, 2 = the test could not be run (bad input, or the rule raised an error).
 
 The rules file is run as code: read it before you run it. A per-document timeout stops runaway regexes (Unix only).
 """
 import argparse
+import ast
+import copy
 import csv
 import hashlib
 import inspect
 import json
+import math
 import re
 import signal
 import sys
@@ -48,17 +51,13 @@ import textwrap
 from fractions import Fraction
 from pathlib import Path
 
-import pyarrow as pa
-import pyarrow.compute as pc
-import pyarrow.parquet as pq
-
 ACTIONS = ("keep", "fix", "drop")
 RULE_ID = re.compile(r"^D[AB]-[A-H][1-9]-\d{3}$")
+RULE_ID_RE = RULE_ID
 DEFAULT_REGISTRY = Path(__file__).resolve().parent.parent / "rules" / "registry.json"
 # A fenced block, possibly indented inside a list item. The closing fence must have the same indent.
 FENCE = re.compile(r"^([ \t]*)```(?:python|py)[ \t]*\n(.*?)^\1```[ \t]*$", re.S | re.M)
 HAS_ALARM = hasattr(signal, "setitimer")
-SHEET_RULE = re.compile(r"^RULE_ID\s*=", re.M)
 
 
 class Fatal(Exception):
@@ -69,55 +68,153 @@ class RuleTimeout(Exception):
     pass
 
 
+class RuleMutationError(Exception):
+    pass
+
+
 def _on_alarm(signum, frame):
-    raise RuleTimeout
+    raise RuleTimeout("per-document time limit exceeded")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open('rb') as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+
+def _code_assignment_names(code: str):
+    """Inspect top-level bindings and reject duplicate literal rule keys.
+
+    Duplicate keys inside a Python dictionary are normally overwritten before
+    runtime inspection, which would make --rule all undercount submitted rules.
+    """
+    tree = ast.parse(code)
+    names = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        seen = set()
+        for key in node.keys:
+            if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
+                continue
+            if key.value in seen:
+                raise ValueError(f'duplicate dictionary key {key.value!r}')
+            seen.add(key.value)
+    for node in tree.body:
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    names.add(target.id)
+    return names
 
 
 def load_rules(path: Path):
-    """Run the code in the rules file and return (namespace, sha256 of the code that ran)."""
+    """Run all executable rule blocks; reject skipped/overwritten definitions."""
     try:
         src = path.read_text(encoding="utf-8")
-    except OSError as e:
-        raise Fatal(f"cannot read rules file {path}: {e.strerror}")
+    except (OSError, UnicodeError) as e:
+        raise Fatal(f"cannot read rules file {path}: {e}") from e
     is_md = path.suffix.lower() == ".md"
     blocks = [textwrap.dedent(m.group(2)) for m in FENCE.finditer(src)] if is_md else [src]
     if not blocks:
-        raise Fatal(f"{path.name}: no ```python block found")
+        raise Fatal(f"{path}: no executable python blocks")
     ns = {"__name__": "rules"}
-    ran = []
+    declared = {}
     for i, block in enumerate(blocks, 1):
         label = f"{path.name} block {i}" if is_md else path.name
         try:
-            if is_md and SHEET_RULE.search(block):  # one sheet rule: its own namespace, found by its RULE_ID
+            assignments = _code_assignment_names(block)
+            tree = ast.parse(block)
+            has_medicine = "medicine" in assignments or any(
+                isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "medicine"
+                for n in tree.body
+            )
+            if is_md and has_medicine and "RULE_ID" not in assignments:
+                raise ValueError("medicine() defined without RULE_ID; rule would be skipped")
+            if is_md and "RULE_ID" in assignments:
                 own = {"__name__": "rules"}
                 exec(compile(block, label, "exec"), own)
-                ns.setdefault("RULES_BY_ID", {})[own["RULE_ID"]] = own["medicine"]
+                rid, medicine = own.get("RULE_ID"), own.get("medicine")
+                if not isinstance(rid, str) or not RULE_ID.fullmatch(rid):
+                    raise ValueError("RULE_ID is absent or invalid")
+                if not callable(medicine):
+                    raise ValueError(f"{rid}: medicine must be callable")
+                if rid in declared or rid in (ns.get("RULES_BY_ID") or {}):
+                    raise ValueError(f"duplicate RULE_ID {rid} (previous block {declared.get(rid, 'registry mapping')})")
+                declared[rid] = i
+                ns.setdefault("RULES_BY_ID", {})[rid] = medicine
+                required = own.get("REQUIRED_FIELDS", ())
+                if isinstance(required, str):
+                    raise ValueError(f"{rid}: REQUIRED_FIELDS must be a collection of field names")
+                requirements = set(required)
+                if own.get("LANGS") is not None:
+                    requirements.add("lang_label")
+                # Detect metadata use even through doc.get() with a default.
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name) and node.value.id == "doc":
+                        if isinstance(node.slice, ast.Constant) and node.slice.value in ("url", "lang_label"):
+                            requirements.add(node.slice.value)
+                    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                            and isinstance(node.func.value, ast.Name) and node.func.value.id == "doc"
+                            and node.func.attr == "get" and node.args
+                            and isinstance(node.args[0], ast.Constant)
+                            and node.args[0].value in ("url", "lang_label")):
+                        requirements.add(node.args[0].value)
+                if not all(isinstance(s, str) and s in ("doc_id", "text", "url", "lang_label") for s in requirements):
+                    raise ValueError(f"{rid}: invalid REQUIRED_FIELDS")
+                setattr(medicine, "_g1_required_fields", frozenset(requirements))
             else:
+                # An incomplete example or overwritten mapping must never produce PASS.
+                prior = dict(ns.get("RULES_BY_ID") or {})
+                prior_short = dict(ns.get("RULES") or {})
                 exec(compile(block, label, "exec"), ns)
-            ran.append(block)
+                updated, updated_short = ns.get("RULES_BY_ID") or {}, ns.get("RULES") or {}
+                if not isinstance(updated, dict) or not isinstance(updated_short, dict):
+                    raise ValueError("RULES_BY_ID and RULES must be dictionaries")
+                if any(rid not in updated or updated[rid] is not fn for rid, fn in prior.items()):
+                    raise ValueError("overwrote an already registered RULE_ID")
+                if any(rid not in updated_short or updated_short[rid] is not fn for rid, fn in prior_short.items()):
+                    raise ValueError("overwrote an already registered RULES entry")
         except Exception as e:
-            if not is_md:
-                raise Fatal(f"{label}: {type(e).__name__}: {e}")
-            # medicine.md often shows code fragments next to the complete code. Skip what does not run alone.
-            print(f"warning: skipped {label} ({type(e).__name__}: {e})", file=sys.stderr)
-    if not ran:
-        raise Fatal(f"{path.name}: no code block ran without an error")
-    return ns, hashlib.sha256("\n".join(ran).encode("utf-8")).hexdigest()
-
+            raise Fatal(f"{label}: {type(e).__name__}: {e}") from e
+    by_id, by_code = ns.get("RULES_BY_ID") or {}, ns.get("RULES") or {}
+    if not isinstance(by_id, dict) or not all(callable(fn) for fn in by_id.values()):
+        raise Fatal("RULES_BY_ID must map IDs to callable rules")
+    if not isinstance(by_code, dict) or not all(isinstance(k, str) and callable(fn) for k, fn in by_code.items()):
+        raise Fatal("RULES must map disease codes to callable rules")
+    if not all(isinstance(rid, str) and RULE_ID.fullmatch(rid) for rid in by_id):
+        raise Fatal("RULES_BY_ID includes invalid rule ID")
+    return ns, hashlib.sha256("\n".join(blocks).encode("utf-8")).hexdigest()
 
 def registry_file_for(rule_id: str, registry: Path) -> Path:
-    """Find the rules file of a rule ID in the registry."""
+    """Find the rule file, rejecting duplicates and unsafe/withdrawn paths."""
     try:
         entries = json.loads(registry.read_text(encoding="utf-8"))["rules"]
-    except (OSError, ValueError, KeyError) as e:
-        raise Fatal(f"cannot read the registry {registry}: {e}")
-    for e in entries:
-        if e["id"] == rule_id:
-            if e.get("withdrawn"):
-                print(f"warning: {rule_id} is withdrawn: its medicine.md no longer has this rule", file=sys.stderr)
-            return registry.parent / e["file"]
-    raise Fatal(f"{rule_id} is not in the registry {registry}")
-
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        raise Fatal(f"cannot read the registry {registry}: {e}") from e
+    if not isinstance(entries, list) or any(not isinstance(e, dict) for e in entries):
+        raise Fatal(f"{registry}: rules must be a list of records")
+    matches = [e for e in entries if e.get("id") == rule_id]
+    if not matches:
+        raise Fatal(f"{rule_id} is not in the registry {registry} (expected one registry entry, found 0)")
+    if len(matches) != 1:
+        raise Fatal(f"{rule_id}: expected one registry entry, found {len(matches)}")
+    e = matches[0]
+    if e.get("withdrawn"):
+        raise Fatal(f"{rule_id}: withdrawn rule cannot be approved")
+    filename = e.get("file")
+    if not isinstance(filename, str) or not filename.strip():
+        raise Fatal(f"{rule_id}: missing rule file path in registry")
+    resolved = (registry.parent / filename).resolve()
+    trusted_root = (Path(__file__).resolve().parents[3] if registry.resolve() == DEFAULT_REGISTRY.resolve()
+                    else registry.parent.resolve())
+    if not resolved.is_relative_to(trusted_root):
+        raise Fatal(f"{rule_id}: rule file must remain within trusted registry directory/repository")
+    return resolved
 
 def find_rule(ns: dict, code: str):
     if RULE_ID.match(code):
@@ -152,45 +249,73 @@ def classify(text: str, out) -> str:
 
 
 def read_gold(path: Path):
-    try:
-        with open(path, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            if "doc_id" not in (reader.fieldnames or []):
-                raise Fatal(f"{path.name}: no doc_id column")
-            ids = [r["doc_id"].strip() for r in reader if r["doc_id"] and r["doc_id"].strip()]
-    except OSError as e:
-        raise Fatal(f"cannot read gold file {path}: {e.strerror}")
-    unique = list(dict.fromkeys(ids))
-    if len(unique) < len(ids):
-        print(f"warning: {len(ids) - len(unique)} duplicate doc_id rows in the gold file were ignored", file=sys.stderr)
-    if not unique:
-        raise Fatal(f"{path.name}: the gold set is empty")
-    return unique
+    """Gold membership must have two *different* nonempty named readers.
 
+    This validates provenance structure, NOT the underlying diagnosis votes;
+    verify those against the source submissions when building the gold set.
+    """
+    required = {'doc_id', 'reader_1', 'reader_2'}
+    ids = []
+    seen = set()
+    try:
+        with path.open(newline='', encoding='utf-8-sig') as stream:
+            reader = csv.DictReader(stream)
+            if not reader.fieldnames or not required.issubset(reader.fieldnames):
+                raise Fatal(f'{path.name}: required columns are doc_id,reader_1,reader_2')
+            if len(reader.fieldnames) != len(set(reader.fieldnames)):
+                raise Fatal(f'{path.name}: duplicate column heading')
+            for number, row in enumerate(reader, 2):
+                if None in row:
+                    raise Fatal(f'{path.name} line {number}: extra CSV fields')
+                id_, a, b = ((row.get(key) or '').strip() for key in ('doc_id', 'reader_1', 'reader_2'))
+                if not id_ or not a or not b:
+                    raise Fatal(f'{path.name} line {number}: missing ID or clean reader')
+                if a.casefold() == b.casefold():
+                    raise Fatal(f'{path.name} line {number}: same reader recorded twice')
+                if id_ in seen:
+                    raise Fatal(f'{path.name} line {number}: duplicate doc_id {id_}')
+                seen.add(id_)
+                ids.append(id_)
+    except (OSError, UnicodeError, csv.Error) as exc:
+        raise Fatal(f'cannot read gold file {path}: {exc}') from exc
+    if not ids:
+        raise Fatal(f'{path.name}: gold set is empty')
+    return ids
 
 def read_pack_docs(path: Path, ids):
-    """Return {doc_id: {"doc_id", "text", "url", "lang_label"}} for the gold ids only."""
+    """Return validated gold documents; preserve missing optional metadata as missing."""
+    try:
+        import pyarrow as pa
+        import pyarrow.compute as pc
+        import pyarrow.parquet as pq
+    except ImportError as e:
+        raise Fatal("pyarrow is required to read Parquet; pip install pyarrow") from e
     try:
         names = pq.read_schema(path).names
-        cols = ["doc_id", "text"] + [c for c in ("url", "lang_label") if c in names]
+        if not {"doc_id", "text"}.issubset(names):
+            raise Fatal(f"{path.name}: pack requires doc_id and text columns")
+        cols = ["doc_id", "text"] + [c for c in ("url", "lang_label", "pack_id") if c in names]
         table = pq.read_table(path, columns=cols)
-    except (OSError, KeyError, ValueError) as e:
-        raise Fatal(f"cannot read pack {path}: {e}")
-    table = table.filter(pc.is_in(table["doc_id"], value_set=pa.array(ids, type=table["doc_id"].type)))
+        table = table.filter(pc.is_in(table["doc_id"], value_set=pa.array(ids, type=table["doc_id"].type)))
+        rows = table.to_pylist()
+    except Fatal:
+        raise
+    except Exception as e:
+        raise Fatal(f"cannot read pack {path}: {type(e).__name__}: {e}") from e
     docs = {}
-    for row in table.to_pylist():
+    for row in rows:
         doc_id = row["doc_id"]
-        if doc_id in docs:
-            raise Fatal(f"doc_id {doc_id} appears twice in the pack")
-        if row["text"] is None:
-            raise Fatal(f"doc_id {doc_id} has no text in the pack")
-        docs[doc_id] = {"doc_id": doc_id, "text": row["text"], "url": row.get("url") or "",
-                        "lang_label": row.get("lang_label") or ""}
-    missing = [i for i in ids if i not in docs]
+        if not isinstance(doc_id, str) or doc_id in docs:
+            raise Fatal(f"{path.name}: invalid or duplicate doc_id {doc_id!r}")
+        if not isinstance(row["text"], str):
+            raise Fatal(f"{path.name}: doc_id {doc_id} has non-text value")
+        if "pack_id" in row and row["pack_id"] != path.stem:
+            raise Fatal(f"{path.name}: doc_id {doc_id} belongs to pack {row['pack_id']!r}")
+        docs[doc_id] = dict(row)
+    missing = [id_ for id_ in ids if id_ not in docs]
     if missing:
-        raise Fatal(f"{len(missing)} gold doc_ids are not in the pack, for example {', '.join(missing[:3])}")
-    return docs
-
+        raise Fatal(f"{path.name}: {len(missing)} gold IDs are not in the pack, e.g. {', '.join(missing[:3])}")
+    return {id_: docs[id_] for id_ in ids}
 
 def read_pack_texts(path: Path, ids):
     """Return {doc_id: text} for the gold ids only."""
@@ -207,70 +332,110 @@ def takes_doc(rule) -> bool:
 
 
 def harm_percent(changed: int, dropped: int, n: int, limit: Fraction):
-    """Return (percent of the gold set that was changed or dropped, passed). The one place the limit is applied."""
+    if n <= 0:
+        raise Fatal('cannot calculate harm against an empty gold set')
     percent = Fraction((changed + dropped) * 100, n)
     return percent, percent <= limit
+
+def _replacement(text, out):
+    return out if isinstance(out, str) else out[1]
+
+
+
+def _invoke(rule, doc, timeout):
+    """Classify a rule without ever exposing shared inputs to mutation."""
+    original = copy.deepcopy(doc)
+    required = set(getattr(rule, '_g1_required_fields', ()))
+    missing = sorted(k for k in required if k not in original or original[k] is None or (k == 'lang_label' and not str(original[k]).strip()))
+    if missing:
+        raise ValueError('required metadata missing: ' + ', '.join(missing))
+    working = copy.deepcopy(original)
+    if HAS_ALARM:
+        signal.setitimer(signal.ITIMER_REAL, timeout)
+    try:
+        out = rule(working) if takes_doc(rule) else rule(working['text'])
+        if working != original:
+            raise RuleMutationError('medicine mutated input document; return a new value instead')
+        verdict = classify(original['text'], out)
+        return verdict, (_replacement(original['text'], out) if verdict == 'fix' else original['text'])
+    finally:
+        if HAS_ALARM:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+
+def _normalized(doc_id, value):
+    if isinstance(value, dict):
+        return value
+    return {'doc_id': doc_id, 'text': value}
 
 
 def run_rule(rule, texts: dict, timeout: float):
     """texts maps doc_id to the text, or to the document dict of read_pack_docs."""
     changed, dropped, errors = [], [], []
-    by_doc = takes_doc(rule)
     if HAS_ALARM:
         signal.signal(signal.SIGALRM, _on_alarm)
     for doc_id, doc in texts.items():
         if not isinstance(doc, dict):
-            doc = {"doc_id": doc_id, "text": doc, "url": "", "lang_label": ""}
-        text = doc["text"]
-        if HAS_ALARM:
-            signal.setitimer(signal.ITIMER_REAL, timeout)
+            doc = {"doc_id": doc_id, "text": doc}
         try:
-            verdict = classify(text, rule(doc) if by_doc else rule(text))
+            verdict, _ = _invoke(rule, doc, timeout)
         except Exception as e:  # a rule that crashes is a rule bug; report the type only, never document text
             errors.append((doc_id, type(e).__name__))
             continue
-        finally:
-            if HAS_ALARM:
-                signal.setitimer(signal.ITIMER_REAL, 0)
         if verdict == "fix":
             changed.append(doc_id)
         elif verdict == "drop":
             dropped.append(doc_id)
     return changed, dropped, errors
-
-
 def run_sheet(rules, texts: dict, timeout: float):
     """Run the rules in order on each document: a drop ends it, a fix passes the new text on. Same counts as run_rule."""
     changed, dropped, errors = [], [], []
-    calls = [(rid, rule, takes_doc(rule)) for rid, rule in rules]
     if HAS_ALARM:
         signal.signal(signal.SIGALRM, _on_alarm)
     for doc_id, doc in texts.items():
-        d = dict(doc) if isinstance(doc, dict) else {"doc_id": doc_id, "text": doc, "url": "", "lang_label": ""}
+        d = copy.deepcopy(doc) if isinstance(doc, dict) else {"doc_id": doc_id, "text": doc}
         start, verdict = d["text"], "keep"
-        for rid, rule, by_doc in calls:
-            if HAS_ALARM:
-                signal.setitimer(signal.ITIMER_REAL, timeout)
+        for rid, rule in rules:
             try:
-                out = rule(d) if by_doc else rule(d["text"])
-                step = classify(d["text"], out)
+                step, newtext = _invoke(rule, d, timeout)
             except Exception as e:
                 errors.append((doc_id, f"{rid}: {type(e).__name__}"))
                 verdict = "error"
                 break
-            finally:
-                if HAS_ALARM:
-                    signal.setitimer(signal.ITIMER_REAL, 0)
             if step == "drop":
                 verdict = "drop"
                 break
             if step == "fix":
-                d["text"] = out if isinstance(out, str) else out[1]
+                d["text"] = newtext
         if verdict == "drop":
             dropped.append(doc_id)
         elif verdict == "keep" and d["text"] != start:
             changed.append(doc_id)
     return changed, dropped, errors
+def _result(name, rows, n, limit):
+    changed, dropped, errors = rows
+    percent, passed = harm_percent(len(changed), len(dropped), n, limit)
+    status = 'ERROR' if errors else 'PASS' if passed else 'FAIL'
+    return {'rule': name, 'changed': len(changed), 'dropped': len(dropped),
+            'affected_unique': len(set(changed) | set(dropped)),
+            'errors': len(errors), 'error_types': sorted(set(error for _, error in errors)),
+            'percent': f'{float(percent):.6f}', 'result': status,
+            'changed_ids': changed, 'dropped_ids': dropped,
+            'affected_ids': list(dict.fromkeys(changed + dropped))}
+
+
+
+def _write_report(args, rules_path, digest, count, limit, status, results):
+    if not args.report:
+        return
+    report = {"pack": args.pack.name, "pack_sha256": sha256_file(args.pack),
+              "gold": args.gold.name, "gold_sha256": sha256_file(args.gold),
+              "gold_count": count, "rules": str(rules_path),
+              "rules_file_sha256": sha256_file(rules_path), "code_sha256": digest,
+              "limit_percent": str(limit), "status": status, "results": results}
+    args.report.parent.mkdir(parents=True, exist_ok=True)
+    args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
 
 def main_all(args, limit) -> int:
@@ -280,25 +445,30 @@ def main_all(args, limit) -> int:
     ns, digest = load_rules(args.rules)
     rules = list((ns.get("RULES_BY_ID") or {}).items()) or list((ns.get("RULES") or {}).items())
     if not rules:
-        raise Fatal(f"{args.rules.name}: no RULE_ID blocks, RULES_BY_ID or RULES to run")
+        raise Fatal(f"{args.rules.name}: no callable rules for --rule all")
     n = len(texts)
     print(f"pack: {args.pack.name}   gold: {args.gold.name} ({n} documents)   rules: {len(rules)}")
-    print(f"rules file: {args.rules.name}   code sha256: {digest[:16]}")
-    print(f"{'rule':<14}{'changed':>8}{'dropped':>8}{'percent':>9}  result")
+    print(f"rules file: {args.rules.name}   code sha256: {digest}")
+    print(f"{'rule':<18}{'changed':>8}{'dropped':>8}{'percent':>9}  result")
     worst = 0
-    for name, rows in [(rid, run_rule(rule, texts, args.timeout)) for rid, rule in rules] +                       [("ALL IN ORDER", run_sheet(rules, texts, args.timeout))]:
+    results = []
+    for name, rows in [(rid, run_rule(rule, texts, args.timeout)) for rid, rule in rules] + [
+            ("ALL IN ORDER", run_sheet(rules, texts, args.timeout))]:
         changed, dropped, errors = rows
+        result = _result(name, rows, n, limit)
+        results.append(result)
         percent, passed = harm_percent(len(changed), len(dropped), n, limit)
-        result = "ERROR" if errors else "PASS" if passed else "FAIL"
+        status = result["result"]
         worst = max(worst, 2 if errors else 0 if passed else 1)
-        print(f"{name:<14}{len(changed):>8}{len(dropped):>8}{float(percent):>8.2f}%  {result}"
-              + (f"  ({len(errors)} errors, for example {errors[0][0]} {errors[0][1]})" if errors else ""))
-        if args.show and (changed or dropped):
-            print("  affected doc_ids: " + ", ".join((changed + dropped)[: args.show]))
-    print("result: " + ("PASS" if worst == 0 else "FAIL" if worst == 1 else "ERROR"))
+        print(f"{name:<18}{len(changed):>8}{len(dropped):>8}{float(percent):>8.2f}%  {status}")
+        if args.show:
+            print("  affected doc_ids: " + ", ".join(result["affected_ids"][:args.show]))
+        if errors:
+            print("  errors: " + ", ".join(result["error_types"]))
+    status = ("PASS", "FAIL", "ERROR")[worst]
+    print("result: " + status)
+    _write_report(args, args.rules, digest, n, limit, status, results)
     return worst
-
-
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Run one cleaning rule on a gold set and report the harm.")
     ap.add_argument("--pack", required=True, type=Path)
@@ -310,59 +480,50 @@ def main(argv=None) -> int:
     ap.add_argument("--limit", default="1", help="failing limit in percent of the gold set (default 1)")
     ap.add_argument("--show", type=int, default=0, metavar="N", help="list the first N affected doc_ids")
     ap.add_argument("--timeout", type=float, default=5.0, help="seconds per document (default 5)")
+    ap.add_argument("--report", type=Path, help="write reproducible JSON, IDs only")
     args = ap.parse_args(argv)
 
     try:
-        limit = Fraction(args.limit)
-        if limit < 0:
-            raise ValueError
-    except ValueError:
-        print(f"error: --limit must be a number of percent, not {args.limit!r}", file=sys.stderr)
-        return 2
-    code = args.rule.strip().upper()
-    if code == "ALL":
-        if args.rules is None:
-            print("error: --rule all needs --rules", file=sys.stderr)
-            return 2
         try:
+            limit = Fraction(args.limit)
+        except (ValueError, ZeroDivisionError) as e:
+            raise Fatal(f"--limit must be a number from 0 through 100: {args.limit!r}") from e
+        if not Fraction(0) <= limit <= Fraction(100):
+            raise Fatal("--limit must be from 0 through 100")
+        if not math.isfinite(args.timeout) or args.timeout <= 0:
+            raise Fatal("--timeout must be finite and greater than zero")
+        if args.show < 0:
+            raise Fatal("--show must be nonnegative")
+        if not HAS_ALARM:
+            raise Fatal("per-document timeout unsupported on this platform; use Linux/macOS")
+        code = args.rule.strip().upper()
+        if args.rules is None and (code == "ALL" or not RULE_ID.fullmatch(code)):
+            raise Fatal("--rule all or disease-code tests require --rules")
+        if code == "ALL":
             return main_all(args, limit)
-        except Fatal as e:
-            print(f"error: {e}", file=sys.stderr)
-            return 2
-    if args.rules is None and not RULE_ID.match(code):
-        print("error: give --rules, or a rule ID such as DA-B3-001 as --rule", file=sys.stderr)
-        return 2
 
-    try:
         ids = read_gold(args.gold)
         texts = read_pack_docs(args.pack, ids)
         rules_path = args.rules or registry_file_for(code, args.registry)
         ns, digest = load_rules(rules_path)
         rule = find_rule(ns, code)
-        if not HAS_ALARM:
-            print("warning: no per-document timeout on this platform", file=sys.stderr)
         changed, dropped, errors = run_rule(rule, texts, args.timeout)
-    except Fatal as e:
+        n = len(texts)
+        result = _result(code, (changed, dropped, errors), n, limit)
+        print(f"pack: {args.pack.name}   gold: {args.gold.name} ({n} documents)   rule: {code}")
+        print(f"rules file: {rules_path.name}   code sha256: {digest}")
+        print(f"documents changed: {len(changed)}")
+        print(f"documents dropped: {len(dropped)}")
+        print(f"percent: {float(result['percent']):.2f}% of the gold set (limit {args.limit}%)")
+        if args.show:
+            print("  affected doc_ids: " + ", ".join(result["affected_ids"][:args.show]))
+        if errors:
+            print("  errors: " + ", ".join(result["error_types"]))
+        print("result: " + result["result"])
+        _write_report(args, rules_path, digest, n, limit, result["result"], [result])
+        return {"PASS": 0, "FAIL": 1, "ERROR": 2}[result["result"]]
+    except (Fatal, OSError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
-
-    n = len(texts)
-    harmed = len(changed) + len(dropped)
-    percent, passed = harm_percent(len(changed), len(dropped), n, limit)
-    print(f"pack: {args.pack.name}   gold: {args.gold.name} ({n} documents)   rule: {code}")
-    print(f"rules file: {rules_path.name}   code sha256: {digest[:16]}")
-    print(f"documents changed: {len(changed)}")
-    print(f"documents dropped: {len(dropped)}")
-    print(f"percent: {float(percent):.2f}% of the gold set (limit {args.limit}%)")
-    if args.show and harmed:
-        print("affected doc_ids: " + ", ".join(((changed + dropped)[: args.show])))
-    if errors:
-        print(f"rule errors: {len(errors)} documents, for example {errors[0][0]} ({errors[0][1]})")
-        print("result: ERROR (the rule failed on some gold documents, so the harm is not known)")
-        return 2
-    print("result: " + ("PASS" if passed else "FAIL"))
-    return 0 if passed else 1
-
-
 if __name__ == "__main__":
     sys.exit(main())
