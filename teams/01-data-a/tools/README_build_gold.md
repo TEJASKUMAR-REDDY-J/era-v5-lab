@@ -39,7 +39,7 @@ one-per-line text list of confirmed G1 pack IDs is preferable:
 ```bash
 python teams/01-data-a/tools/build_gold.py \
   --repo-root . --include-open-prs \
-  --pack-list teams/01-data-a/g1_pack_ids.txt
+  --pack-list teams/01-data-a/gold/g1_pack_ids.txt
 ```
 
 Example `g1_pack_ids.txt`:
@@ -60,7 +60,7 @@ Optional: validate IDs against the actual downloaded Parquet packs (requires
 
 ```bash
 python teams/01-data-a/tools/build_gold.py \
-  --include-open-prs --pack-list teams/01-data-a/g1_pack_ids.txt \
+  --include-open-prs --pack-list teams/01-data-a/gold/g1_pack_ids.txt \
   --pack-dir /path/to/parquet_packs
 ```
 

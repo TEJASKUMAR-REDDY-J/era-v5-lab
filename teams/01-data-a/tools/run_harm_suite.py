@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[3]
 TEAM = ROOT / 'teams' / '01-data-a'
 SPEC = TEAM / 'spec' / 'spec_v1.md'
 REGISTRY = TEAM / 'rules' / 'registry.json'
-G1_PACKS = TEAM / 'g1_pack_ids.txt'
+G1_PACKS = TEAM / 'gold' / 'g1_pack_ids.txt'
 
 # All matching formats below are the documented output of build_spec_v1.py.
 INVENTORY_ROW = re.compile(
@@ -165,7 +165,7 @@ def run(parquet_dir: Path, report_dir: Path, spec: Path,
         gold_dir: Path | None = None, *, limit: str = '1', timeout: float = 5.0,
         dry_run: bool = False) -> int:
     registry = registry or TEAM / 'rules' / 'registry.json'
-    pack_ids = pack_ids or TEAM / 'g1_pack_ids.txt'
+    pack_ids = pack_ids or TEAM / 'gold' / 'g1_pack_ids.txt'
     gold_dir = gold_dir or TEAM / 'gold'
     report_dir.mkdir(parents=True, exist_ok=True)
     try:

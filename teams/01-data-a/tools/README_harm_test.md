@@ -213,7 +213,7 @@ uv run python teams/01-data-a/tools/run_harm_suite.py \
 | `--report-dir <folder>` | output directory; default `teams/01-data-a/reports` |
 | `--spec <file>` | draft parent specification; default `teams/01-data-a/spec/spec_v1.md` |
 | `--registry <file>` | executable rule-ID registry; default `teams/01-data-a/rules/registry.json` |
-| `--pack-ids <file>` | core G1 pack list; default `teams/01-data-a/g1_pack_ids.txt` |
+| `--pack-ids <file>` | core G1 pack list; default `teams/01-data-a/gold/g1_pack_ids.txt` |
 | `--limit <percent>` | maximum individual-rule harm percentage; default `1` |
 | `--timeout <seconds>` | time limit for each rule/document call; default `5` |
 | `--dry-run` | show coverage and statuses without running any medicine code |

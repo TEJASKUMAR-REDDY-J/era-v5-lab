@@ -26,7 +26,7 @@ def harness(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, 'TEAM', team)
     (team / 'tools').mkdir()
     (team / 'tools' / 'harm_test.py').write_text('')
-    (team / 'g1_pack_ids.txt').write_text('code-go\ncode-python\nmath-megamath\n')
+    (team / 'gold' / 'g1_pack_ids.txt').write_text('code-go\ncode-python\nmath-megamath\n')
     originals = tmp_path / 'packs'
     originals.mkdir()
     gold = team / 'gold'
@@ -98,7 +98,7 @@ def mock_success(monkeypatch, override=None):
 
 def execute(h):
     return runner.run(h.originals, h.reports, h.spec, h.registry,
-                      h.team / 'g1_pack_ids.txt', h.gold)
+                      h.team / 'gold' /'g1_pack_ids.txt', h.gold)
 
 
 def records(h):
@@ -195,7 +195,7 @@ def test_dry_run_reports_coverage_without_original_packs(harness, monkeypatch):
     for path in harness.originals.iterdir():
         path.unlink()
     assert runner.run(harness.originals, harness.reports, harness.spec, harness.registry,
-                      harness.team / 'g1_pack_ids.txt', harness.gold, dry_run=True) == 1
+                      harness.team / 'gold' / 'g1_pack_ids.txt', harness.gold, dry_run=True) == 1
     assert not calls
     assert records(harness)['code-go']['status'] == 'DRY_RUN'
     assert len(records(harness)['code-go']['rules']) == 2
