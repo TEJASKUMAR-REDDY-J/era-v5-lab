@@ -1,0 +1,103 @@
+[
+  {
+    "pack_id": "code-cpp",
+    "status": "PASS",
+    "gold_count": 120,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/code-cpp_harm.json",
+    "gold_sha256": "0f53271f3bebb4b5d62464c74945732af745306fba2ac6035b61d858f61bb973",
+    "pack_sha256": "2aa25660b81ccaea5e153ab30c0abd80df2a0cf42531421094c5ff9c96401bd5",
+    "worst_percent": 0.0
+  },
+  {
+    "pack_id": "code-go",
+    "status": "PASS",
+    "gold_count": 163,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/code-go_harm.json",
+    "gold_sha256": "81942db337e2e191b15b916941a2cf4160d1f581296c58b07167be1660c677a6",
+    "pack_sha256": "30fc352199a6b3773d76a692420d25469835e8668ded2cfe8a6be09d71958661",
+    "worst_percent": 0.0
+  },
+  {
+    "pack_id": "code-java",
+    "status": "PASS",
+    "gold_count": 134,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/code-java_harm.json",
+    "gold_sha256": "45c626cb871469c45009fd4750db739b9ab6e03d8a725d45140a73e14282275c",
+    "pack_sha256": "739dc95cdb4241847b051e8c55f5a723a4597919c62f9d6e4ebb9a957d445b00",
+    "worst_percent": 0.0
+  },
+  {
+    "pack_id": "code-js-ts",
+    "status": "FAIL",
+    "gold_count": 204,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/code-js-ts_harm.json",
+    "gold_sha256": "518cf5c367f088a324b94167e03b224ffa48e38cf429003fbe2ba7c705a2ad1a",
+    "pack_sha256": "4aa4dea19a83b8db922156838b6772e107f39c4ce6af76bf19b3008a57b27018",
+    "worst_percent": 3.431373
+  },
+  {
+    "pack_id": "code-rust",
+    "status": "PASS",
+    "gold_count": 78,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/code-rust_harm.json",
+    "gold_sha256": "2fbb0779f2da11fb888da093ba55f9b609ecef250f56790903f7c2854bf09c96",
+    "pack_sha256": "c5822b7df0e76a6bbca95ea6d73a94f19970fe8a71e5645e9205195193a227e5",
+    "worst_percent": 0.0
+  },
+  {
+    "pack_id": "en-dclm",
+    "status": "PASS",
+    "gold_count": 62,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/en-dclm_harm.json",
+    "gold_sha256": "8165439648189b96fb5b7986435761a05fd34a50474a6d30a196c5308d27767d",
+    "pack_sha256": "d5ae1e7e991de478eb443ec6ca991308473c22922a986c3ebbba71ebfe0fa2b4",
+    "worst_percent": 0.0
+  },
+  {
+    "pack_id": "en-fineweb-edu",
+    "status": "PASS",
+    "gold_count": 160,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/en-fineweb-edu_harm.json",
+    "gold_sha256": "6f1e0b6728275456d18eed848edc0ce62b912d83a5bb877296a059d1311c6d66",
+    "pack_sha256": "3a0ad16983c03e9d8b6a40d8e58d769d9b89e68406a3b86e79fd7b8d68e022de",
+    "worst_percent": 0.0
+  },
+  {
+    "pack_id": "en-nemotroncc",
+    "status": "PASS",
+    "gold_count": 34,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/en-nemotroncc_harm.json",
+    "gold_sha256": "0175e5d0afa8d66195fdd200c3daa4484ec279b363c61deb09c59487f905d69c",
+    "pack_sha256": "6eae1507bc689c79ec8b73011b264f5b4558ef8eb3ddbf866a598588b7cf0fbb",
+    "worst_percent": 0.0
+  },
+  {
+    "pack_id": "en-nemotroncc-synth",
+    "status": "PASS",
+    "gold_count": 96,
+    "report": "/home/vijay/projects/erav5/era-v5-lab/teams/01-data-a/reports/en-nemotroncc-synth_harm.json",
+    "gold_sha256": "72216094cbebbf7b913cc16061b202820c1ed9a9710ef6af6a132c5f89910315",
+    "pack_sha256": "0f1c3a9866ada7fb5ea2a244135d9766375351bec366c13cd9c5abfb3d82573c",
+    "worst_percent": 0.0
+  },
+  {
+    "pack_id": "code-python",
+    "status": "PENDING",
+    "reason": "Canonical code medicines explicitly exclude Python"
+  },
+  {
+    "pack_id": "math-finemath",
+    "status": "PENDING",
+    "reason": "Canonical math medicine and conflict review pending"
+  },
+  {
+    "pack_id": "math-megamath",
+    "status": "PENDING",
+    "reason": "Canonical math medicine and two-reader gold pending"
+  },
+  {
+    "pack_id": "sci-finepdfs",
+    "status": "PENDING",
+    "reason": "Canonical science medicine and conflict review pending"
+  }
+]
