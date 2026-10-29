@@ -53,6 +53,27 @@ class HarmTestCase(unittest.TestCase):
         self.assertIn("documents dropped: 1", out)
         self.assertIn("result: FAIL", out)
 
+    def test_debug_lists_the_documents_that_did_not_pass_without_their_text(self):
+        src = ("RULES = {'X': lambda t: ('drop', '') if t == 'DROPME' else "
+               "('fix', t.replace('<issue_start> ', ''))}\n")
+        rc, out, err = self.run_ht(src, "x", "rules.py", "--debug")
+        self.assertEqual(rc, 1)
+        self.assertIn("debug: gold: 200 doc_ids from gold.csv", err)
+        self.assertIn("debug: X: 3 gold documents did not pass", err)
+        self.assertIn("  d000  changed  29 -> 15 characters, first difference at offset 0", err)
+        self.assertIn("  d002  dropped  (6 characters)", err)
+        self.assertNotIn("marked document", err + out)            # ids and offsets only, never text
+        rc, out, err = self.run_ht(src, "x")                       # nothing extra without --debug
+        self.assertNotIn("debug:", err)
+
+    def test_debug_names_the_error_of_a_crashing_rule_and_works_with_rule_all(self):
+        src = "def medicine_b3(t):\n    return 1 / 0 if t == 'DROPME' else t\n"
+        md = "**Disease:** B3, x\n```python\n" + src + "```\n"
+        rc, _, err = self.run_ht(md, "all", "medicine.md", "--debug")
+        self.assertEqual(rc, 2)
+        self.assertIn("debug: section B3: rule medicine_b3 (from function medicine_b3)", err)
+        self.assertIn("  d002  error ZeroDivisionError", err)
+
     def test_limit_option(self):
         rc, out, _ = self.run_ht("cure_a1 = lambda t: t.upper()\n", "A1", "rules.py", "--limit", "100")
         self.assertEqual(rc, 0)

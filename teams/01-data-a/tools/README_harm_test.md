@@ -93,6 +93,7 @@ Runs one rule on the gold set. Prints documents changed, documents dropped, the 
 | `--registry <file>` | where to look up a rule ID. Default: `rules/registry.json` |
 | `--limit <percent>` | the failing limit, as a percent of the gold set. Default `1` |
 | `--show <N>` | also list the first N `doc_id`s that were changed or dropped. Default `0` |
+| `--debug` | print on stderr what the test does (gold and pack sizes, the rules file, the function chosen for each section) and one line for each gold document that was changed, dropped or crashed: its `doc_id`, the kind of change, the lengths and the first offset that differs. Never the text |
 | `--timeout <seconds>` | the time allowed for one document. Default `5` |
 | `--report <file>` | optional JSON report with source hashes, counts, rule results, and affected IDs (no raw text) |
 

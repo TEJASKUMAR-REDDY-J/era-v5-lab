@@ -74,6 +74,13 @@ def repo_relative(path: Path) -> str:
 
 FENCE = medicine_extract.FENCE  # a fenced python block, possibly indented inside a list item
 HAS_ALARM = hasattr(signal, "setitimer")
+DEBUG = False  # set by --debug
+
+
+def debug(message: str):
+    """A progress line on stderr when --debug is given. Ids, counts and offsets only, never document text."""
+    if DEBUG:
+        print("debug: " + message, file=sys.stderr)
 
 
 class Fatal(Exception):
@@ -154,6 +161,7 @@ def load_medicine_md(path: Path, src: str):
     """
     found, code = medicine_extract.rules_from_markdown(src, path.name)
     for b in found.blocks:
+        debug(f"{path.name} block {b.index}: {b.kind}")
         if b.kind in ("fragment", "syntax error"):
             what = "has a syntax error" if b.kind == "syntax error" else "is a fragment that does not run on its own"
             raise Fatal(f"{path.name} block {b.index} {what}. Make it complete, or remove it from the medicine.md")
@@ -165,6 +173,8 @@ def load_medicine_md(path: Path, src: str):
         raise Fatal(f"{path.name}: " + "; ".join(found.clashes))
     if not found.chosen:
         raise Fatal(f"{path.name}: no rule could be matched to a disease code")
+    for r in found.chosen:
+        debug(f"section {r['code']}: rule {r['expr']} (from {r['how']})")
     ns = {"__name__": "rules"}
     try:
         exec(compile(code, path.name, "exec"), ns)
@@ -447,8 +457,21 @@ def _normalized(doc_id, value):
     return {'doc_id': doc_id, 'text': value}
 
 
-def run_rule(rule, texts: dict, timeout: float):
-    """texts maps doc_id to the text, or to the document dict of read_pack_docs."""
+def debug_not_passing(name: str, detail: dict):
+    """With --debug: one line for each gold document that the rule changed, dropped or crashed on."""
+    if not DEBUG:
+        return
+    debug(f"{name}: " + (f"{len(detail)} gold documents did not pass" if detail else "every gold document passed"))
+    for doc_id, what in detail.items():
+        debug(f"  {doc_id}  {what}")
+
+
+def run_rule(rule, texts: dict, timeout: float, detail: dict = None):
+    """texts maps doc_id to the text, or to the document dict of read_pack_docs.
+
+    If `detail` is a dict, it gets a line for each document that did not pass: doc_id -> a short description
+    (the kind of change, lengths and the first offset that differs, or the error type). Never the text itself.
+    """
     changed, dropped, errors = [], [], []
     if HAS_ALARM:
         signal.signal(signal.SIGALRM, _on_alarm)
@@ -456,15 +479,25 @@ def run_rule(rule, texts: dict, timeout: float):
         if not isinstance(doc, dict):
             doc = {"doc_id": doc_id, "text": doc}
         try:
-            verdict, _ = _invoke(rule, doc, timeout)
+            verdict, new = _invoke(rule, doc, timeout)
         except Exception as e:  # a rule that crashes is a rule bug; report the type only, never document text
             errors.append((doc_id, type(e).__name__))
+            if detail is not None:
+                detail[doc_id] = f"error {type(e).__name__}"
             continue
         if verdict == "fix":
             changed.append(doc_id)
+            if detail is not None:
+                old = doc["text"]
+                detail[doc_id] = (f"changed  {len(old)} -> {len(new)} characters, "
+                                  f"first difference at offset {len(os.path.commonprefix([old, new]))}")
         elif verdict == "drop":
             dropped.append(doc_id)
+            if detail is not None:
+                detail[doc_id] = f"dropped  ({len(doc['text'])} characters)"
     return changed, dropped, errors
+
+
 def run_sheet(rules, texts: dict, timeout: float):
     """Run the rules in order on each document: a drop ends it, a fix passes the new text on. Same counts as run_rule."""
     changed, dropped, errors = [], [], []
@@ -518,8 +551,11 @@ def _write_report(args, rules_path, digest, count, limit, status, results):
 def main_all(args, limit) -> int:
     """--rule all: every rule of the rules file alone, then all of them in file order."""
     ids = read_gold(args.gold)
+    debug(f"gold: {len(ids)} doc_ids from {args.gold.name}")
     texts = read_pack_docs(args.pack, ids)
+    debug(f"pack: {len(texts)} documents read from {args.pack.name}")
     ns, digest = load_rules(args.rules)
+    debug(f"rules file: {args.rules} (code sha256 {digest[:12]})")
     rules = list((ns.get("RULES_BY_ID") or {}).items()) or list((ns.get("RULES") or {}).items())
     if not rules:
         raise Fatal(f"{args.rules.name}: no callable rules for --rule all")
@@ -529,7 +565,8 @@ def main_all(args, limit) -> int:
     print(f"{'rule':<18}{'changed':>8}{'dropped':>8}{'percent':>9}  result")
     worst = 0
     results = []
-    for name, rows in [(rid, run_rule(rule, texts, args.timeout)) for rid, rule in rules] + [
+    details = {rid: {} for rid, _ in rules}
+    for name, rows in [(rid, run_rule(rule, texts, args.timeout, details[rid] if DEBUG else None)) for rid, rule in rules] + [
             ("ALL IN ORDER", run_sheet(rules, texts, args.timeout))]:
         changed, dropped, errors = rows
         result = _result(name, rows, n, limit)
@@ -542,6 +579,7 @@ def main_all(args, limit) -> int:
             print("  affected doc_ids: " + ", ".join(result["affected_ids"][:args.show]))
         if errors:
             print("  errors: " + ", ".join(result["error_types"]))
+        debug_not_passing(name, details.get(name, {}))
     status = ("PASS", "FAIL", "ERROR")[worst]
     print("result: " + status)
     _write_report(args, args.rules, digest, n, limit, status, results)
@@ -558,7 +596,12 @@ def main(argv=None) -> int:
     ap.add_argument("--show", type=int, default=0, metavar="N", help="list the first N affected doc_ids")
     ap.add_argument("--timeout", type=float, default=5.0, help="seconds per document (default 5)")
     ap.add_argument("--report", type=Path, help="write reproducible JSON, IDs only")
+    ap.add_argument("--debug", action="store_true",
+                    help="on stderr: what the test does, and a line for each gold document that was changed, dropped "
+                         "or raised an error (ids, lengths and offsets, never text)")
     args = ap.parse_args(argv)
+    global DEBUG
+    DEBUG = args.debug
 
     try:
         try:
@@ -580,13 +623,19 @@ def main(argv=None) -> int:
             return main_all(args, limit)
 
         ids = read_gold(args.gold)
+        debug(f"gold: {len(ids)} doc_ids from {args.gold.name}")
         texts = read_pack_docs(args.pack, ids)
+        debug(f"pack: {len(texts)} documents read from {args.pack.name}")
         if args.rules and not RULE_ID.fullmatch(code):
             check_one_section(args.rules, code)
         rules_path = args.rules or registry_file_for(code, args.registry)
         ns, digest = load_rules(rules_path)
+        debug(f"rules file: {rules_path} (code sha256 {digest[:12]})")
         rule = find_rule(ns, code)
-        changed, dropped, errors = run_rule(rule, texts, args.timeout)
+        debug(f"rule {code}: function {getattr(rule, '__name__', '<inline>')}, "
+              f"gets the {'document dict' if takes_doc(rule) else 'text'}")
+        detail = {} if DEBUG else None
+        changed, dropped, errors = run_rule(rule, texts, args.timeout, detail)
         n = len(texts)
         result = _result(code, (changed, dropped, errors), n, limit)
         print(f"pack: {args.pack.name}   gold: {args.gold.name} ({n} documents)   rule: {code}")
@@ -599,6 +648,7 @@ def main(argv=None) -> int:
         if errors:
             print("  errors: " + ", ".join(result["error_types"]))
         print("result: " + result["result"])
+        debug_not_passing(code, detail or {})
         _write_report(args, rules_path, digest, n, limit, result["result"], [result])
         return {"PASS": 0, "FAIL": 1, "ERROR": 2}[result["result"]]
     except (Fatal, OSError) as e:
