@@ -16,9 +16,10 @@ Usage:
     --timeout   seconds allowed for one rule call on one document (default 5)
 
 A plain medicine.md (one "**Disease:** <code>" section for each code) is read by medicine_extract.py, the same code
-that writes rules/<pack_id>/<handle>.py, so the rules that run here are the rules the team runs. A fragment or a
-broken block is left out and reported. Two sections for one code, a name that two blocks define with different code, or
-no section at all is an error. The rule of a section is medicine_<code>, cure_<code> or its only public function.
+that writes rules/<pack_id>/<handle>.py, so the rules that run here are the rules the team runs. A fragment (a block
+that does not run on its own) or a block with a syntax error is an error here: fix or remove it. (The extractor leaves
+such a block out and reports it.) Two sections for one code, a name that two blocks define with different code, or
+no section at all is an error too. The rule of a section is medicine_<code>, cure_<code> or its only public function.
 
 Inside a rules .py file the rule is found in one of three ways:
     RULES_BY_ID = {"DA-B3-001": fn}   written by medicine_extract.py (used for a rule ID)
@@ -146,15 +147,18 @@ def _is_sheet(blocks) -> bool:
 def load_medicine_md(path: Path, src: str):
     """A plain medicine.md (one "**Disease:**" section for each code): the rules are found by medicine_extract.py.
 
-    Fragments and broken blocks are left out and reported, not fatal. The rules run from the same code that the
-    extractor writes to rules/<pack_id>/<handle>.py (without the IDs).
+    A block that does not run on its own (a fragment) or has a syntax error stops the test: the annotator must fix
+    or remove it, so a PASS is for the whole medicine.md. (medicine_extract.py leaves such a block out and
+    reports it.) The rules run from the same code that the extractor writes to rules/<pack_id>/<handle>.py
+    (without the IDs).
     """
     found, code = medicine_extract.rules_from_markdown(src, path.name)
-    if not found.sections:
-        raise Fatal(f"{path.name}: no '**Disease:** <code>' line found, so there is no medicine section")
     for b in found.blocks:
         if b.kind in ("fragment", "syntax error"):
-            print(f"warning: {path.name} block {b.index} left out ({b.kind})", file=sys.stderr)
+            what = "has a syntax error" if b.kind == "syntax error" else "is a fragment that does not run on its own"
+            raise Fatal(f"{path.name} block {b.index} {what}. Make it complete, or remove it from the medicine.md")
+    if not found.sections:
+        raise Fatal(f"{path.name}: no '**Disease:** <code>' line found, so there is no medicine section")
     for note in found.notes:
         print(f"warning: {note}", file=sys.stderr)
     if found.clashes:

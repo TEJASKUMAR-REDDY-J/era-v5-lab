@@ -112,13 +112,18 @@ class HarmTestCase(unittest.TestCase):
         """A plain medicine.md: (code, python) for each section."""
         return "".join(f"**Disease:** {code}, x\n{self.FENCE}python\n{src}\n{self.FENCE}\n" for code, src in sections)
 
-    def test_markdown_skips_fragments_and_reports_them(self):
-        md = ("- fragment:\n  ```python\n  text = MARKER.sub('', text)\n  ```\n\n"
-              + self.plain_md(("B3", "def cure_b3(text):\n    return re.sub('<issue_start> ', '', text)")))
-        rc, out, err = self.run_ht(md, "B3", "medicine.md")      # `re` is never imported in the medicine.md
-        self.assertEqual(rc, 0)
-        self.assertIn("warning: medicine.md block 1 left out (fragment)", err)
-        self.assertIn("documents changed: 2", out)
+    def test_markdown_rejects_nonrunnable_python_fragments(self):
+        md = ("# Medicine\n\n- fragment:\n  ```python\n  text = MARKER.sub('', text)\n  ```\n\n"
+              "```python\nimport re\n\ndef cure_b3(text):\n    return re.sub('<issue_start>', '', text)\n```\n")
+        rc, out, err = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual(rc, 2)
+        self.assertIn("medicine.md block 1", err)
+
+    def test_markdown_rejects_a_block_with_a_syntax_error(self):
+        md = self.plain_md(("B3", "def cure_b3(text) return text"))
+        rc, _, err = self.run_ht(md, "B3", "medicine.md")
+        self.assertEqual(rc, 2)
+        self.assertIn("medicine.md block 1 has a syntax error", err)
 
     def test_markdown_function_names_other_than_cure_are_found(self):
         md = self.plain_md(("B3", "def _strip(text):\n    return text.replace('<issue_start> ', '')\n\n"
