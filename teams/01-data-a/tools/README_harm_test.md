@@ -7,7 +7,7 @@ Before you commit your `medicine.md`, check that each rule changes at most 1% of
 **You need**
 - Your pack's Parquet file (the one you annotated) and its gold file, `teams/01-data-a/gold/<pack_id>_gold.csv` (ask the Data A team if it is not there yet).
 - Your `medicine.md`.
-- Python 3.10 or newer and `pip install pyarrow`. On Linux and macOS each document gets a time limit (`--timeout`); Windows has no such timer, so the test runs without it and prints a warning.
+- Python 3.10 or newer and `pip install pyarrow`. Linux, macOS and Windows work. Each rule call on a document has a time limit (`--timeout`, default 5 s). On Linux and macOS a call over the limit is reported as an error for that document. Windows has no SIGALRM, so there a watchdog ends the whole test (exit code 1) and prints where the rule was stuck.
 
 **Run** (from the repo root; `B3` is the disease code of the rule you want to test)
 

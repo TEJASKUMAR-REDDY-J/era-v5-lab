@@ -40,12 +40,16 @@ PASS requires no errors and (changed + dropped) at most --limit percent of the g
 
 Exit code: 0 = PASS, 1 = FAIL, 2 = the test could not be run (bad input, or the rule raised an error).
 
-The rules file is run as code: read it before you run it. A per-document timeout stops runaway regexes (Unix only).
+The rules file is run as code: read it before you run it. A per-document timeout stops runaway regexes. On Linux and
+macOS it uses SIGALRM: the document is reported as an error and the test goes on. Windows has no SIGALRM, so there
+the faulthandler watchdog is used: a rule call that runs past --timeout ends the whole test (exit code 1) and prints
+where it was stuck (a stack trace, never document text).
 """
 import argparse
 import ast
 import copy
 import csv
+import faulthandler
 import hashlib
 import inspect
 import json
@@ -74,6 +78,8 @@ def repo_relative(path: Path) -> str:
 
 FENCE = medicine_extract.FENCE  # a fenced python block, possibly indented inside a list item
 HAS_ALARM = hasattr(signal, "setitimer")
+# faulthandler writes to a real file descriptor, so it uses the process's own stderr (None under pythonw: no watchdog)
+WATCHDOG_OUT = sys.__stderr__
 DEBUG = False  # set by --debug
 
 
@@ -439,6 +445,8 @@ def _invoke(rule, doc, timeout):
     working = copy.deepcopy(original)
     if HAS_ALARM:
         signal.setitimer(signal.ITIMER_REAL, timeout)
+    elif WATCHDOG_OUT is not None:  # no SIGALRM (Windows): faulthandler's own thread ends the run if the call hangs
+        faulthandler.dump_traceback_later(timeout, exit=True, file=WATCHDOG_OUT)
     try:
         out = rule(working) if takes_doc(rule) else rule(working['text'])
         if working != original:
@@ -448,6 +456,8 @@ def _invoke(rule, doc, timeout):
     finally:
         if HAS_ALARM:
             signal.setitimer(signal.ITIMER_REAL, 0)
+        elif WATCHDOG_OUT is not None:
+            faulthandler.cancel_dump_traceback_later()
 
 
 
@@ -614,9 +624,9 @@ def main(argv=None) -> int:
             raise Fatal("--timeout must be finite and greater than zero")
         if args.show < 0:
             raise Fatal("--show must be nonnegative")
-        if not HAS_ALARM:  # Windows has no SIGALRM: run without the per-document limit instead of refusing to run
-            print(f"warning: no per-document timeout on this platform; --timeout {args.timeout:g} is not applied "
-                  "(a rule that hangs will hang the test). Use Linux/macOS for the timeout.", file=sys.stderr)
+        if not HAS_ALARM:  # Windows has no SIGALRM: the faulthandler watchdog enforces --timeout instead
+            print(f"note: no SIGALRM on this platform; a rule call over --timeout {args.timeout:g}s ends the whole "
+                  "test (exit code 1) instead of being reported for one document.", file=sys.stderr)
         code = args.rule.strip().upper()
         if args.rules is None and (code == "ALL" or not RULE_ID.fullmatch(code)):
             raise Fatal("--rule all or disease-code tests require --rules")
