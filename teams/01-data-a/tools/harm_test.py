@@ -20,6 +20,14 @@ Inside a rules file the rule is found in one of three ways:
     RULES = {"B3": fn}                fn(text) -> ("keep" | "fix" | "drop", new_text)   (the shared format)
     def cure_b3(text): ...            returns the new text as a str
 
+A medicine sheet (for example code-medicines/medicine_code.md) may hold one rule per ```python block, each with its
+own RULE_ID = "DA-B3-001" and a function medicine(doc). Each such block runs in its own namespace, so blocks may
+reuse names, and the rule is found by its RULE_ID. --rule all then tests every rule of the sheet alone, and the
+whole sheet in file order (a drop ends a document, a fix passes the new text to the next rule).
+
+A rule may also return True (drop) or False (keep). A rule whose first parameter is named doc gets a dict with
+doc_id, text, url and lang_label (url and lang_label are read when the pack has them, else ""), not the text.
+
 A document is "changed" when the rule returns text that differs from the input (compared byte for byte, no
 normalisation). It is "dropped" when the rule returns the action "drop". Each document counts once.
 PASS means (changed + dropped) is at most --limit percent of the gold documents.
@@ -31,6 +39,7 @@ The rules file is run as code: read it before you run it. A per-document timeout
 import argparse
 import csv
 import hashlib
+import inspect
 import json
 import re
 import signal
@@ -49,6 +58,7 @@ DEFAULT_REGISTRY = Path(__file__).resolve().parent.parent / "rules" / "registry.
 # A fenced block, possibly indented inside a list item. The closing fence must have the same indent.
 FENCE = re.compile(r"^([ \t]*)```(?:python|py)[ \t]*\n(.*?)^\1```[ \t]*$", re.S | re.M)
 HAS_ALARM = hasattr(signal, "setitimer")
+SHEET_RULE = re.compile(r"^RULE_ID\s*=", re.M)
 
 
 class Fatal(Exception):
@@ -78,7 +88,12 @@ def load_rules(path: Path):
     for i, block in enumerate(blocks, 1):
         label = f"{path.name} block {i}" if is_md else path.name
         try:
-            exec(compile(block, label, "exec"), ns)
+            if is_md and SHEET_RULE.search(block):  # one sheet rule: its own namespace, found by its RULE_ID
+                own = {"__name__": "rules"}
+                exec(compile(block, label, "exec"), own)
+                ns.setdefault("RULES_BY_ID", {})[own["RULE_ID"]] = own["medicine"]
+            else:
+                exec(compile(block, label, "exec"), ns)
             ran.append(block)
         except Exception as e:
             if not is_md:
@@ -122,6 +137,8 @@ def find_rule(ns: dict, code: str):
 
 def classify(text: str, out) -> str:
     """Return 'keep', 'fix' or 'drop' for one rule result. 'fix' means the text really differs."""
+    if isinstance(out, bool):  # a detector: True means drop the document
+        return "drop" if out else "keep"
     if isinstance(out, str):
         return "fix" if out != text else "keep"
     if isinstance(out, tuple) and len(out) == 2 and out[0] in ACTIONS:
@@ -131,7 +148,7 @@ def classify(text: str, out) -> str:
             raise TypeError("new_text is not a str")
         # Judge by the text: a rule that says "keep" but returns different text still changed the document.
         return "fix" if out[1] != text else "keep"
-    raise TypeError("rule must return a str or (action, new_text)")
+    raise TypeError("rule must return a str, (action, new_text), True or False")
 
 
 def read_gold(path: Path):
@@ -151,24 +168,42 @@ def read_gold(path: Path):
     return unique
 
 
-def read_pack_texts(path: Path, ids):
-    """Return {doc_id: text} for the gold ids only."""
+def read_pack_docs(path: Path, ids):
+    """Return {doc_id: {"doc_id", "text", "url", "lang_label"}} for the gold ids only."""
     try:
-        table = pq.read_table(path, columns=["doc_id", "text"])
+        names = pq.read_schema(path).names
+        cols = ["doc_id", "text"] + [c for c in ("url", "lang_label") if c in names]
+        table = pq.read_table(path, columns=cols)
     except (OSError, KeyError, ValueError) as e:
         raise Fatal(f"cannot read pack {path}: {e}")
     table = table.filter(pc.is_in(table["doc_id"], value_set=pa.array(ids, type=table["doc_id"].type)))
-    texts = {}
-    for doc_id, text in zip(table["doc_id"].to_pylist(), table["text"].to_pylist()):
-        if doc_id in texts:
+    docs = {}
+    for row in table.to_pylist():
+        doc_id = row["doc_id"]
+        if doc_id in docs:
             raise Fatal(f"doc_id {doc_id} appears twice in the pack")
-        if text is None:
+        if row["text"] is None:
             raise Fatal(f"doc_id {doc_id} has no text in the pack")
-        texts[doc_id] = text
-    missing = [i for i in ids if i not in texts]
+        docs[doc_id] = {"doc_id": doc_id, "text": row["text"], "url": row.get("url") or "",
+                        "lang_label": row.get("lang_label") or ""}
+    missing = [i for i in ids if i not in docs]
     if missing:
         raise Fatal(f"{len(missing)} gold doc_ids are not in the pack, for example {', '.join(missing[:3])}")
-    return texts
+    return docs
+
+
+def read_pack_texts(path: Path, ids):
+    """Return {doc_id: text} for the gold ids only."""
+    return {i: d["text"] for i, d in read_pack_docs(path, ids).items()}
+
+
+def takes_doc(rule) -> bool:
+    """True if the rule's first parameter is named doc: it gets the document dict, not the text."""
+    try:
+        params = list(inspect.signature(rule).parameters)
+    except (TypeError, ValueError):
+        return False
+    return bool(params) and params[0] == "doc"
 
 
 def harm_percent(changed: int, dropped: int, n: int, limit: Fraction):
@@ -178,14 +213,19 @@ def harm_percent(changed: int, dropped: int, n: int, limit: Fraction):
 
 
 def run_rule(rule, texts: dict, timeout: float):
+    """texts maps doc_id to the text, or to the document dict of read_pack_docs."""
     changed, dropped, errors = [], [], []
+    by_doc = takes_doc(rule)
     if HAS_ALARM:
         signal.signal(signal.SIGALRM, _on_alarm)
-    for doc_id, text in texts.items():
+    for doc_id, doc in texts.items():
+        if not isinstance(doc, dict):
+            doc = {"doc_id": doc_id, "text": doc, "url": "", "lang_label": ""}
+        text = doc["text"]
         if HAS_ALARM:
             signal.setitimer(signal.ITIMER_REAL, timeout)
         try:
-            verdict = classify(text, rule(text))
+            verdict = classify(text, rule(doc) if by_doc else rule(text))
         except Exception as e:  # a rule that crashes is a rule bug; report the type only, never document text
             errors.append((doc_id, type(e).__name__))
             continue
@@ -199,12 +239,73 @@ def run_rule(rule, texts: dict, timeout: float):
     return changed, dropped, errors
 
 
+def run_sheet(rules, texts: dict, timeout: float):
+    """Run the rules in order on each document: a drop ends it, a fix passes the new text on. Same counts as run_rule."""
+    changed, dropped, errors = [], [], []
+    calls = [(rid, rule, takes_doc(rule)) for rid, rule in rules]
+    if HAS_ALARM:
+        signal.signal(signal.SIGALRM, _on_alarm)
+    for doc_id, doc in texts.items():
+        d = dict(doc) if isinstance(doc, dict) else {"doc_id": doc_id, "text": doc, "url": "", "lang_label": ""}
+        start, verdict = d["text"], "keep"
+        for rid, rule, by_doc in calls:
+            if HAS_ALARM:
+                signal.setitimer(signal.ITIMER_REAL, timeout)
+            try:
+                out = rule(d) if by_doc else rule(d["text"])
+                step = classify(d["text"], out)
+            except Exception as e:
+                errors.append((doc_id, f"{rid}: {type(e).__name__}"))
+                verdict = "error"
+                break
+            finally:
+                if HAS_ALARM:
+                    signal.setitimer(signal.ITIMER_REAL, 0)
+            if step == "drop":
+                verdict = "drop"
+                break
+            if step == "fix":
+                d["text"] = out if isinstance(out, str) else out[1]
+        if verdict == "drop":
+            dropped.append(doc_id)
+        elif verdict == "keep" and d["text"] != start:
+            changed.append(doc_id)
+    return changed, dropped, errors
+
+
+def main_all(args, limit) -> int:
+    """--rule all: every rule of the rules file alone, then all of them in file order."""
+    ids = read_gold(args.gold)
+    texts = read_pack_docs(args.pack, ids)
+    ns, digest = load_rules(args.rules)
+    rules = list((ns.get("RULES_BY_ID") or {}).items()) or list((ns.get("RULES") or {}).items())
+    if not rules:
+        raise Fatal(f"{args.rules.name}: no RULE_ID blocks, RULES_BY_ID or RULES to run")
+    n = len(texts)
+    print(f"pack: {args.pack.name}   gold: {args.gold.name} ({n} documents)   rules: {len(rules)}")
+    print(f"rules file: {args.rules.name}   code sha256: {digest[:16]}")
+    print(f"{'rule':<14}{'changed':>8}{'dropped':>8}{'percent':>9}  result")
+    worst = 0
+    for name, rows in [(rid, run_rule(rule, texts, args.timeout)) for rid, rule in rules] +                       [("ALL IN ORDER", run_sheet(rules, texts, args.timeout))]:
+        changed, dropped, errors = rows
+        percent, passed = harm_percent(len(changed), len(dropped), n, limit)
+        result = "ERROR" if errors else "PASS" if passed else "FAIL"
+        worst = max(worst, 2 if errors else 0 if passed else 1)
+        print(f"{name:<14}{len(changed):>8}{len(dropped):>8}{float(percent):>8.2f}%  {result}"
+              + (f"  ({len(errors)} errors, for example {errors[0][0]} {errors[0][1]})" if errors else ""))
+        if args.show and (changed or dropped):
+            print("  affected doc_ids: " + ", ".join((changed + dropped)[: args.show]))
+    print("result: " + ("PASS" if worst == 0 else "FAIL" if worst == 1 else "ERROR"))
+    return worst
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Run one cleaning rule on a gold set and report the harm.")
     ap.add_argument("--pack", required=True, type=Path)
     ap.add_argument("--gold", required=True, type=Path)
     ap.add_argument("--rules", type=Path, help="rules .py or medicine.md (not needed for a rule ID)")
-    ap.add_argument("--rule", required=True, help="rule ID such as DA-B3-001, or a disease code such as B3")
+    ap.add_argument("--rule", required=True,
+                    help="rule ID such as DA-B3-001, a disease code such as B3, or all (every rule in --rules)")
     ap.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
     ap.add_argument("--limit", default="1", help="failing limit in percent of the gold set (default 1)")
     ap.add_argument("--show", type=int, default=0, metavar="N", help="list the first N affected doc_ids")
@@ -219,13 +320,22 @@ def main(argv=None) -> int:
         print(f"error: --limit must be a number of percent, not {args.limit!r}", file=sys.stderr)
         return 2
     code = args.rule.strip().upper()
+    if code == "ALL":
+        if args.rules is None:
+            print("error: --rule all needs --rules", file=sys.stderr)
+            return 2
+        try:
+            return main_all(args, limit)
+        except Fatal as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 2
     if args.rules is None and not RULE_ID.match(code):
         print("error: give --rules, or a rule ID such as DA-B3-001 as --rule", file=sys.stderr)
         return 2
 
     try:
         ids = read_gold(args.gold)
-        texts = read_pack_texts(args.pack, ids)
+        texts = read_pack_docs(args.pack, ids)
         rules_path = args.rules or registry_file_for(code, args.registry)
         ns, digest = load_rules(rules_path)
         rule = find_rule(ns, code)
