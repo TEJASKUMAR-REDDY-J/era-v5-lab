@@ -166,13 +166,53 @@ class Extracted(NamedTuple):
     blocks: list     # every python block, as a Block
     chosen: list     # the rules found: {code, n, expr, how, action}
     notes: list      # why a section gave no rule
+    clashes: list    # names that two blocks define with different code (the last one wins for every rule)
+
+
+def _bound_names(node):
+    """The names a top-level statement defines: a function, a class, an assignment or an import."""
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return [node.name]
+    if isinstance(node, ast.Assign):
+        return [t.id for t in node.targets if isinstance(t, ast.Name)]
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        return [node.target.id]
+    if isinstance(node, (ast.Import, ast.ImportFrom)):
+        return [(a.asname or a.name).split(".")[0] for a in node.names]
+    return []
+
+
+def find_clashes(sections, blocks):
+    """Messages for each name that two or more blocks define with different code.
+
+    All blocks end up in one module, so a name means its last definition for every rule. The same helper copied into
+    several sections is fine; a name with different code in different sections silently changes the earlier rules.
+    """
+    versions = {}  # name -> [(block, dump of the code)]
+    for b in blocks:
+        if b.kind not in ("code", "support"):
+            continue
+        here = {}
+        for node in ast.parse(b.text).body:
+            for name in _bound_names(node):
+                here[name] = ast.dump(node)  # no line numbers: formatting and comments do not count
+        for name, dump in here.items():
+            versions.setdefault(name, []).append((b, dump))
+    messages = []
+    for name, found in versions.items():
+        if len({dump for _, dump in found}) > 1:
+            where = ", ".join(f"block {b.index} ({sections[b.section][2] if b.section is not None else 'outside the sections'})"
+                              for b, _ in found)
+            messages.append(f"{name} is defined with different code in {where}; the last one is used by every rule. "
+                            f"Rename one of them")
+    return messages
 
 
 def read_rules(src: str) -> Extracted:
     """Read a medicine.md and pick the rule of each section. Nothing is run."""
     sections, blocks = read_medicine(src)
     chosen, notes = resolve(sections, blocks)
-    return Extracted(sections, blocks, chosen, notes)
+    return Extracted(sections, blocks, chosen, notes, find_clashes(sections, blocks))
 
 
 def rules_from_markdown(src: str, name: str = "medicine.md"):
@@ -262,11 +302,12 @@ def default_out(path: Path, base: Path = DEFAULT_REGISTRY.parent):
     return rules_path(found[0], found[1], base) if found else None
 
 
-def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> int:
+def extract_one(medicine: Path, found, out: Path, entries, registry: Path, clashed=None) -> int:
     """Turn one medicine.md into the rules file `out`. Return 0 if done, 1 if no rule could be made, 2 if unreadable.
 
     `found` is (pack_id, handle), or None. `entries` is the registry list (changed in place, saved by the caller),
-    or None: the rules then get no IDs.
+    or None: the rules then get no IDs. `clashed`, if given, gets `found` added when two blocks define a name
+    with different code.
     """
     try:
         src = medicine.read_text(encoding="utf-8")
@@ -274,7 +315,7 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> in
         print(f"error: cannot read {medicine}: {getattr(e, 'strerror', None) or e}", file=sys.stderr)
         return 2
 
-    sections, blocks, chosen, notes = read_rules(src)
+    sections, blocks, chosen, notes, clashes = read_rules(src)
     if not sections:
         print("error: no '**Disease:** <code>' line found, so there is no medicine section", file=sys.stderr)
         return 1
@@ -299,6 +340,10 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path) -> in
             print(f"  left out: block {b.index}, {b.kind}")
     for n in notes:
         print(f"  note: {n}")
+    for c in clashes:
+        print(f"  warning: {c}")
+    if clashes and clashed is not None:
+        clashed.append(found)
     if ids is None:
         print("  note: the path has no pack and handle, so the rules get no IDs and the registry is not changed")
         if any(r["n"] > 1 for r in chosen):
@@ -345,16 +390,18 @@ def main(argv=None) -> int:
         print(f"error: no <pack_id>/<handle>/medicine.md under {args.dir}", file=sys.stderr)
         return 1
     entries = load_registry(args.registry)
-    status = {}
+    status, clashed = {}, []
     for path in files:
         pack, handle = path.parent.parent.name, path.parent.name
         print(f"\n== {pack}/{handle} ==")
-        status[(pack, handle)] = extract_one(path, (pack, handle), rules_path(pack, handle, args.registry.parent), entries, args.registry)
+        status[(pack, handle)] = extract_one(path, (pack, handle), rules_path(pack, handle, args.registry.parent), entries, args.registry, clashed)
     save_registry(args.registry, entries)
     failed = [k for k, rc in status.items() if rc]
     print(f"\n{len(status) - len(failed)} of {len(status)} medicine.md files done. Registry: {args.registry}")
     for pack, handle in failed:
         print(f"  no rules: {pack}/{handle}")
+    for pack, handle in clashed:
+        print(f"  same name, different code in two sections (see the warning above): {pack}/{handle}")
     return 1 if failed else 0
 
 

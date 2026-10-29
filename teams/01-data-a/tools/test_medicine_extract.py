@@ -148,6 +148,51 @@ class SharedReaderCase(unittest.TestCase):
         self.assertEqual(out.read_text(), medicine_extract.rules_from_markdown(self.TEXT, "medicine.md")[1])
 
 
+class ClashCase(unittest.TestCase):
+    """A name defined with different code in two blocks: the last one would win for every rule."""
+
+    def clashes(self, *sections):
+        text = md(*[x for code, py_code in sections for x in (f"**Disease:** {code}, x", py(py_code))])
+        return medicine_extract.read_rules(text).clashes
+
+    def test_the_same_helper_copied_into_two_sections_is_fine(self):
+        helper = "def _strip(t):\n    return t.strip()\n"
+        self.assertEqual(self.clashes(("B3", helper + "def medicine_b3(t):\n    return _strip(t)"),
+                                      ("E1", helper + "def medicine_e1(t):\n    return _strip(t)")), [])
+
+    def test_formatting_and_comments_do_not_count_as_different(self):
+        self.assertEqual(self.clashes(("B3", "def _h(t):\n    return t.strip()  # one"),
+                                      ("E1", "def _h( t ):\n    # two\n    return t.strip()")), [])
+
+    def test_same_name_with_different_code_is_reported(self):
+        got = self.clashes(("B3", "def _strip(t):\n    return t.replace('<m>', '')"),
+                           ("E1", "def _strip(t):\n    return t.replace('<h>', '')"))
+        self.assertEqual(len(got), 1)
+        self.assertIn("_strip is defined with different code in block 1 (B3), block 2 (E1)", got[0])
+        self.assertIn("the last one is used by every rule", got[0])
+
+    def test_constants_and_imports_count_too(self):
+        got = self.clashes(("B3", "import re\nMARKER = re.compile('<m>')"),
+                           ("E1", "import regex as re\nMARKER = re.compile('<h>')"))
+        self.assertEqual(sorted(g.split(" ")[0] for g in got), ["MARKER", "re"])
+
+    def test_a_name_changed_inside_one_block_is_not_a_clash(self):
+        self.assertEqual(self.clashes(("B3", "X = 1\nX = 2\ndef medicine_b3(t):\n    return t")), [])
+
+    def test_the_extractor_warns_and_still_writes(self):
+        text = md("**Disease:** B3, x", py("def _s(t):\n    return 'a'\ndef medicine_b3(t):\n    return _s(t)"),
+                  "**Disease:** E1, y", py("def _s(t):\n    return 'b'\ndef medicine_e1(t):\n    return _s(t)"))
+        tmp = Path(tempfile.mkdtemp())
+        src, out = tmp / "medicine.md", tmp / "rules.py"
+        src.write_text(text)
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            rc = medicine_extract.main([str(src), "--out", str(out)])
+        self.assertEqual(rc, 0)
+        self.assertIn("warning: _s is defined with different code", stdout.getvalue())
+        self.assertTrue(out.exists())
+
+
 class IdCase(unittest.TestCase):
     """Rule IDs and the registry. Medicine files live in <tmp>/submissions/<pack>/<handle>/medicine.md."""
 
