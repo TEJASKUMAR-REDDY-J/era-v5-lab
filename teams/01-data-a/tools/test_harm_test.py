@@ -148,12 +148,19 @@ class HarmTestCase(unittest.TestCase):
         self.assertIn("ALL IN ORDER", out)
 
     def test_the_harm_test_runs_the_code_the_extractor_writes(self):
-        import hashlib
         md = self.plain_md(("B3", "def medicine_b3(t):\n    return t"))
         (self.tmp / "medicine.md").write_text(md)
         _, digest = harm_test.load_rules(self.tmp / "medicine.md")
         code = harm_test.medicine_extract.rules_from_markdown(md, "medicine.md")[1]
-        self.assertEqual(digest, hashlib.sha256(code.encode()).hexdigest())
+        self.assertEqual(digest, harm_test.medicine_extract.fingerprint(code))
+
+    def test_the_code_sha256_ignores_comments_and_spacing_but_not_code(self):
+        def digest(src):
+            (self.tmp / "medicine.md").write_text(self.plain_md(("B3", src)))
+            return harm_test.load_rules(self.tmp / "medicine.md")[1]
+        base = digest("def medicine_b3(t):\n    return t.strip()")
+        self.assertEqual(base, digest("# strips\ndef medicine_b3( t ):\n\n    return t.strip()   # done\n"))
+        self.assertNotEqual(base, digest("def medicine_b3(t):\n    return t.lstrip()"))
 
     def test_two_sections_for_one_code_stop_the_test(self):
         md = ("**Disease:** B3, markers\n```python\ndef cure_b3(text):\n    return text.replace('<issue_start> ', '')\n```\n"

@@ -44,6 +44,7 @@ function in that section, and give it a name that no earlier rule uses.
 """
 import argparse
 import ast
+import hashlib
 import json
 import os
 import re
@@ -215,6 +216,15 @@ def read_rules(src: str) -> Extracted:
     return Extracted(sections, blocks, chosen, notes, find_clashes(sections, blocks))
 
 
+def fingerprint(code: str) -> str:
+    """sha256 of the code's syntax tree. Comments, blank lines, spacing and the header docstring do not change it;
+    changing what the code does, or the order of the blocks, does."""
+    tree = ast.parse(code)
+    if tree.body and isinstance(tree.body[0], ast.Expr) and isinstance(getattr(tree.body[0], "value", None), ast.Constant):
+        tree.body = tree.body[1:]  # the header says which file it came from
+    return hashlib.sha256(ast.dump(tree).encode("utf-8")).hexdigest()
+
+
 def rules_from_markdown(src: str, name: str = "medicine.md"):
     """Return (Extracted, code): the rules found in a medicine.md, and the text of the rules file for them.
 
@@ -267,12 +277,13 @@ def save_registry(path: Path, entries):
     path.write_text(json.dumps({"rules": entries}, indent=2) + "\n", encoding="utf-8")
 
 
-def assign_ids(entries, pack: str, handle: str, rules, file_rel: str, reserved=frozenset()):
+def assign_ids(entries, pack: str, handle: str, rules, file_rel: str, reserved=frozenset(), code_sha256=None):
     """Return the rule ID of each rule in `rules`, in order. New entries are added to the registry list.
 
     A (pack, handle, code, n) that is in the registry keeps its ID. A new one takes the next number for its
     team and code, skipping the IDs in `reserved` (used by the medicine sheets). Rules of this pack and handle
-    that are no longer in the medicine.md are marked withdrawn.
+    that are no longer in the medicine.md are marked withdrawn. `code_sha256` is the fingerprint of the
+    medicine.md's code (see fingerprint); every rule of the file keeps it.
     """
     prefix = "DA" if pack in DATA_A_PACKS else "DB"
     mine = {(e["code"], e.get("n", 1)): e for e in entries if e["pack"] == pack and e["handle"] == handle}
@@ -289,6 +300,8 @@ def assign_ids(entries, pack: str, handle: str, rules, file_rel: str, reserved=f
                  "code": r["code"], "n": r["n"]}
             entries.append(e)
         e["n"], e["file"], e["action"], e["withdrawn"] = r["n"], file_rel, r["action"], False
+        if code_sha256:
+            e["code_sha256"] = code_sha256
         ids.append(e["id"])
     return ids
 
@@ -354,7 +367,8 @@ def extract_one(medicine: Path, found, out: Path, entries, registry: Path, clash
         # as_posix: the registry is shared, so its paths use "/" on every platform (Windows gives "\\")
         file_rel = Path(os.path.relpath(out.resolve(), registry.resolve().parent)).as_posix()
         ids = assign_ids(entries, found[0], found[1], chosen, file_rel,
-                         reserved=sheet_ids(registry.resolve().parent.parent))
+                         reserved=sheet_ids(registry.resolve().parent.parent),
+                         code_sha256=fingerprint(render(medicine.name, blocks, chosen)))
     for i, r in enumerate(chosen):
         print(f"  {r['code']}: {r['expr']}   (from {r['how']}, action {r['action'] or 'not stated'})"
               + (f"   -> {ids[i]}" if ids else ""))

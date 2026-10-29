@@ -187,6 +187,7 @@ uv run python teams/01-data-a/tools/run_harm_suite.py \
 | `action` | `fix` or `drop`, as the annotator wrote it |
 | `file` | the rules file that holds the code, relative to the registry |
 | `withdrawn` | `true` if the rule is no longer in the `medicine.md` |
+| `code_sha256` | fingerprint of the code in the `medicine.md` when it was extracted. `harm_test.py` prints the same value as `code sha256` for a plain `medicine.md`, so you can check that the code you run is the code the annotator tested. Comments, blank lines and spacing do not change it |
 
 To look at the rules, run `python -I teams/01-data-a/tools/registry_view.py`. It writes `rules/registry.html`, a page you open in a browser: search the rules and expand one to see its function. It does not run the code and needs no `pyarrow`. Run it again after the registry changes and commit the new page. `--show DA-B3-001` prints one rule in the terminal.
 

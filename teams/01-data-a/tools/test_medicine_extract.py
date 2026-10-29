@@ -148,6 +148,26 @@ class SharedReaderCase(unittest.TestCase):
         self.assertEqual(out.read_text(), medicine_extract.rules_from_markdown(self.TEXT, "medicine.md")[1])
 
 
+class FingerprintCase(unittest.TestCase):
+    def test_comments_spacing_and_the_header_do_not_count(self):
+        a = medicine_extract.rules_from_markdown(md("**Disease:** B3, x", py("def medicine_b3(t):\n    return t")), "a.md")[1]
+        b = medicine_extract.rules_from_markdown(md("**Disease:** B3, y", py("# note\ndef medicine_b3( t ):\n    return t  # ok")), "b.md")[1]
+        c = medicine_extract.rules_from_markdown(md("**Disease:** B3, x", py("def medicine_b3(t):\n    return t + ' '")), "a.md")[1]
+        self.assertEqual(medicine_extract.fingerprint(a), medicine_extract.fingerprint(b))
+        self.assertNotEqual(medicine_extract.fingerprint(a), medicine_extract.fingerprint(c))
+
+    def test_the_registry_keeps_the_fingerprint_that_harm_test_prints(self):
+        tmp = Path(tempfile.mkdtemp())
+        src = tmp / "submissions" / "code-rust" / "alice" / "medicine.md"
+        src.parent.mkdir(parents=True)
+        src.write_text(md("**Disease:** B3, x", py("def medicine_b3(t):\n    return t")))
+        reg = tmp / "rules" / "registry.json"
+        with contextlib.redirect_stdout(io.StringIO()):
+            medicine_extract.main([str(src), "--registry", str(reg)])
+        entry = json.loads(reg.read_text())["rules"][0]
+        self.assertEqual(entry["code_sha256"], harm_test.load_rules(src)[1])
+
+
 class ClashCase(unittest.TestCase):
     """A name defined with different code in two blocks: the last one would win for every rule."""
 

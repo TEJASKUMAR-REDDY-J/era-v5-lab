@@ -166,7 +166,7 @@ def load_medicine_md(path: Path, src: str):
         exec(compile(code, path.name, "exec"), ns)
     except Exception as e:
         raise Fatal(f"{path.name}: {type(e).__name__}: {e}") from e
-    return ns, hashlib.sha256(code.encode("utf-8")).hexdigest()
+    return ns, medicine_extract.fingerprint(code)  # the registry keeps the same value as code_sha256
 
 
 def load_rules(path: Path):
