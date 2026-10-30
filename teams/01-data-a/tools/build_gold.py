@@ -23,6 +23,10 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 import json
 
+# The csv module defaults to 128 KiB per field, which rejects some PR labels.
+# Allow up to 16 MiB; larger/corrupt sheets are skipped with an audit warning.
+csv.field_size_limit(16 * 1024 * 1024)
+
 SUBMISSION_PATTERN = re.compile(
     r"^diagnosis/submissions/(?P<pack>[^/]+)/(?P<handle>[^/]+)/labels\.csv$",
     flags=re.IGNORECASE,
@@ -281,7 +285,7 @@ def parse_labels(submission: Submission, warnings: List[str]) -> Dict[str, Vote]
         for row in reader:
             normalized.append({(k.strip().lower() if k else ""): v for k, v in row.items()})
     except csv.Error as exc:
-        raise ValueError(f"{submission.source}: malformed CSV") from exc
+        raise ValueError(f"{submission.source}: malformed CSV ({exc})") from exc
     votes = {}
     conflicted = set()
     for row_num, row in enumerate(normalized, start=2):
@@ -381,8 +385,11 @@ def build_gold(
             try:
                 parsed_votes = parse_labels(submission, warnings)
             except (ValueError, csv.Error) as exc:
-                # Invalid submissions must not silently reduce gold membership.
-                raise ValueError(f"{submission.source}: invalid labels CSV: {exc}") from exc
+                # One broken submission must not prevent other packs/reviewers
+                # from producing gold evidence. Ignore this sheet in full.
+                skipped_files += 1
+                warnings.append(f"Skipping invalid labels CSV from {submission.source}: {exc}")
+                continue
             file_count += 1
             for doc_id, vote in parsed_votes.items():
                 review_votes[doc_id][submission.handle] = vote
@@ -480,10 +487,10 @@ def main(argv=None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     print(f"\nWrote {len(summary)} pack gold file(s) and coverage to {out}")
-    print(f"{'pack_id':28} {'files':>5} {'2-clean':>8} {'gold':>6} {'shortfall':>9}")
-    print("-" * 62)
+    print(f"{'pack_id':28} {'files':>5} {'skipped':>7} {'2-clean':>8} {'gold':>6} {'shortfall':>9}")
+    print("-" * 70)
     for row in summary:
-        print(f"{row['pack_id'][:28]:28} {row['label_files']:5} "
+        print(f"{row['pack_id'][:28]:28} {row['label_files']:5} {row['skipped_label_files']:7} "
               f"{row['docs_with_2_clean_votes']:8} {row['gold_docs']:6} {row['shortfall']:9}")
     if warnings:
         print(f"\n{len(warnings)} warning(s), including:", file=sys.stderr)
