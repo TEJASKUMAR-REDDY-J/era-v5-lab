@@ -35,7 +35,7 @@ Fields of the template's rule card that are still open for every rule: independe
 | 30 source, drops | `DA-E1-001` (go), `DA-E1-004` (rust, python), `DA-E1-008` (js-ts), `DA-E1-006` (java), `DA-E1-005`, `DA-E1-007` (cpp), `DA-E2-001`, `DA-C3-002` (go), `DA-C4-002` (java) | in the combined test |
 | 30 source, strips | `DA-E4-005` (go), `DA-E4-010` (go, rust, java, cpp, python), `DA-E4-009` (java), `DA-E4-007` (js-ts), `DA-C1-004` (go), `DA-C1-005` (java) | in the combined test |
 | 40 data safety | `DA-B4-009`, `DA-E3-003`, `DA-E3-004` | in the combined test |
-| 90 post-clean | a test, not a rule | 0 empty docs on all packs. No doc lost its last code: 13 changed docs have only comments and imports, and had no other code before either (go 3, rust 1, java 2, cpp 6, python 1) |
+| 90 post-clean | a test, not a rule | 0 empty docs on all packs. No doc lost its last code: 15 changed docs have only comments and imports, and had no other code before either (go 4, rust 1, java 2, cpp 7, python 1) |
 
 **Conflict ledger**
 
@@ -50,7 +50,7 @@ Fields of the template's rule card that are still open for every rule: independe
 | `DA-E3-003` | `DA-E3-004` | Known formats and shape-based search | 003 first | Each replaces what the other cannot; 5 real secrets replaced |
 | `DA-A4-002` | `DA-A4-003` | 003 changes an author-quoted U+FFFD on go (ruling 7) | 003 on java only | Scoped by `LANGS` |
 
-**Combined harm test** (`harm_test.py --rule all`; files in [results/](results/)):
+**Combined harm test** (`harm_test.py --rule all`; files in [results/](results/), made by [scripts/run_all.py](scripts/run_all.py)):
 
 | pack | gold harm | limit | result | with disputed docs left in | fixed / dropped / untouched | labelled rows treated |
 |---|---|---:|---|---|---|---|

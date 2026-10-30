@@ -11,6 +11,9 @@ teams/01-data-a/spec/
   medicine_<family>.md    the runnable rules: one block per rule, in run order
   decisions_<family>.md   why each rule was picked or not, for each disease
   results/<pack>_harm.json   harm_test.py --report output: IDs and digests only
+  results/stress_<pack>_harm.json   the same, with disputed docs left in
+  results/evidence.json, inputs_manifest.json   every medicine on every pack; digest of every input
+  scripts/                what makes the sheet and results: see scripts/README.md
 ```
 
 Families: `code`, `en`, `math`. Science and Indic follow when their owners are set.
@@ -78,7 +81,7 @@ python -I teams/01-data-a/tools/harm_test.py --pack <pack>.parquet --gold teams/
 python -I teams/01-data-a/tools/medicine_conflicts.py --packs code- --sheet teams/01-data-a/spec/medicine_code.md --out <file>
 ```
 
-These tools are on `g1-harm-test`, not on this base branch. Results here were made with them at `bae5163`.
+These tools are on `g1-harm-test`, not on this base branch. Results here were made with them at `bae5163`. To remake the sheet and all results, see [scripts/README.md](scripts/README.md).
 
 ## Decide
 
