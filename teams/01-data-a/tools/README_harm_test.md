@@ -60,8 +60,18 @@ Run them in this order. Steps 2 and 3 can use the rules and IDs that step 1 make
 | 1 | `medicine_extract.py` | one `medicine.md`, or a directory (eg submissions dir) | the rules as a Python file, and a rule ID for each rule |
 | 2 | `harm_test.py` | one pack, one gold file, one rule ID | documents changed, documents dropped, the percent, PASS or FAIL at 1% |
 | 3 | `rule_report.py` | one pack, its gold file, all its rules | `REPORT.md`: harm test of every rule for the pack, and advice on which rules to keep |
-| 4 | `run_harm_suite.py` | draft Spec v1, registry, G1 pack list, original Parquet files, refreshed gold CSVs | per-rule JSON evidence, per-pack coverage/status summary, run metadata |
+| 4 | `run_harm_suite.py` (Week 2) | draft Spec v1, registry, G1 pack list, original Parquet files, refreshed gold CSVs | per-rule JSON evidence, per-pack coverage/status summary, run metadata |
 | any time | `registry_view.py` | the registry | `registry.html`: a page to search the rules and see each rule's function |
+
+**Week 2: files that are not in this PR yet.** This PR has the scripts, `rules/registry.json` and `rules/registry.html`. It does not have the files that the scripts read and write. They are added in week 2:
+
+| Not in this PR | Made by | Needed by |
+|---|---|---|
+| `medicines/submissions/<pack_id>/<handle>/medicine.md` | step 0, `fetch_medicines.py` | step 1 with `--dir` |
+| `rules/<pack_id>/<handle>.py`, the rules files that `registry.json` points to | step 1, `medicine_extract.py` | step 2 with a rule ID (and no `--rules`), steps 3 and 4, `registry_view.py` (the function of each rule) |
+| `spec/spec_v1.md` | `spec/build_spec_v1.py` | step 4 |
+
+Until then, use `harm_test.py --rules <medicine.md> --rule <code>` (see "For annotators" above). It does not need any of these files. Until the rules files are added, `registry.json` has IDs that point to files that are not in the repository.
 
 ## 0. Fetch the medicines: `fetch_medicines.py`
 
@@ -127,7 +137,7 @@ Runs one rule on the gold set. Prints documents changed, documents dropped, the 
 
 **Where the cleaning code comes from.** `harm_test.py` is a **test runner**, not a collection of hardcoded cleaning rules. It loads executable Python supplied by annotators in one of two ways:
 
-1. **By rule ID (registry):** With `--rule DA-B3-001` and no `--rules`, it looks up the ID in `teams/01-data-a/rules/registry.json`. The registry points to a generated `teams/01-data-a/rules/<pack_id>/<handle>.py` file written by `medicine_extract.py` from an annotator's `medicine.md`. The runner loads that file and selects the matching `RULES_BY_ID` entry.
+1. **By rule ID (registry):** *(Week 2: the generated rules files are not in this PR yet, so use `--rules` until then.)* With `--rule DA-B3-001` and no `--rules`, it looks up the ID in `teams/01-data-a/rules/registry.json`. The registry points to a generated `teams/01-data-a/rules/<pack_id>/<handle>.py` file written by `medicine_extract.py` from an annotator's `medicine.md`. The runner loads that file and selects the matching `RULES_BY_ID` entry.
 2. **By explicit file:** With `--rules <rules.py or medicine.md> --rule B3` (or a full rule ID), it loads the supplied file directly, without consulting the registry. A Markdown sheet can contain separate executable `RULE_ID` / `medicine(doc)` blocks; A plain `medicine.md` (one `**Disease:**` section per code) is read by the same code as `medicine_extract.py`, so the rules that run are the rules the extractor writes to `rules/<pack_id>/<handle>.py`. A fragment (a block that does not run on its own) or a block with a syntax error stops the test: fix or remove it. The extractor leaves such a block out and reports it. Two sections for one code, or a name defined with different code in two blocks, is an error too. Python files can define `RULES_BY_ID`, `RULES`, or `cure_<code>`.
 
 **The data comes from different files:** `--pack` supplies the original Parquet documents; `--gold` supplies independently reviewed clean `doc_id`s (with `reader_1` and `reader_2`). Neither is a source of cleaning functions. `harm_test.py` does **not** discover or test all files under `medicines/submissions` automatically; `--rule all` runs only the rules in the **one file** given by `--rules`. The extractor and `rule_report.py` handle multi-submission workflows.
@@ -188,7 +198,9 @@ The advice is for a person to check. Nothing records the decision yet.
 
 Exit code: 0 done, 2 the report could not be made.
 
-## 4. Run the Spec v1 harm suite: `run_harm_suite.py`
+## 4. Run the Spec v1 harm suite: `run_harm_suite.py` (Week 2)
+
+> **Week 2.** This script needs `spec/spec_v1.md`, the rules files that the registry points to, and `medicines/submissions/`. None of them is in this PR, so it cannot be run yet.
 
 Run the **batch audit** after collecting/extracting medicines and generating the draft parent Spec v1. Unlike `harm_test.py --rule all`, this script evaluates **individual active registry rules** for each applicable pack; it does **not** execute the `spec_v1.md` itself. The parent spec contains review-only fenced `text` code examples, not executable `python` rule blocks. The suite reads its medicine inventory, proposal statuses, and conflict ledger, then maps candidate rules from `rules/registry.json` by pack, contributor, and disease code.
 
@@ -225,6 +237,8 @@ uv run python teams/01-data-a/tools/run_harm_suite.py \
 **Exit codes:** `1` means the G1 release audit remains **INCOMPLETE**, including successful dry-run audits; that is expected while Spec v1 is a draft, G2 is pending, and no combined pipeline has been approved. `2` indicates invalid suite-level inputs. Check the JSON and printed per-pack statuses rather than treating exit code `1` alone as a test failure. For individual rule failures, review their per-rule JSON reports. The suite runs contributor Python through `harm_test.py`: review the generated rules before execution.
 
 ## The registry and Spec v1
+
+> **Week 2.** `rules/registry.json` is in this PR. The rules files that it points to, `spec/spec_v1.md` and `medicines/submissions/` are not: they are added in week 2.
 
 `teams/01-data-a/rules/registry.json` has one entry for every rule that the extractor found:
 
