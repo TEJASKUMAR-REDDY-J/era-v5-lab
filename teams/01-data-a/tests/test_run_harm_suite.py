@@ -26,11 +26,11 @@ def harness(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, 'TEAM', team)
     (team / 'tools').mkdir()
     (team / 'tools' / 'harm_test.py').write_text('')
-    (team / 'gold' / 'g1_pack_ids.txt').write_text('code-go\ncode-python\nmath-megamath\n')
-    originals = tmp_path / 'packs'
-    originals.mkdir()
     gold = team / 'gold'
     gold.mkdir()
+    (gold / 'g1_pack_ids.txt').write_text('code-go\ncode-python\nmath-megamath\n')
+    originals = tmp_path / 'packs'
+    originals.mkdir()
     for pack in ('code-go', 'code-python'):
         (originals / (pack + '.parquet')).write_bytes(b'placeholder-' + pack.encode())
         (gold / (pack + '_gold.csv')).write_text('doc_id,reader_1,reader_2\nx,a,b\n')
@@ -43,7 +43,7 @@ def harness(tmp_path, monkeypatch):
         path = team / 'medicines' / 'submissions' / pack / handle / 'medicine.md'
         path.parent.mkdir(parents=True, exist_ok=True)
         content = f'# Medicine: {pack} / {code} / {handle}\n'
-        path.write_text(content)
+        path.write_text(content, encoding='utf-8', newline='')  # exact bytes: the spec stores their SHA-256 (Windows would write CRLF)
         inv.append((pack, handle, digest(content), code, state))
     lines = ['# G1 Data A — Spec v1: Parent Medicine (DRAFT)',
              '> **Status:** NOT APPROVED / NOT FROZEN',
@@ -60,7 +60,7 @@ def harness(tmp_path, monkeypatch):
         lines.append(f'### Medicine {i}: {pack} / {code} · {handle}\n\n> **Status:** {state}; not approved.')
     path = team / 'spec' / 'spec_v1.md'
     path.parent.mkdir()
-    path.write_text('\n\n'.join(lines))
+    path.write_text('\n\n'.join(lines), encoding='utf-8')  # '—' and '·': not cp1252 on Windows
     registry = team / 'rules' / 'registry.json'
     registry.parent.mkdir()
     rules = [
@@ -233,6 +233,8 @@ def test_real_spec_format_if_present():
 
 
 def test_json_paths_are_repo_relative(harness, monkeypatch):
+    if harness.team.resolve().drive != runner.ROOT.resolve().drive:
+        pytest.skip('Windows: the temp folder and the repository are on different drives, so no relative path exists')
     mock_success(monkeypatch)
     assert execute(harness) == 1
     metadata = json.loads((harness.reports / 'g1_harm_metadata.json').read_text())
@@ -257,6 +259,8 @@ def test_repo_relative_paths_include_outside_files(tmp_path):
     internal = runner.ROOT / 'teams' / '01-data-a' / 'spec' / 'spec_v1.md'
     assert runner.repo_relative(internal) == 'teams/01-data-a/spec/spec_v1.md'
     external = tmp_path / 'original-packs' / 'code-go.parquet'
+    if external.resolve().drive != runner.ROOT.resolve().drive:
+        pytest.skip('Windows: the temp folder and the repository are on different drives, so no relative path exists')
     rel = runner.repo_relative(external)
     assert not Path(rel).is_absolute()
     assert (runner.ROOT / rel).resolve() == external.resolve()

@@ -47,7 +47,10 @@ EXIT = {'PASS': 0, 'FAIL': 1, 'ERROR': 2}
 
 def repo_relative(path: Path) -> str:
     """Serialize paths relative to the repository, including external inputs."""
-    return Path(os.path.relpath(Path(path).resolve(), ROOT)).as_posix()
+    try:
+        return Path(os.path.relpath(Path(path).resolve(), ROOT)).as_posix()
+    except ValueError:  # Windows: the file is on another drive than the repository, so there is no relative path
+        return Path(path).resolve().as_posix()
 
 
 def sha256(path: Path) -> str:
