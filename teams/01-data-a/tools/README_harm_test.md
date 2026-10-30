@@ -61,14 +61,15 @@ Run them in this order. Steps 2 and 3 can use the rules and IDs that step 1 make
 | 2 | `harm_test.py` | one pack, one gold file, one rule ID | documents changed, documents dropped, the percent, PASS or FAIL at 1% |
 | 3 | `rule_report.py` | one pack, its gold file, all its rules | `REPORT.md`: harm test of every rule for the pack, and advice on which rules to keep |
 | 4 | `run_harm_suite.py` (Week 2) | draft Spec v1, registry, G1 pack list, original Parquet files, refreshed gold CSVs | per-rule JSON evidence, per-pack coverage/status summary, run metadata |
+| any time | `medicine_conflicts.py` (Week 2) | the medicine sheets, the gold files, the registry | `MEDICINE_CHECK.md`: which gold files lack medicines, and which medicines clash. Nothing is run |
 | any time | `registry_view.py` | the registry | `registry.html`: a page to search the rules and see each rule's function |
 
 **Week 2: files that are not in this PR yet.** This PR has the scripts, `rules/registry.json` and `rules/registry.html`. It does not have the files that the scripts read and write. They are added in week 2:
 
 | Not in this PR | Made by | Needed by |
 |---|---|---|
-| `medicines/submissions/<pack_id>/<handle>/medicine.md` | step 0, `fetch_medicines.py` | step 1 with `--dir` |
-| `rules/<pack_id>/<handle>.py`, the rules files that `registry.json` points to | step 1, `medicine_extract.py` | step 2 with a rule ID (and no `--rules`), steps 3 and 4, `registry_view.py` (the function of each rule) |
+| `medicines/submissions/<pack_id>/<handle>/medicine.md` | step 0, `fetch_medicines.py` | step 1 with `--dir`, `medicine_conflicts.py` |
+| `rules/<pack_id>/<handle>.py`, the rules files that `registry.json` points to | step 1, `medicine_extract.py` | step 2 with a rule ID (and no `--rules`), steps 3 and 4, `registry_view.py` (the function of each rule), `medicine_conflicts.py` (to tell whether a rule can run) |
 | `spec/spec_v1.md` | `spec/build_spec_v1.py` | step 4 |
 
 Until then, use `harm_test.py --rules <medicine.md> --rule <code>` (see "For annotators" above). It does not need any of these files. Until the rules files are added, `registry.json` has IDs that point to files that are not in the repository.
@@ -197,6 +198,42 @@ The advice is for a person to check. Nothing records the decision yet.
 | `--timeout <seconds>` | the time allowed for one document. Default `5` |
 
 Exit code: 0 done, 2 the report could not be made.
+
+## Check the medicines: `medicine_conflicts.py` (Week 2)
+
+> **Week 2.** This script reads the sheets in `medicines/submissions/` and the rules files that the registry points to. Neither is in this PR. Without the sheets every gold file is flagged `NO MEDICINE` and the exit code is 1, so the report says nothing useful yet.
+
+```
+python -I teams/01-data-a/tools/medicine_conflicts.py [--packs en-]
+```
+
+Reads the medicine sheets, the gold files and the registry, and writes `teams/01-data-a/rules/MEDICINE_CHECK.md`: a section for each gold file, then the codes that several packs of one language treat. **Nothing is run.** The sheets and the rules files are only read (with `ast`), so it is safe to run before anyone has read the annotators' code. It does not run the harm test (`harm_test.py` does that) and it does not choose between rules (`rule_report.py` does that). Run it after step 1.
+
+For each gold file it flags:
+
+| Flag | Meaning |
+|---|---|
+| `NO MEDICINE` | no medicine sheet, or only blank templates |
+| `NOT ENOUGH` | no rule that can run: none was extracted, or each one needs a name that its code never defines |
+| `ONE ANNOTATOR` | only one annotator wrote medicines, so there is nothing to compare them with |
+| `NOT EXTRACTED` | a sheet has medicine sections but no rule in the registry (run `medicine_extract.py`) |
+| `CANNOT RUN` | a rule needs names that its code never defines: it fails with `NameError` |
+| `NO RULE` | a code that a sheet says was found more than five times has no rule that can run |
+| `BLANK SHEET` | an annotator's sheet is the blank template, while other medicines cover the pack |
+| `SMALL GOLD SET` | fewer than 100 gold documents: 1% allows 0, so one touched document fails a rule |
+
+For each code with two or more medicines in one pack: `ACTIONS DIFFER` (they disagree on fix, drop or keep), `RULE VS HAND` (one annotator wrote a rule, another edits named rows by hand) and `CHOOSE` (two or more rules can run: `rule_report.py` says which to keep). The medicines of each such code are listed side by side, because a clash in what they do (cut a cut-off text, or join it to the next chunk) cannot be found by a program: a person compares them.
+
+| Option | Meaning |
+|---|---|
+| `--packs <text>` | only the packs whose ID starts with this, for example `en-` |
+| `--medicines <folder>` | the medicine sheets, as `<pack_id>/<handle>/medicine.md` or `<pack_id>-medicine/<handle>-medicine.md`. Default: `medicines/submissions` |
+| `--gold-dir <folder>` | the gold files, `<pack_id>_gold.csv`. Default: `gold` |
+| `--registry <file>` | the registry to read. Default: `rules/registry.json` |
+| `--sheet <file>` | take the rules from a standard sheet (one `RULE_ID` block per rule, with `ORIGIN` and `AUTHOR`), for example `en-medicines/medicine_en.md`, instead of the registry. A rule whose `ORIGIN` lists several packs counts for each of them |
+| `--out <file>` | where to write the report. Default: `rules/MEDICINE_CHECK.md` |
+
+Exit code: 0 done, 1 a gold file has no medicine or no rule that can run (`NO MEDICINE`, `NOT ENOUGH`), 2 the report could not be made.
 
 ## 4. Run the Spec v1 harm suite: `run_harm_suite.py` (Week 2)
 
