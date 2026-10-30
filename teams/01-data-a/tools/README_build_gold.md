@@ -33,7 +33,7 @@ python teams/01-data-a/tools/build_gold.py --repo-root .
 
 **Scope:** By default this includes pack names beginning `en-`, `code-`,
 `math-`, `sci-`, or `cadj-`. The `cadj-` category is **provisional** until
-Rohan confirms Data A/Data B ownership; inspect the generated list. A CSV or
+TSAI confirms Data A/Data B ownership; inspect the generated list. A CSV or
 one-per-line text list of confirmed G1 pack IDs is preferable:
 
 ```bash
@@ -42,10 +42,9 @@ python teams/01-data-a/tools/build_gold.py \
   --pack-list teams/01-data-a/gold/g1_pack_ids.txt
 ```
 
-Example `g1_pack_ids.txt`:
+Example entries from `g1_pack_ids.txt`:
 
 ```text
-# Replace with confirmed G1 pack IDs from the assignment sheet
 en-dclm
 code-go
 math-finemath
@@ -74,7 +73,7 @@ Files under `teams/01-data-a/gold/`:
 - `<pack_id>_gold.csv`: `doc_id,reader_1,reader_2` (only IDs and GitHub handles)
 - `gold_coverage.csv`: per-pack counts (`label_files`, reviewers, unique IDs,
   full reads, 2-reader overlaps, two-clean candidates, disputes, gold count,
-  target shortfall)
+  target shortfall, skipped label files)
 
 Previous gold files for packs no longer selected are left untouched by default;
 use `--remove-stale` to delete obsolete `*_gold.csv` outputs deliberately.
@@ -95,9 +94,15 @@ not an arbitrary cutoff. A shortfall is reported rather than hidden.
 5. Conservatively exclude candidates on which *any* additional reviewer
    explicitly said `fix` or `drop`. Use `--allow-disputed` only if the team
    confirms strict "2 clean votes regardless of dissent" semantics.
-6. Duplicate rows with conflicting labels from the same reviewer are not
-   counted. Broken CSV structure fails loudly. A newer PR replaces, rather
-   than concatenates with, the older file from the same reviewer.
+6. Conflicting duplicate rows for a doc ID from one reviewer disqualify that
+   reviewer's clean vote **and mark the document disputed**. This prevents a
+   `fix`/`drop` from vanishing when other reviewers provide two clean votes.
+   Duplicate conflicts cannot enter gold even with `--allow-disputed`.
+7. Bad CSV sheets are skipped with warnings, counted in `skipped_label_files`
+   (not partially included), and do not stop other packs. The parser accepts
+   fields up to 16 MiB; `--fail-on-warnings` makes anomalies fail the command.
+   A newer PR replaces, rather than concatenates with, the older file from
+   the same reviewer.
 
 Use `--fail-under-target` for an optional nonzero exit code when a listed pack
 has fewer than the reporting target, and `--fail-on-warnings` to require
@@ -122,7 +127,7 @@ repository. Do not commit downloaded raw Parquet packs or other sensitive data.
 git checkout -b g1-gold-sets
 git add teams/01-data-a/tools/build_gold.py \
         teams/01-data-a/tests/test_build_gold.py \
-        teams/01-data-a/README_gold.md \
+        teams/01-data-a/tools/README_build_gold.md \
         teams/01-data-a/gold/
 git commit -m "G1: build audited Data A gold sets"
 git push -u origin g1-gold-sets

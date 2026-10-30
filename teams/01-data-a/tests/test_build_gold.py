@@ -79,8 +79,42 @@ class BuilderTests(unittest.TestCase):
         warnings=[]
         with tempfile.TemporaryDirectory() as tmp:
             report=bg.build_gold(docs,Path(tmp),warnings=warnings)
-            self.assertEqual(report[0]['gold_docs'],1)  # bob + carol
+            self.assertEqual(report[0]['gold_docs'],0)  # alice's fix remains a dispute
+            self.assertEqual(report[0]['disputed_gold_candidates'],1)
+            self.assertEqual(report[0]['docs_with_2_clean_votes'],1)  # bob + carol
+            self.assertEqual(read_csv(Path(tmp)/'en-test_gold.csv'), [])
             self.assertTrue(any('conflicting duplicate' in x for x in warnings))
+
+    def test_duplicate_fix_or_drop_always_blocks_gold(self):
+        # The disputed row may appear before or after clean, and duplicate
+        # conflicts must remain excluded even with --allow-disputed.
+        for bad in ('fix', 'drop'):
+            for clean_first in (True, False):
+                with self.subTest(bad=bad, clean_first=clean_first):
+                    good = 'abc,full,clean,,,,'
+                    negative = f'abc,full,{bad},A1,,,'
+                    alice_rows = (good, negative) if clean_first else (negative, good)
+                    docs = [sub('en-test', 'alice', *alice_rows),
+                            sub('en-test', 'bob', good),
+                            sub('en-test', 'carol', good)]
+                    for allow_disputed in (False, True):
+                        with tempfile.TemporaryDirectory() as tmp:
+                            report = bg.build_gold(docs, Path(tmp),
+                                                   allow_disputed=allow_disputed)
+                            self.assertEqual(report[0]['gold_docs'], 0)
+                            self.assertEqual(report[0]['disputed_gold_candidates'], 1)
+                            self.assertEqual(read_csv(Path(tmp)/'en-test_gold.csv'), [])
+
+    def test_duplicate_conflict_retains_marker_after_more_rows(self):
+        good='abc,full,clean,,,,'
+        docs=[sub('en-test','alice',good,'abc,full,fix,A1,,,',good),
+              sub('en-test','bob',good),sub('en-test','carol',good)]
+        votes=bg.parse_labels(docs[0],[])
+        self.assertTrue(votes['abc'].conflicted_duplicate)
+        self.assertTrue(votes['abc'].negative)
+        self.assertFalse(votes['abc'].clean)
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(bg.build_gold(docs,Path(tmp))[0]['gold_docs'],0)
 
     def test_clean_with_diseases_and_partial_are_not_clean(self):
         docs=[sub('en-test','one','A,full,clean,A1,,,','B,partial,clean,,,,'),
@@ -127,11 +161,60 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(pr[0].handle,'Alice')
         self.assertEqual(bg.parse_labels(pr[0],[])['one'].clean,True)
 
-    def test_malformed_csv_header_fails_instead_of_silent_pass(self):
-        broken = bg.Submission('en-test','alice','bad-file','doc_id,read,verdict\na,full,clean\n',('',0))
+    def test_malformed_csv_header_skipped_without_losing_other_reviewers(self):
+        broken = bg.Submission('en-test', 'alice', 'bad-file',
+                               'doc_id,read,verdict\na,full,clean\n', ('', 0))
+        valid = [sub('en-test', 'bob', 'a,full,clean,,,,'),
+                 sub('en-test', 'carol', 'a,full,clean,,,,'),
+                 sub('code-go', 'dave', 'b,full,clean,,,,'),
+                 sub('code-go', 'erin', 'b,full,clean,,,,')]
+        warnings = []
         with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(ValueError,'missing required columns'):
-                bg.build_gold([broken],Path(tmp))
+            result = bg.build_gold([broken] + valid, Path(tmp), warnings=warnings)
+            packs = {p['pack_id']: p for p in result}
+            self.assertEqual(packs['en-test']['skipped_label_files'], 1)
+            self.assertEqual(packs['en-test']['label_files'], 2)
+            self.assertEqual(packs['en-test']['reviewers'], 2)
+            self.assertEqual(packs['en-test']['gold_docs'], 1)
+            self.assertEqual(packs['code-go']['skipped_label_files'], 0)
+            self.assertEqual(packs['code-go']['gold_docs'], 1)
+            self.assertEqual(len(read_csv(Path(tmp) / 'en-test_gold.csv')), 1)
+            self.assertEqual(read_csv(Path(tmp) / 'gold_coverage.csv')[1]['skipped_label_files'], '1')
+            self.assertTrue(any('Skipping invalid labels CSV' in w and 'bad-file' in w for w in warnings))
+
+    def test_large_field_over_original_128k_limit_is_accepted(self):
+        self.assertGreaterEqual(csv.field_size_limit(), 512 * 1024)
+        long_evidence = 'x' * (512 * 1024)
+        raw = sample('a,full,fix,A1,"' + long_evidence + '",,',
+                     'b,full,clean,,,,')
+        large = bg.Submission('en-test', 'alice', 'PR #120 large evidence', raw, ('', 0))
+        other = sub('en-test', 'bob', 'b,full,clean,,,,')
+        with tempfile.TemporaryDirectory() as tmp:
+            warnings = []
+            rows = bg.build_gold([large, other], Path(tmp), warnings=warnings)
+            self.assertEqual(rows[0]['skipped_label_files'], 0)
+            self.assertEqual(rows[0]['gold_docs'], 1)
+            self.assertEqual(read_csv(Path(tmp) / 'en-test_gold.csv')[0]['doc_id'], 'b')
+
+    def test_unparseable_oversized_sheet_is_skipped_not_partially_used(self):
+        previous_limit = csv.field_size_limit()
+        try:
+            # Force the same parser failure as the original 128 KiB limit,
+            # without allocating an unreasonably large fixture.
+            csv.field_size_limit(128)
+            broken = bg.Submission('math-finemath', 'bad', 'oversized-sheet',
+                sample('a,full,clean,,,,', 'b,full,fix,A1,"' + 'x' * 512 + '",,'), ('', 0))
+            valid = [sub('math-finemath', 'alice', 'a,full,clean,,,,'),
+                     sub('math-finemath', 'bob', 'a,full,clean,,,,')]
+            with tempfile.TemporaryDirectory() as tmp:
+                warnings = []
+                result = bg.build_gold([broken] + valid, Path(tmp), warnings=warnings)
+                self.assertEqual(result[0]['skipped_label_files'], 1)
+                self.assertEqual(result[0]['label_files'], 2)
+                self.assertEqual(result[0]['gold_docs'], 1)
+                self.assertTrue(any('field larger than field limit' in w for w in warnings))
+        finally:
+            csv.field_size_limit(previous_limit)
 
 
 if __name__ == '__main__':

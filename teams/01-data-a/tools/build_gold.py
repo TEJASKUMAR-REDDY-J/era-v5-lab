@@ -55,19 +55,21 @@ class Vote:
     read: str
     verdict: str
     diseases: str
+    conflicted_duplicate: bool = False  # same reviewer gave incompatible rows for this doc
 
     @property
     def fully_read(self) -> bool:
-        return self.read == "full"
+        return self.read == "full" and not self.conflicted_duplicate
 
     @property
     def clean(self) -> bool:
-        return self.read == "full" and self.verdict == "clean" and not self.diseases
+        return (not self.conflicted_duplicate and self.read == "full"
+                and self.verdict == "clean" and not self.diseases)
 
     @property
     def negative(self) -> bool:
-        # Inconsistent clean+disease is not safe evidence of a gold document.
-        return self.verdict in {"fix", "drop"} or bool(self.diseases)
+        # Preserve disagreement even when duplicate rows cancel a reviewer's clean vote.
+        return self.conflicted_duplicate or self.verdict in {"fix", "drop"} or bool(self.diseases)
 
 
 class MalformedLabelsError(ValueError):
@@ -272,7 +274,7 @@ def choose_current_submissions(submissions: Sequence[Submission], warnings: List
 
 
 def parse_labels(submission: Submission, warnings: List[str]) -> Dict[str, Vote]:
-    """Invalid/conflicting rows contribute no gold vote; never print private note text."""
+    """Keep duplicate conflicts as disqualifying evidence; never print private note text."""
     stream = io.StringIO(submission.csv_text, newline="")
     try:
         reader = csv.DictReader(stream)
@@ -307,8 +309,13 @@ def parse_labels(submission: Submission, warnings: List[str]) -> Dict[str, Vote]
         if doc_id in conflicted:
             continue
         if doc_id in votes and votes[doc_id] != vote:
-            warnings.append(f"{submission.source}, row {row_num}: conflicting duplicate doc_id; excluding reviewer vote")
-            votes.pop(doc_id)
+            warnings.append(f"{submission.source}, row {row_num}: conflicting duplicate doc_id; marking document disputed")
+            # Do not erase a fix/drop just because this reviewer also wrote clean.
+            # The marker excludes this reviewer's clean vote AND prevents the
+            # document becoming gold from two other reviewers' clean votes.
+            previous = votes[doc_id]
+            votes[doc_id] = Vote(previous.read, previous.verdict,
+                                 previous.diseases, conflicted_duplicate=True)
             conflicted.add(doc_id)
             continue
         votes[doc_id] = vote
@@ -401,6 +408,7 @@ def build_gold(
             full = [handle for handle, vote in votes.items() if vote.fully_read]
             clean = sorted([handle for handle, vote in votes.items() if vote.clean], key=str.casefold)
             has_dispute = any(vote.negative for vote in votes.values())
+            has_duplicate_conflict = any(vote.conflicted_duplicate for vote in votes.values())
             if full:
                 full_count += 1
             if len(full) >= 2:
@@ -409,7 +417,9 @@ def build_gold(
                 two_clean += 1
                 if has_dispute:
                     disputed += 1
-                if has_dispute and not allow_disputed:
+                # Duplicate conflicting rows are untrustworthy even when the
+                # optional --allow-disputed override permits other dissent.
+                if has_duplicate_conflict or (has_dispute and not allow_disputed):
                     continue
                 if known_doc_ids is not None and doc_id not in known_doc_ids:
                     warnings.append(f"{pack}: gold candidate doc_id {doc_id} not found in source Parquet; skipping")

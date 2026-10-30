@@ -1,4 +1,3 @@
-# Replace with confirmed G1 pack IDs from the assignment sheet
 code-cpp
 code-go
 code-java
