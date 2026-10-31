@@ -10,7 +10,7 @@ HERE = Path(__file__).resolve().parents[1] / "spec_v1"
 WT, PACKS = Path(sys.argv[1]), Path(sys.argv[2])
 TEAM = WT / "teams" / "01-data-a"
 CLEAN = HERE / "clean.py"
-OUT = HERE / "harm_results"; OUT.mkdir(exist_ok=True)
+OUT = HERE / "results"; OUT.mkdir(exist_ok=True)
 FAMILIES = {"code": ["code-go", "code-rust", "code-js-ts", "code-java", "code-cpp", "code-python"],
             "English": ["en-dclm", "en-fineweb-edu", "en-nemotroncc", "en-nemotroncc-synth"], "math": ["math-finemath", "math-megamath"], "science": ["sci-finepdfs"]}
 lines = ["# Spec v1 harm tests", "",
@@ -22,7 +22,7 @@ for fam, packs in FAMILIES.items():
         parquet = PACKS / f"{pack}.parquet"
         if not parquet.exists() or not n:
             missing.append((fam, pack, n, "gold set is empty: NOT TESTABLE" if not n else "pack not on this machine: NOT RUN")); continue
-        report = OUT / f"{pack}_harm.json"
+        report = OUT / f"clean_{pack}_harm.json"
         rc = subprocess.run([sys.executable, str(TEAM / "tools" / "harm_test.py"), "--pack", str(parquet), "--gold", str(gold), "--rules", str(CLEAN), "--rule", "all", "--report", str(report)], capture_output=True, text=True)
         d = json.loads(report.read_text(encoding="utf-8")); d["rules"] = "teams/01-data-a/spec_v1/clean.py"
         report.write_text(json.dumps(d, indent=2) + "\n", encoding="utf-8", newline="\n")
@@ -36,7 +36,7 @@ for code in codes:
         r = next(x for x in ran[p]["results"] if x["rule"] == code)
         cells.append(f"{r['changed'] + r['dropped']}" + ("" if r["result"] == "PASS" else f" **{r['result']}**"))
     lines.append(f"| {code} | " + " | ".join(cells) + " |")
-lines += ["", "Affected gold IDs are in `harm_results/`. No document text is kept.", "", "## Not run", "", "| family | pack | gold docs | why |", "|---|---|---:|---|"]
+lines += ["", "Affected gold IDs are in `results/clean_<pack>_harm.json`. No document text is kept.", "", "## Not run", "", "| family | pack | gold docs | why |", "|---|---|---:|---|"]
 lines += [f"| {f} | {p} | {n} | {w} |" for f, p, n, w in missing]
 (HERE / "harm_tests.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 for p in packs: print(p, ran[p]["status"], [(r["rule"], r["changed"], r["dropped"], r["errors"]) for r in ran[p]["results"] if r["changed"] or r["dropped"] or r["errors"]])

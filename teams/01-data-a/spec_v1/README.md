@@ -14,7 +14,8 @@ teams/01-data-a/
     clean.py                the cleaner, generated from the sheets
     run_clean.py            runs the cleaner on one pack
     tests/                  unit tests on made-up values
-    harm_tests.md, harm_results/   every clean.py function on every gold set
+    harm_tests.md           every clean.py function on every gold set
+    results/clean_<pack>_harm.json   the reports behind harm_tests.md: IDs and digests only
     results/<pack>_harm.json   harm_test.py --report on the sheet: IDs and digests only
     results/stress_<pack>_harm.json   the same, with disputed docs left in
     results/evidence.json, inputs_manifest.json   every medicine on every pack; digest of every input
@@ -107,7 +108,7 @@ These tools are on `g1-harm-test`, not on this base branch. Results here were ma
 | `medicine_<family>.md` | The rules of one family: `code`, `en`, `math`, `sci` | The PR for that family |
 | `decisions_<family>.md` | Why each rule was picked or not | The same PR |
 | `../tools/f1_rule.py` | The one F1 rule, shared by all families | A PR that names the family it adds |
-| `clean.py`, `harm_tests.md`, `harm_results/` | Generated | Only the rebuild step, after a merge |
+| `clean.py`, `harm_tests.md`, `results/clean_*` | Generated | Only the rebuild step, after a merge |
 
 ## Run it
 
@@ -141,7 +142,7 @@ Paths start at `teams/01-data-a/`. `ftfy` is needed once the English A3 rule is 
    | It needs an answer from TSAI | Hold it as `BLOCKED`, with the question. |
 
 5. **Do not edit someone else's rule to change what it does.** Add a new block and say why in the decisions file.
-6. **In your PR, change only your sheet, your decisions file and your tests.** Leave `clean.py` and `harm_results/` out: two PRs regenerating them will always conflict. Paste your harm results in the PR text.
+6. **In your PR, change only your sheet, your decisions file and your tests.** Leave `clean.py` and `results/clean_*` out: two PRs regenerating them will always conflict. Paste your harm results in the PR text.
 7. **After a merge,** whoever merges reruns the steps in "Run it" and commits the generated files.
 
 Each rule needs the fields in "What every rule must have" above, and has to meet the bar in "When a rule is APPROVED".

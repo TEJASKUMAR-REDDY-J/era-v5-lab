@@ -21,7 +21,7 @@ DRAFT. Each cell: gold docs changed + dropped, for that function on that pack's 
 | F1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ALL IN ORDER | 0 | 0 | 1 | 0 | 0 | 0 |
 
-Affected gold IDs are in `harm_results/`. No document text is kept.
+Affected gold IDs are in `results/clean_<pack>_harm.json`. No document text is kept.
 
 ## Not run
 
