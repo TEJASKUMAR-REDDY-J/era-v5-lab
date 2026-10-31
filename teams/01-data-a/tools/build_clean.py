@@ -1,8 +1,8 @@
-"""Write ../clean.py from every medicine sheet: one function per disease code, each rule's code unchanged.
+"""Write ../spec_v1/clean.py from every medicine sheet: one function per disease code, each rule's code unchanged.
 
   python -I build_clean.py
 
-Reads teams/01-data-a/spec/medicine_<family>.md. Each rule block goes into its own closure, so helpers with the same name
+Reads teams/01-data-a/spec_v1/medicine_<family>.md. Each rule block goes into its own closure, so helpers with the same name
 in two blocks or two families do not clash. Prints any string that indenting a block changed: only a multi-line string
 can change, and a docstring or a verbose regex does not care.
 """
@@ -10,7 +10,7 @@ import ast, re, sys, textwrap
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SPEC = HERE.parents[1] / "spec"
+SPEC = HERE.parent / "spec_v1"
 BLOCK = re.compile(r"^```python\n(.*?)^```", re.S | re.M)  # at line start: a rule can hold ``` inside a regex
 CODE_ORDER = ["A1", "A2", "A6", "A4", "B3", "E1", "E2", "C3", "C4", "E4", "C1", "B4", "E3", "F1"]  # the code sheet's stages; other codes follow
 
@@ -91,6 +91,6 @@ def clean(doc):
         return ("drop", doc["text"])
     return ("fix" if text != doc["text"] else "keep", text)
 ''')
-dest = HERE.parent / "clean.py"
+dest = HERE.parent / "spec_v1" / "clean.py"
 dest.write_text("".join(out), encoding="utf-8", newline="\n")
 print("rules:", {f: len(r) for f, r in families.items()}, "| functions:", len(codes), "| languages:", sorted(lang_family))

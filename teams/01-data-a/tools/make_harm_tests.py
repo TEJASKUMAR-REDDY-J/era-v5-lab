@@ -6,7 +6,7 @@ A pack with no file in <packs dir> is listed as not run. Reports are IDs and dig
 """
 import csv, json, subprocess, sys
 from pathlib import Path
-HERE = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parents[1] / "spec_v1"
 WT, PACKS = Path(sys.argv[1]), Path(sys.argv[2])
 TEAM = WT / "teams" / "01-data-a"
 CLEAN = HERE / "clean.py"

@@ -1,10 +1,10 @@
 {
-  "pack": "code-go.parquet",
-  "pack_sha256": "30fc352199a6b3773d76a692420d25469835e8668ded2cfe8a6be09d71958661",
-  "gold": "code-go_gold.csv",
-  "gold_sha256": "81942db337e2e191b15b916941a2cf4160d1f581296c58b07167be1660c677a6",
-  "gold_count": 163,
-  "rules": "teams/01-data-a/spec/medicine_code.md",
+  "pack": "code-python.parquet",
+  "pack_sha256": "b79698620cd7526f9fcb6157376c86274616367baa7757976568c50a6b802e1f",
+  "gold": "code-python_gold.csv",
+  "gold_sha256": "90a83563453745dc9603780ea67dbf0ac6428df7fa31934e765a4dba13e21782",
+  "gold_count": 51,
+  "rules": "teams/01-data-a/spec_v1/medicine_code.md",
   "rules_file_sha256": "e096bea29f0634a76ae99600753527aa266a1d69ed06c4fd88e800b42c8bf13b",
   "code_sha256": "c4a299ad6f40ed44d51b0974204cc1e4d91b320412f24c73d937def5d827aea1",
   "limit_percent": "1",
@@ -221,16 +221,20 @@
     },
     {
       "rule": "DA-E4-010",
-      "changed": 0,
+      "changed": 1,
       "dropped": 0,
-      "affected_unique": 0,
+      "affected_unique": 1,
       "errors": 0,
       "error_types": [],
-      "percent": "0.000000",
+      "percent": "1.960784",
       "result": "PASS",
-      "changed_ids": [],
+      "changed_ids": [
+        "4580e7dac6d032a3"
+      ],
       "dropped_ids": [],
-      "affected_ids": []
+      "affected_ids": [
+        "4580e7dac6d032a3"
+      ]
     },
     {
       "rule": "DA-E4-009",
@@ -325,16 +329,20 @@
     },
     {
       "rule": "ALL IN ORDER",
-      "changed": 0,
+      "changed": 1,
       "dropped": 0,
-      "affected_unique": 0,
+      "affected_unique": 1,
       "errors": 0,
       "error_types": [],
-      "percent": "0.000000",
+      "percent": "1.960784",
       "result": "PASS",
-      "changed_ids": [],
+      "changed_ids": [
+        "4580e7dac6d032a3"
+      ],
       "dropped_ids": [],
-      "affected_ids": []
+      "affected_ids": [
+        "4580e7dac6d032a3"
+      ]
     }
   ]
 }
