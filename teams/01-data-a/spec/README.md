@@ -18,6 +18,8 @@ teams/01-data-a/spec/
 
 Families: `code`, `en`, `math`. Science and Indic follow when their owners are set.
 
+**The cleaner** made from these sheets, how to run it, and where to add your medicines: [../spec_v1/README.md](../spec_v1/README.md).
+
 **One source for each fact.** Rules live only in `medicine_<family>.md`. The registry of the template's §3 is the table at the top of that file, so it cannot drift from the code. Numbers come from `results/`, not from hand-typed tables.
 
 `spec/spec_v1.md` stays the name that `build_spec_v1.py` writes and `run_harm_suite.py` reads. This folder does not use it for now: see "Decide" below.
