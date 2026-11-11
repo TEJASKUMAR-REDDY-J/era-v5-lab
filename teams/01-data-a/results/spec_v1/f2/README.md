@@ -1,8 +1,8 @@
-# F2 results: G9 fingerprints v1
+# F2 results: G9 fingerprints v2
 
-These are historical validation snapshots tied to the hashes below, not a fresh validation of the current cleaner. The [Indic report](indic_gold_validation.json) records cleaner `27eaac44…`; use [validate_f2_indic.py](../../../spec_v1/validate/validate_f2_indic.py) with the [documented own-pack inputs](../../../spec_v1/README_indic.md#optional-f2-validation) to refresh it. Keep old report hashes intact when reorganizing evidence.
+The 13-pack table below was rerun on 11 Nov with set v2 and the current `clean.py`. The [Indic report](indic_gold_validation.json) is an older snapshot on set v1 for cleaner `27eaac44…`; use [validate_f2_indic.py](../../../spec_v1/validate/validate_f2_indic.py) with the [documented own-pack inputs](../../../spec_v1/README_indic.md#optional-f2-validation) to refresh it. Keep old report hashes intact when reorganizing evidence.
 
-`run_clean.py --f2` and the F2 harm tests on the 13 Data A packs. Fingerprint set `11e290a44d1467875fdf8bebc55eab21f0a6367f411aab98a4a027a546fd372e` (full set, pinned in `spec_v1/f2_rule.py`), `clean.py` `a5a1a596a0e7`, `spec_v1/f2_rule.py` `0f6968be84b1`. The reports of F2 alone are `f2_<pack>_harm.json`.
+`run_clean.py --f2` and the F2 harm tests on the 13 Data A packs. Fingerprint set `2826a3b883210c653979103c09ce1c79e40fc4f7034b54027f2836482370d22a` (v2, full set, pinned in `spec_v1/f2_rule.py`), `clean.py` `14ce613473e6`, `spec_v1/f2_rule.py` `b401e4b75ef3`. The reports of F2 alone are `f2_<pack>_harm.json`.
 
 | pack | docs | dropped by `clean.py` | **dropped by F2** | kept | errors | gold hit by F2 alone | gold hit by `clean.py` then F2 | gold docs | limit | harm |
 |---|---:|---:|---:|---:|---:|---:|---|---:|---:|---|
@@ -21,7 +21,7 @@ These are historical validation snapshots tied to the hashes below, not a fresh 
 | `sci-finepdfs` | 500 | 13 | **3** | 484 | 0 | 0 | 0 (0 by F2) | 202 | 2 | PASS |
 
 - **F2 alone:** `harm_test.py --rule F2` on the raw gold docs.
-- **`clean.py` then F2:** each gold doc through `clean.py`, then F2 on the text it keeps, as `run_clean.py --f2` does. A gold doc counts once, changed or dropped. `clean.py` changes no gold doc on these packs, so the two agree.
+- **`clean.py` then F2:** the gold docs `clean.py` changed or dropped, plus those F2 dropped, from the `run_clean.py --f2` run on the same pack. A gold doc counts once.
 - **kept + dropped + errors = docs** on every pack (`final` in the summary).
 
 ## Every doc F2 drops, reviewed
@@ -44,4 +44,4 @@ The offset is in the cleaned text. **Possible** means benchmark content may be i
 | `sci-finepdfs` | `35eb8b91a98d3a41` | `mmlu:test:5817`, `mmlu:test:5654` ... | 1,111,191 | possible: a passage only | A public Jefferson passage that three MMLU history questions quote. The questions and options are not in the doc. G9's README names it as a false hit. |
 | `sci-finepdfs` | `3f91dba6d4dcbafd` | `hle:test:6724d81d42ec04c22a24aa83` | 22,947 | shared text | The same citation, 4 times. |
 
-4 possible, 9 shared text, 0 not reviewed. Only one holds a benchmark question; the other possible ones hold a quoted passage or instructions.
+4 possible, 9 shared text, 0 not reviewed.
