@@ -313,6 +313,22 @@ All data is made up inside the tests (`conftest.py`). The runner's tests use `te
 
 ---
 
+## ⏱ Measured on real data
+
+Smoke run on 13 Nov, Windows laptop, one process. Two packs of cleaned sample v0 (**ind-ta-sangraha-s** and **sci-finepdfs**, both splits, 10,446 documents), a hand-made 3-row remove list, and the **real** `run_f2.py` (#35) with G9's **full** set v2:
+
+| Stage | Result | Time |
+|---|---|---:|
+| apply | 10,446 → 3 removed → 10,443 · held-out parts byte-identical | 2.2 s |
+| f2 | 10,443 → **14 benchmark copies dropped** (all in sci-finepdfs) → 10,429 · 0 errors | **508.5 s** |
+| survivor loss | a real F2-dropped survivor reported as `lost` | 0.1 s |
+| runner | 10 of 10 checks passed · a changed adopted folder refused on `--from` | |
+
+> [!WARNING]
+> **F2 dominates the run time.** It checked about **15 docs/s on sci-finepdfs** (long PDF text) and **53 docs/s on Tamil**, plus about 10 s per split to load the set. At those rates, the **1,432,552 documents** of sample v0 would take roughly **8 to 26 hours in one process**. For the week-3 run, F2 should run in parallel: one process per pack or part, about 1.1 GB of memory each. Since `run_f2.py` already takes any folder and skips finished files, this needs no code change in F2.
+
+---
+
 ## 🧠 Design decisions
 
 | Decision | Why |
