@@ -49,6 +49,20 @@ def test_untouched_parts_are_byte_copies(tmp_path, cleaned, write_remove_list):
     assert copied[("train", "code-go/part-00000.parquet")] is False
 
 
+def test_untouched_parts_are_hard_links_unless_copy(tmp_path, cleaned, write_remove_list):
+    import os
+    rl = write_remove_list([["code-go", "train", "code-go/part-00000.parquet", 0, "g0"]])
+    src = cleaned / "train" / "en-dclm" / "part-00000.parquet"
+    s = ad.apply(cleaned, rl, tmp_path / "linked")
+    assert os.path.samefile(src, tmp_path / "linked" / "train" / "en-dclm" / "part-00000.parquet")
+    assert {p["part"]: p["linked"] for p in s["parts"] if p["split"] == "train"} == {
+        "code-go/part-00000.parquet": False, "code-go/part-00001.parquet": True, "en-dclm/part-00000.parquet": True}
+    s = ad.apply(cleaned, rl, tmp_path / "copied", link=False)
+    dst = tmp_path / "copied" / "train" / "en-dclm" / "part-00000.parquet"
+    assert not os.path.samefile(src, dst) and sha(src) == sha(dst)
+    assert not any(p["linked"] for p in s["parts"])
+
+
 def test_same_doc_id_in_two_parts_only_the_listed_copy_goes(tmp_path, cleaned, write_remove_list):
     rl = write_remove_list([["code-go", "train", "code-go/part-00001.parquet", 0, "g0"]])
     out = tmp_path / "deduped"

@@ -7,6 +7,7 @@ Environment switches for the tests:
   FAKE_F2_DROP      comma-separated doc_ids to drop as benchmark copies
   FAKE_F2_ERROR     comma-separated doc_ids whose check "raises": kept out and reported as errors
   FAKE_F2_BAD_SHA   any value: report a wrong input_sha256 (an F2 that read something else)
+  FAKE_F2_CRASH     a text: exit 2 without writing anything when an input path contains it (a crashed process)
 """
 import argparse, hashlib, json, os, sys, time
 from pathlib import Path
@@ -30,6 +31,9 @@ ap.add_argument("--inputs", type=Path, nargs="+", required=True)
 ap.add_argument("--out", type=Path, required=True)
 args = ap.parse_args()
 drop, err = ids("FAKE_F2_DROP"), ids("FAKE_F2_ERROR")
+crash = os.environ.get("FAKE_F2_CRASH")
+if crash and any(crash in p.as_posix() for p in args.inputs):
+    sys.exit(2)
 reports, t0 = [], time.time()
 for root in args.inputs:
     for src in sorted(root.rglob("*.parquet")):

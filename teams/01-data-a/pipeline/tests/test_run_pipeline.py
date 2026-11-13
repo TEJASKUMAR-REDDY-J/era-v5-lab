@@ -82,7 +82,7 @@ def write_config(path, outs, run_id="test-run", **extra):
 
 @pytest.fixture
 def config(tmp_path, tsai_outputs, monkeypatch):
-    for k in ("FAKE_F2_ERROR", "FAKE_F2_BAD_SHA"):
+    for k in ("FAKE_F2_ERROR", "FAKE_F2_BAD_SHA", "FAKE_F2_CRASH"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("FAKE_F2_DROP", "g0,h1")
     return write_config(tmp_path / "pipeline.json", tsai_outputs)
@@ -234,6 +234,43 @@ def test_bad_config_stops_before_anything_runs(tmp_path, config):
     with pytest.raises(rp.Stop, match="f2 script .* not found"):
         rp.run(config)
     assert not (tmp_path / "runs").exists()
+
+
+def set_f2(config, **kw):
+    cfg = json.loads(config.read_text(encoding="utf-8"))
+    cfg["stages"]["f2"].update(kw)
+    config.write_text(json.dumps(cfg), encoding="utf-8")
+
+
+def test_parallel_f2_matches_one_process(tmp_path, config, tsai_outputs):
+    one = rp.run(config)
+    par_cfg = write_config(tmp_path / "par.json", tsai_outputs, run_id="parallel")
+    set_f2(par_cfg, workers=3)
+    par = rp.run(par_cfg)
+    run = tmp_path / "runs" / "parallel"
+    f2 = next(s for s in par["stages"] if s["stage"] == "f2")
+    assert (f2["workers"], f2["units"]) == (3, 3)  # train/code-go, train/en-dclm, heldout/code-go
+    assert par["totals"] == one["totals"] and final_ids(run) == final_ids(tmp_path / "runs" / "test-run")
+    assert {p.name for p in (run / "logs").glob("f2_*.log")} == {"f2_train_code-go.log", "f2_train_en-dclm.log",
+                                                                  "f2_heldout_code-go.log"}
+    loss = {s["stage"]: s["counts"] for s in par["stages"]}["survivor_loss"]
+    assert (loss["lost"], loss["partly_hit"]) == (1, 1)
+
+
+def test_parallel_f2_crash_names_the_pack_and_rerun_recovers(config, monkeypatch):
+    set_f2(config, workers=2)
+    monkeypatch.setenv("FAKE_F2_CRASH", "en-dclm")
+    with pytest.raises(rp.Stop, match=r"1 of 3 unit\(s\) failed.*train/en-dclm"):
+        rp.run(config)
+    monkeypatch.delenv("FAKE_F2_CRASH")
+    assert rp.run(config, start="f2")["totals"]["final"] == 9
+
+
+@pytest.mark.parametrize("workers", [0, "4", 1.5, True])
+def test_bad_workers_stop(config, workers):
+    set_f2(config, workers=workers)
+    with pytest.raises(rp.Stop, match="workers"):
+        rp.run(config)
 
 
 def test_cli(tmp_path, config):

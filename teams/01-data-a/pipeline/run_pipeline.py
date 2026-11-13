@@ -12,14 +12,17 @@ STAGES
   overlap        overlap_summary.json, overlap_matches.csv, overlap_docs.parquet                          (TSAI job, #255)
   dedup          remove_list.csv, dedup_groups.csv, dedup_summary.json                                    (TSAI job, #255)
   apply          apply_dedup.py on clean's output with dedup's remove list  -> <run>/deduped
-  f2             run_f2.py once per split on <run>/deduped/<split>            -> <run>/final/<split>
+  f2             run_f2.py on <run>/deduped/<split>                           -> <run>/final/<split>
+                 (one process per split; with "workers": N, up to N processes at once, one per pack folder)
   survivor_loss  survivor_loss.py on dedup_groups.csv and F2's reports        -> <run>/report
 
 clean, overlap and dedup take "mode": "adopt" (TSAI ran the job; "output" names the folder it returned) or "mode": "run"
 ("command": the script and its arguments, run with this Python from the repository root; "output": where that script writes).
-apply, f2 and survivor_loss always run. f2 takes "script" (default teams/01-data-a/spec_v1/run_f2.py). Scripts run with
+apply, f2 and survivor_loss always run. f2 takes "script" (default teams/01-data-a/spec_v1/run_f2.py) and "workers"
+(default 1; each run_f2.py process loads G9's full set, about 1.1 GB of memory, so N workers need about N × 1.1 GB plus the
+documents in flight). apply takes "link" (default true: untouched parts are hard-linked, not copied). Scripts run with
 python -I, which ignores user site-packages and PYTHONPATH: install pyarrow and the rest into the environment itself.
-Each script's output streams to <run>/logs/<stage>.log.
+Each script's output streams to <run>/logs/<stage>.log (F2: logs/f2_<split>[_<pack>].log).
 
 CONFIG (JSON; keys starting with "_" are comments; paths relative to the repository root, or absolute)
 =====================================================================================================
@@ -180,6 +183,9 @@ class Run:
                     raise Stop(f"config: stages.{stage}.command (a list: script, then arguments) is missing for mode run")
                 if not path(cmd[0]).is_file():
                     raise Stop(f"config: stages.{stage}.command script {cmd[0]} not found")
+        workers = self.stages.get("f2", {}).get("workers", 1)
+        if not isinstance(workers, int) or isinstance(workers, bool) or workers < 1:
+            raise Stop(f"config: stages.f2.workers is {workers!r}, expected a whole number >= 1")
         if STAGES.index(upto) >= STAGES.index("f2"):
             script = self.stages.get("f2", {}).get("script", DEFAULT_F2)
             if not path(script).is_file():
@@ -261,7 +267,8 @@ class Run:
         out, clean = self.output("apply"), self.done["clean"]["counts"]
         try:
             s = apply_dedup.apply(self.output("clean"), self.output("dedup") / "remove_list.csv", out,
-                                  splits=tuple(sp for sp in SPLITS if sp in clean["by_split"]))
+                                  splits=tuple(sp for sp in SPLITS if sp in clean["by_split"]),
+                                  link=bool(self.stages.get("apply", {}).get("link", True)))
         except apply_dedup.Stop as e:
             raise Stop(f"apply: {e}")
         counts = dict(s["totals"])
@@ -276,44 +283,73 @@ class Run:
         return {"mode": "run", "command": ["teams/01-data-a/pipeline/apply_dedup.py"],
                 "code_sha256": s["code_sha256"], "output": "deduped", "counts": counts}
 
+    def f2_units(self, src, split, workers):
+        """The F2 work units of one split: the whole split with one worker, else one unit per pack folder (plus one
+        for Parquet files sitting directly in the split folder). Each unit: (name, inputs, out)."""
+        out = self.output("f2") / split
+        if workers <= 1:
+            return [(split, [src / split], out)]
+        units = [(f"{split}/{d.name}", [d], out / d.name) for d in sorted((src / split).iterdir())
+                 if d.is_dir() and any(d.rglob("*.parquet"))]
+        loose = sorted(f for f in (src / split).glob("*.parquet") if f.is_file())
+        if loose:
+            units.append((f"{split}/(files)", loose, out))
+        return units
+
     def stage_f2(self):
-        script = self.stages.get("f2", {}).get("script", DEFAULT_F2)
+        from concurrent.futures import ThreadPoolExecutor
+        spec = self.stages.get("f2", {})
+        script, workers = spec.get("script", DEFAULT_F2), int(spec.get("workers", 1))
         src, out = self.output("apply"), self.output("f2")
         parts = getattr(self, "apply_parts", None)
         if parts is None:  # apply was recorded by an earlier run
             s = load_json(src / "apply_dedup_summary.json")
             parts = {(p["split"], p["part"]): p["output_sha256"] for p in s["parts"]}
         kept_by_split = self.done["apply"]["counts"]["kept_by_split"]
-        totals = {"rows": 0, "kept": 0, "dropped_by_f2": 0, "errors": 0}
-        by_split, sets = {}, set()
-        for split in SPLITS:
-            if not (src / split).is_dir():
-                continue
+        splits = [sp for sp in SPLITS if (src / sp).is_dir()]
+        for split in splits:  # before any F2 runs
             mine = {p for (sp, p) in parts if sp == split}
             if (out / split).is_dir():
                 stale = sorted(f.relative_to(out / split).as_posix() for f in (out / split).rglob("*.parquet")
                                if f.relative_to(out / split).as_posix() not in mine)
                 self.check(f"no stale F2 output in final/{split}", not stale,
                            f"{len(stale)} Parquet file(s) from an earlier run, e.g. {stale[0] if stale else ''}")
-            log = self.dir / "logs" / f"f2_{split}.log"
-            rc = run_script(script, ["--inputs", src / split, "--out", out / split], "f2", log)
-            summary = out / split / "f2_summary.json"
-            if rc != 0 and not summary.is_file():
-                raise Stop(f"f2: {Path(script).name} on {split} failed with exit code {rc}: {tail(log)}")
-            s = load_json(summary)
+        units = [u for sp in splits for u in self.f2_units(src, sp, workers)]
+
+        def one(unit):
+            name, inputs, dst = unit
+            log = self.dir / "logs" / ("f2_" + name.replace("/", "_").replace("(", "").replace(")", "") + ".log")
+            rc = run_script(script, ["--inputs", *inputs, "--out", dst], "f2", log)
+            return name, dst, rc, log
+
+        t0 = time.time()
+        with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:  # each thread waits on its own run_f2 process
+            results = list(pool.map(one, units))
+        failed = [(n, rc, log) for n, dst, rc, log in results if rc != 0 and not (dst / "f2_summary.json").is_file()]
+        if failed:
+            n, rc, log = failed[0]
+            raise Stop(f"f2: {len(failed)} of {len(units)} unit(s) failed without a summary, e.g. {n} "
+                       f"(exit code {rc}): {tail(log)}. Rerun --from f2: finished files are skipped")
+
+        totals = {"rows": 0, "kept": 0, "dropped_by_f2": 0, "errors": 0}
+        by_split, sets = {sp: dict.fromkeys(totals, 0) for sp in splits}, set()
+        for name, dst, rc, log in results:
+            s = load_json(dst / "f2_summary.json")
             sets.add(s.get("set_sha256"))
             errors = s.get("errors", 0)
             errors = len(errors) if isinstance(errors, list) else errors
-            by_split[split] = {"rows": s.get("rows", 0), "kept": s.get("kept", 0),
-                               "dropped_by_f2": s.get("dropped_by_f2", 0), "errors": errors}
-            for k in totals:
-                totals[k] += by_split[split][k]
-            self.check(f"F2 reported no errors on {split}", errors == 0 and rc == 0,
+            split = name.split("/")[0]
+            for k, v in (("rows", s.get("rows", 0)), ("kept", s.get("kept", 0)),
+                         ("dropped_by_f2", s.get("dropped_by_f2", 0)), ("errors", errors)):
+                by_split[split][k] += v
+                totals[k] += v
+            self.check(f"F2 reported no errors on {name}", errors == 0 and rc == 0,
                        f"{errors} docs raised during the check, exit code {rc}; see {log.name}")
+        for split in splits:
             self.check(f"F2 read every deduplicated row of {split}", by_split[split]["rows"] == kept_by_split.get(split),
                        f"F2 rows {by_split[split]['rows']}, apply kept {kept_by_split.get(split)}")
             wrong = []
-            for part in sorted(mine):
+            for part in sorted(p for (sp, p) in parts if sp == split):
                 rep = out / split / (part + ".f2.json")
                 got = load_json(rep).get("input_sha256") if rep.is_file() else None
                 if got != parts[(split, part)]:
@@ -322,8 +358,9 @@ class Run:
                        f"{len(wrong)} part(s) without a matching F2 report, e.g. {wrong[0] if wrong else ''}")
         self.check("F2 used one fingerprint set", len(sets) == 1 and None not in sets, f"set_sha256 values {sorted(map(str, sets))}")
         self.check("F2 counts add up", totals["kept"] + totals["dropped_by_f2"] + totals["errors"] == totals["rows"], f"{totals}")
-        return {"mode": "run", "command": [script, "--inputs", "<run>/deduped/<split>", "--out", "<run>/final/<split>"],
+        return {"mode": "run", "command": [script, "--inputs", "<run>/deduped/<split>[/<pack>]", "--out", "<run>/final/<split>[/<pack>]"],
                 "code_sha256": sha256(path(script)), "output": "final", "set_sha256": sets.pop(),
+                "workers": workers, "units": len(units), "wall_seconds": round(time.time() - t0, 1),
                 "counts": {**totals, "by_split": by_split}}
 
     def stage_survivor_loss(self):

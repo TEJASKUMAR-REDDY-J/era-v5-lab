@@ -15,7 +15,7 @@ The **Clean → Dedup → F2** pipeline of Data A, as one command. It chains the
 | **Order** | clean → overlap → dedup → **apply the remove list** → **F2** → **survivor loss** |
 | **In** | the cleaned parts (`train/`, `heldout/`) and the outputs of overlap and dedup |
 | **Out** | filtered Parquet in the same layout, same schema, unchanged text · `pipeline_manifest.json` |
-| **New here** | `apply_dedup.py` · `survivor_loss.py` · `run_pipeline.py` · `pipeline.json` · 50 tests |
+| **New here** | `apply_dedup.py` · `survivor_loss.py` · `run_pipeline.py` · `pipeline.json` · 57 tests |
 | **Reused, never copied** | `spec_v1/run_clean.py` (#244) · `dedup/overlap.py`, `dedup/dedup.py` (#255) · `spec_v1/run_f2.py` (#35) |
 | **Needs** | Python 3.9+ with `pyarrow`; `pytest` for the tests |
 
@@ -60,7 +60,7 @@ Exit code `0`: every check passed. Exit code `1`: a check failed, and the messag
 | 02 | **overlap** | `dedup/overlap.py --config overlap.json` | #255 | cleaned parts | `overlap_summary.json`, `overlap_matches.csv`, `overlap_docs.parquet` |
 | 03 | **dedup** | `dedup/dedup.py --config dedup.json` | #255 | overlap outputs | `remove_list.csv`, `dedup_groups.csv`, `dedup_summary.json` |
 | 04 | **apply** | `pipeline/apply_dedup.py` | new | cleaned parts + `remove_list.csv` | `deduped/<split>/<part>`, `apply_dedup_summary.json` |
-| 05 | **f2** | `spec_v1/run_f2.py`, once per split | #35 | `deduped/<split>` | `final/<split>/<part>`, `<part>.f2.json`, `f2_summary.json` |
+| 05 | **f2** | `spec_v1/run_f2.py`, per split, or per pack in parallel | #35 | `deduped/<split>` | `final/<split>/<part>`, `<part>.f2.json`, `f2_summary.json` |
 | 06 | **survivor loss** | `pipeline/survivor_loss.py` | new | `dedup_groups.csv` + F2 reports | `survivor_loss.csv`, `survivor_loss_summary.json` |
 
 <details>
@@ -197,7 +197,8 @@ A document whose F2 check raised an error is also kept out of the output, so it 
     "clean":   { "mode": "adopt", "output": "out/tokenizer_sample_v0_clean" },
     "overlap": { "mode": "adopt", "output": "out/overlap" },
     "dedup":   { "mode": "adopt", "output": "out/dedup" },
-    "f2":      { "script": "teams/01-data-a/spec_v1/run_f2.py" }
+    "apply":   { "link": true },             // hard-link untouched parts (no extra disk)
+    "f2":      { "script": "teams/01-data-a/spec_v1/run_f2.py", "workers": 4 }
   }
 }
 ```
@@ -208,6 +209,8 @@ A document whose F2 check raised an error is also kept out of the output, so it 
 | `stages.<…>.command` | `["script.py", "--arg", "…"]` | run with this Python from the repository root; `output` is where that script writes |
 | `stages.<…>.output` | folder | where the stage's files are, in both modes |
 | `stages.f2.script` | path | `run_f2.py` (default `teams/01-data-a/spec_v1/run_f2.py`, from #35) |
+| `stages.f2.workers` | whole number ≥ 1 (default 1) | **1**: one `run_f2.py` per split. **N > 1**: up to N processes at once, one per pack folder, with one log per pack |
+| `stages.apply.link` | `true` (default) · `false` | hard-link untouched parts instead of copying them; falls back to a copy across file systems |
 
 Scripts run with `python -I`, which ignores user site-packages and `PYTHONPATH`: install `pyarrow` and the rest into the environment itself, not with `pip install --user`. Running overlap locally needs Linux or macOS (`overlap.py` uses `resource`). Adopting TSAI's overlap works anywhere.
 
@@ -246,10 +249,10 @@ flowchart TD
 ```text
 out/pipeline/<run_id>/
 ├── pipeline_manifest.json             the record of the run
-├── logs/                              one log per script: overlap.log, f2_train.log, …
+├── logs/                              one log per script: overlap.log, f2_train.log or f2_train_<pack>.log, …
 ├── deduped/                           04 apply
 │   ├── train/<pack>/part-NNNNN.parquet
-│   ├── heldout/<pack>/part-NNNNN.parquet      byte copies: dedup never removes held-out
+│   ├── heldout/<pack>/part-NNNNN.parquet      hard links: dedup never removes held-out
 │   └── apply_dedup_summary.json
 ├── final/                             05 F2: the pipeline's output
 │   ├── train/<pack>/part-NNNNN.parquet  (+ .f2.json)
@@ -293,7 +296,7 @@ A stage's **digest** is the sha256 over the sorted `relative/path<TAB>hash` of e
 
 - **IDs, counts, offsets and hashes only.** No summary, report, log or manifest holds document text or benchmark text, and the tests check this.
 - **Outputs live in `out/`**, which git ignores. Parquet, archives and files over 5 MB never go into the repository.
-- **Untouched parts stay untouched.** A part with nothing to remove is byte-copied, so its sha256 proves it. A filtered part keeps its row groups and compression codec.
+- **Untouched parts stay untouched.** A part with nothing to remove is hard-linked (or byte-copied), so its sha256 proves it, and it costs no extra disk. Nothing in the pipeline edits a file in place: every write goes to `.tmp` and is renamed, so a link never changes its source. A filtered part keeps its row groups and compression codec.
 - **Benchmarks:** F2 uses G9's pinned fingerprint set v2 (`set_sha256 2826a3b8…d22a`), unchanged. The pipeline sees benchmark item IDs, never benchmark text.
 
 <br>
@@ -308,23 +311,24 @@ Smoke run on 13 Nov: a Windows laptop, one process, two packs of cleaned sample 
 | f2 | 10,443 → **14 benchmark copies dropped** (all in sci-finepdfs) → 10,429 · 0 errors | **467 s** |
 | survivor loss | every group accounted for; a real F2-dropped survivor, made a survivor on purpose, is reported as `lost` | 0.1 s |
 | runner | **21 of 21 checks passed**, including every sha256 link · a changed adopted folder is refused on `--from` | |
+| f2, 2 workers | 4 units (one per pack and split) · **identical final Parquet and totals** · 23 of 23 checks · held-out parts hard-linked | **400 s** |
 
 > [!WARNING]
-> **F2 dominates the run time.** It checked about **15 docs/s on sci-finepdfs** (long PDF text) and **53 docs/s on Tamil**, plus about 10 s per split to load the set. At those rates the **1,432,552 documents** of sample v0 take roughly **8 to 26 hours in one process**. For the week-3 run, F2 should run in parallel: one process per pack or part, at about 1.1 GB of memory each. `run_f2.py` already takes any folder and skips finished files, so this needs no change to F2.
+> **F2 dominates the run time.** It checked about **15 docs/s on sci-finepdfs** (long PDF text) and **53 docs/s on Tamil**, plus about 10 s per split to load the set. At those rates the **1,432,552 documents** of sample v0 take roughly **8 to 26 hours in one process**. For the week-3 run, set `stages.f2.workers` (one `run_f2.py` per pack, about 1.1 GB of memory each). The wall time is then bounded by the **largest pack** (in the smoke run, sci-finepdfs alone took about 400 s), so expect roughly `total / workers`, but never less than the slowest pack. Size it as `workers ≈ min(cores − 1, free RAM in GB ÷ 1.5, number of packs)`.
 
 <br>
 
 ## Tests
 
 ```bash
-python -m pytest teams/01-data-a/pipeline/tests -q      # 50 passed
+python -m pytest teams/01-data-a/pipeline/tests -q      # 57 passed
 ```
 
 | File | Tests | Covers |
 |---|:-:|---|
-| `test_apply_dedup.py` | 24 | exact removal · byte copies · the same doc_id in two parts · Windows `\` paths · 8 bad lists, each with the bad row in the last part processed and nothing written · an unreadable or column-less part · row-group boundaries, with zstd kept · stale outputs · a corrupted output redone on rerun · train-only · resume · no text in the summary · CLI |
+| `test_apply_dedup.py` | 25 | exact removal · byte copies · hard links (and `--copy`) · the same doc_id in two parts · Windows `\` paths · 8 bad lists, each with the bad row in the last part processed and nothing written · an unreadable or column-less part · row-group boundaries, with zstd kept · stale outputs · a corrupted output redone on rerun · train-only · resume · no text in the summary · CLI |
 | `test_survivor_loss.py` | 9 | lost · partly hit · untouched · without survivor · split + part + doc_id matching · F2 errors count as dropped · no drops · an uncovered part · mixed fingerprint sets · CLI |
-| `test_run_pipeline.py` | 17 | the full chain (13 → 11 → 9) · identical runs give identical digests · `--from` keeps earlier checks · a changed adopted folder · dedup from another overlap run · overlap of other parts · count mismatch · held-out removed · F2 errors · F2 that read other files · stale F2 output · train-only · `run` mode success and failure · a bad config stopped before anything runs · CLI |
+| `test_run_pipeline.py` | 23 | the full chain (13 → 11 → 9) · parallel F2 gives the same result as one process · a crashed pack is named and a rerun recovers · bad `workers` values · identical runs give identical digests · `--from` keeps earlier checks · a changed adopted folder · dedup from another overlap run · overlap of other parts · count mismatch · held-out removed · F2 errors · F2 that read other files · stale F2 output · train-only · `run` mode success and failure · a bad config stopped before anything runs · CLI |
 
 The data is made up inside the tests (`conftest.py`), in dedup's real formats (`G000001` group ids, rule numbers 0–4). The runner's tests use `tests/fake_run_f2.py`, a stand-in with `run_f2.py`'s command line, its output files and its exit codes. The real F2 needs G9's full set (about 1.1 GB) and is tested in its own PR, and on real data above.
 
@@ -337,7 +341,9 @@ The data is made up inside the tests (`conftest.py`), in dedup's real formats (`
 | **Call the team's scripts, never copy them** | Their owners still change them in open PRs. A copy would drift, and its sha256 would no longer match what TSAI checks. |
 | **Adopt or run** for clean, overlap and dedup | TSAI runs the data jobs, so the runner has to start from what TSAI returns. |
 | **Link stages by sha256, not only by counts** | Two runs can have the same counts. Only hashes prove that dedup used this overlap and that F2 read what apply wrote. |
-| **F2 after dedup, as its own stage, once per split** | TSAI's order (12 Nov). One run per split keeps `train/` and `heldout/` from colliding in F2's output. |
+| **F2 after dedup, as its own stage** | TSAI's order (12 Nov). Runs are per split (or per pack), so `train/` and `heldout/` never collide in F2's output. |
+| **Parallel F2 by pack, not by part** | F2 is the slow stage, and each process loads the 1.1 GB set once. Packs are big enough to keep that load small next to the work, and small enough to spread across cores. |
+| **Hard-link untouched parts** | A third copy of the sample would triple the disk; a link costs nothing and keeps the same sha256. |
 | **Find rows by position, then verify the doc_id** | doc_ids repeat across parts. A mismatch means the list belongs to another cleaning run. |
 | **A held-out row in the list stops the run** | Rule 0 says dedup never removes held-out documents. If one is listed, something upstream is broken. |
 | **Byte-copy untouched parts** | The sha256 proves the part is untouched, and copying is faster than rewriting. |
