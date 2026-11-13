@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-labelledby="t d">
+  <title id="t">How a document travels through the pipeline</title>
+  <desc id="d">Six stages: clean, overlap and dedup (TSAI jobs), then apply, f2 and survivor_loss (run by the runner). Duplicates leave at apply, benchmark copies leave at f2, the rest reaches the final Parquet.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070b1a"/><stop offset="1" stop-color="#14123a"/>
+    </linearGradient>
+    <linearGradient id="trk" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="1160" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/><stop offset="0.5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.04"/>
+    </pattern>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5"/></filter>
+    <clipPath id="frame"><rect width="1200" height="480" rx="22"/></clipPath>
+  </defs>
+  <style>
+    .kick{font:700 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;letter-spacing:3px;fill:#2dd4bf}
+    .h{font:700 24px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;fill:#f8fafc}
+    .name{font:700 19px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;fill:#f8fafc}
+    .num{font:800 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#0b1020}
+    .code{font:500 12.5px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#cbd5e1}
+    .out{font:500 12.5px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#94a3b8}
+    .tag{font:700 12px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace}
+    .bin{font:700 15px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif}
+    .binsub{font:500 12.5px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#94a3b8}
+    .band{font:700 12px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;letter-spacing:2px}
+    .card{animation:rise .9s cubic-bezier(.2,.8,.2,1) both}
+    .c1{animation-delay:.05s}.c2{animation-delay:.15s}.c3{animation-delay:.25s}.c4{animation-delay:.35s}.c5{animation-delay:.45s}.c6{animation-delay:.55s}
+    @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+    .glow{animation:glow 2.4s ease-in-out infinite}
+    @keyframes glow{0%,100%{opacity:.25}50%{opacity:.75}}
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="480" fill="url(#bg)"/>
+    <rect width="1200" height="480" fill="url(#grid)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1199" height="479" rx="22" fill="none" stroke="#334155" stroke-opacity="0.7"/>
+
+  <text x="40" y="40" class="kick">HOW A DOCUMENT TRAVELS</text>
+  <text x="40" y="70" class="h">clean → overlap → dedup → apply → f2 → survivor_loss</text>
+
+  <!-- bands: who runs what -->
+  <rect x="30" y="88" width="560" height="22" rx="11" fill="#2dd4bf" fill-opacity="0.1"/>
+  <text x="310" y="103" class="band" text-anchor="middle" fill="#5eead4">TSAI JOBS · ADOPT THEIR OUTPUT OR RUN LOCALLY</text>
+  <rect x="615" y="88" width="560" height="22" rx="11" fill="#f472b6" fill-opacity="0.1"/>
+  <text x="895" y="103" class="band" text-anchor="middle" fill="#f9a8d4">ALWAYS RUN BY run_pipeline.py</text>
+
+  <!-- stage cards -->
+  <g transform="translate(30 122)"><g class="card c1">
+    <rect width="170" height="150" rx="16" fill="#0f172a" stroke="#2dd4bf" stroke-opacity="0.55"/>
+    <rect width="170" height="5" rx="2.5" fill="#2dd4bf"/>
+    <circle cx="24" cy="32" r="12" fill="#2dd4bf"/><text x="24" y="37" class="num" text-anchor="middle">1</text>
+    <text x="44" y="39" class="name">clean</text>
+    <text x="14" y="72" class="code">spec_v1/run_clean.py</text>
+    <text x="14" y="94" class="out">→ cleaned parts</text>
+    <text x="14" y="134" class="tag" fill="#5eead4">#244 · spec v1</text>
+  </g></g>
+  <g transform="translate(225 122)"><g class="card c2">
+    <rect width="170" height="150" rx="16" fill="#0f172a" stroke="#38bdf8" stroke-opacity="0.55"/>
+    <rect width="170" height="5" rx="2.5" fill="#38bdf8"/>
+    <circle cx="24" cy="32" r="12" fill="#38bdf8"/><text x="24" y="37" class="num" text-anchor="middle">2</text>
+    <text x="44" y="39" class="name">overlap</text>
+    <text x="14" y="72" class="code">dedup/overlap.py</text>
+    <text x="14" y="94" class="out">→ matches + docs</text>
+    <text x="14" y="134" class="tag" fill="#7dd3fc">#255 · H1 + H2</text>
+  </g></g>
+  <g transform="translate(420 122)"><g class="card c3">
+    <rect width="170" height="150" rx="16" fill="#0f172a" stroke="#818cf8" stroke-opacity="0.55"/>
+    <rect width="170" height="5" rx="2.5" fill="#818cf8"/>
+    <circle cx="24" cy="32" r="12" fill="#818cf8"/><text x="24" y="37" class="num" text-anchor="middle">3</text>
+    <text x="44" y="39" class="name">dedup</text>
+    <text x="14" y="72" class="code">dedup/dedup.py</text>
+    <text x="14" y="94" class="out">→ remove_list.csv</text>
+    <text x="14" y="114" class="out">→ dedup_groups.csv</text>
+    <text x="14" y="134" class="tag" fill="#a5b4fc">#255 · rules 0–4</text>
+  </g></g>
+  <g transform="translate(615 122)"><g class="card c4">
+    <rect width="170" height="150" rx="16" fill="#0f172a" stroke="#a78bfa" stroke-opacity="0.75"/>
+    <rect width="170" height="5" rx="2.5" fill="#a78bfa"/>
+    <circle cx="24" cy="32" r="12" fill="#a78bfa"/><text x="24" y="37" class="num" text-anchor="middle">4</text>
+    <text x="44" y="39" class="name">apply</text>
+    <text x="14" y="72" class="code">apply_dedup.py</text>
+    <text x="14" y="94" class="out">→ deduped/</text>
+    <text x="14" y="134" class="tag" fill="#c4b5fd">new · this folder</text>
+  </g></g>
+  <g transform="translate(810 122)"><g class="card c5">
+    <rect width="170" height="150" rx="16" fill="#0f172a" stroke="#f472b6" stroke-opacity="0.65"/>
+    <rect width="170" height="5" rx="2.5" fill="#f472b6"/>
+    <circle cx="24" cy="32" r="12" fill="#f472b6"/><text x="24" y="37" class="num" text-anchor="middle">5</text>
+    <text x="44" y="39" class="name">f2</text>
+    <text x="14" y="72" class="code">spec_v1/run_f2.py</text>
+    <text x="14" y="94" class="out">→ final/</text>
+    <text x="14" y="114" class="out">→ *.f2.json</text>
+    <text x="14" y="134" class="tag" fill="#f9a8d4">#35 · G9 set v2</text>
+  </g></g>
+  <g transform="translate(1005 122)"><g class="card c6">
+    <rect width="170" height="150" rx="16" fill="#0f172a" stroke="#f59e0b" stroke-opacity="0.75"/>
+    <rect width="170" height="5" rx="2.5" fill="#f59e0b"/>
+    <circle cx="24" cy="32" r="12" fill="#f59e0b"/><text x="24" y="37" class="num" text-anchor="middle">6</text>
+    <text x="44" y="39" class="name">survivor</text>
+    <text x="14" y="72" class="code">survivor_loss.py</text>
+    <text x="14" y="94" class="out">→ lost groups</text>
+    <text x="14" y="134" class="tag" fill="#fcd34d">new · this folder</text>
+  </g></g>
+
+  <!-- connectors from cards to the track -->
+  <g stroke="#475569" stroke-dasharray="3 5" stroke-width="1.5">
+    <path d="M115 272V318"/><path d="M310 272V318"/><path d="M505 272V318"/>
+    <path d="M700 272V318"/><path d="M895 272V318"/><path d="M1090 272V318"/>
+  </g>
+
+  <!-- track and exits -->
+  <path d="M40 318H1160" stroke="url(#trk)" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <path d="M700 318V380" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+  <path d="M895 318V380" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+  <path d="M1090 318V380" stroke="#2dd4bf" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+  <g fill="#0b1020" stroke-width="3">
+    <circle cx="115" cy="318" r="7" stroke="#2dd4bf"/><circle cx="310" cy="318" r="7" stroke="#38bdf8"/>
+    <circle cx="505" cy="318" r="7" stroke="#818cf8"/><circle cx="700" cy="318" r="7" stroke="#a78bfa"/>
+    <circle cx="895" cy="318" r="7" stroke="#f472b6"/><circle cx="1090" cy="318" r="7" stroke="#f59e0b"/>
+  </g>
+
+  <!-- bins -->
+  <g transform="translate(615 382)">
+    <rect width="170" height="70" rx="14" fill="#f43f5e" fill-opacity="0.1" stroke="#f43f5e" stroke-opacity="0.6"/>
+    <rect class="glow" width="170" height="70" rx="14" fill="none" stroke="#f43f5e" stroke-width="2"/>
+    <text x="85" y="30" class="bin" text-anchor="middle" fill="#fda4af">removed by dedup</text>
+    <text x="85" y="52" class="binsub" text-anchor="middle">rows of remove_list</text>
+  </g>
+  <g transform="translate(810 382)">
+    <rect width="170" height="70" rx="14" fill="#f59e0b" fill-opacity="0.1" stroke="#f59e0b" stroke-opacity="0.6"/>
+    <rect class="glow" width="170" height="70" rx="14" fill="none" stroke="#f59e0b" stroke-width="2" style="animation-delay:.8s"/>
+    <text x="85" y="30" class="bin" text-anchor="middle" fill="#fcd34d">dropped by F2</text>
+    <text x="85" y="52" class="binsub" text-anchor="middle">benchmark copies</text>
+  </g>
+  <g transform="translate(1005 382)">
+    <rect width="170" height="70" rx="14" fill="#2dd4bf" fill-opacity="0.1" stroke="#2dd4bf" stroke-opacity="0.6"/>
+    <rect class="glow" width="170" height="70" rx="14" fill="none" stroke="#2dd4bf" stroke-width="2" style="animation-delay:1.6s"/>
+    <text x="85" y="30" class="bin" text-anchor="middle" fill="#5eead4">final Parquet</text>
+    <text x="85" y="52" class="binsub" text-anchor="middle">+ manifest + report</text>
+  </g>
+  <text x="40" y="420" class="binsub">every count is checked against the stage before;</text>
+  <text x="40" y="440" class="binsub">a mismatch stops the run before it writes</text>
+
+  <!-- documents: most reach the end, some leave at apply (duplicates) or f2 (benchmark copies) -->
+  <g>
+    <circle r="5" fill="#99f6e4"><animateMotion dur="6s" repeatCount="indefinite" path="M40 318H1090V380"/></circle>
+    <circle r="5" fill="#99f6e4" filter="url(#soft)"><animateMotion dur="6s" repeatCount="indefinite" path="M40 318H1090V380"/></circle>
+    <circle r="5" fill="#fda4af"><animateMotion dur="4.4s" begin="1s" repeatCount="indefinite" path="M40 318H700V380"/></circle>
+    <circle r="5" fill="#99f6e4"><animateMotion dur="6s" begin="2s" repeatCount="indefinite" path="M40 318H1090V380"/></circle>
+    <circle r="5" fill="#fcd34d"><animateMotion dur="5.3s" begin="3s" repeatCount="indefinite" path="M40 318H895V380"/></circle>
+    <circle r="5" fill="#99f6e4"><animateMotion dur="6s" begin="4s" repeatCount="indefinite" path="M40 318H1090V380"/></circle>
+    <circle r="5" fill="#fda4af"><animateMotion dur="4.4s" begin="5s" repeatCount="indefinite" path="M40 318H700V380"/></circle>
+  </g>
+</svg>

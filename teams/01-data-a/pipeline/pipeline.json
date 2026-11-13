@@ -1,0 +1,25 @@
+{
+  "_comment": "Example config for run_pipeline.py on tokenizer sample v0. Paths are relative to the repository root. clean, overlap and dedup are TSAI jobs: 'adopt' points at the folders TSAI returned. Switch a stage to 'run' with a 'command' to run it here instead.",
+  "run_id": "sample-v0",
+  "out": "out/pipeline",
+  "stages": {
+    "clean": {
+      "mode": "adopt",
+      "output": "out/tokenizer_sample_v0_clean",
+      "_run_example": {"mode": "run", "command": ["teams/01-data-a/spec_v1/run_tokenizer_sample.py", "--config", "teams/01-data-a/jobs/2026-11-02-tokenizer-sample-v0-clean/tokenizer_sample_v0_clean.json"], "output": "out/tokenizer_sample_v0_clean"}
+    },
+    "overlap": {
+      "mode": "adopt",
+      "output": "out/overlap",
+      "_run_example": {"mode": "run", "command": ["teams/01-data-a/dedup/overlap.py", "--config", "teams/01-data-a/dedup/overlap.json"], "output": "out/overlap"}
+    },
+    "dedup": {
+      "mode": "adopt",
+      "output": "out/dedup",
+      "_run_example": {"mode": "run", "command": ["teams/01-data-a/dedup/dedup.py", "--config", "teams/01-data-a/dedup/dedup.json"], "output": "out/dedup"}
+    },
+    "f2": {
+      "script": "teams/01-data-a/spec_v1/run_f2.py"
+    }
+  }
+}

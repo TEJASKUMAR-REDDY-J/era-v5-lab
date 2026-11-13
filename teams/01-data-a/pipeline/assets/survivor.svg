@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="350" viewBox="0 0 1200 350" role="img" aria-labelledby="t d">
+  <title id="t">Survivor loss</title>
+  <desc id="d">A dedup group is lost when F2 drops every survivor, partly hit when it drops some, untouched when it drops none.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070b1a"/><stop offset="1" stop-color="#14123a"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#fff" stroke-opacity="0.04"/></pattern>
+    <clipPath id="frame"><rect width="1200" height="350" rx="22"/></clipPath>
+    <g id="x"><path d="M-9 -9L9 9M9 -9L-9 9" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/></g>
+  </defs>
+  <style>
+    .kick{font:700 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;letter-spacing:3px;fill:#2dd4bf}
+    .h{font:700 24px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;fill:#f8fafc}
+    .st{font:800 20px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif}
+    .cap{font:500 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#94a3b8}
+    .lg{font:500 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#cbd5e1}
+    .strike{animation:strike 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+    @keyframes strike{0%,15%{opacity:0;transform:scale(.4)}30%,80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
+    .fade{animation:fade 3s ease-in-out infinite}
+    @keyframes fade{0%,15%{opacity:1}30%,80%{opacity:.18}100%{opacity:1}}
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="350" fill="url(#bg)"/><rect width="1200" height="350" fill="url(#grid)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1199" height="349" rx="22" fill="none" stroke="#334155" stroke-opacity="0.7"/>
+  <text x="40" y="44" class="kick">SURVIVOR LOSS · TSAI, 12 NOV</text>
+  <text x="40" y="76" class="h">F2 runs after dedup. When it drops a survivor, the group's copy is gone.</text>
+
+  <!-- lost -->
+  <g transform="translate(40 100)">
+    <rect width="356" height="180" rx="16" fill="#0f172a" stroke="#f43f5e" stroke-opacity=".6"/>
+    <text x="20" y="34" class="st" fill="#fda4af">lost</text>
+    <circle cx="80" cy="92" r="16" fill="#2dd4bf" class="fade"/>
+    <g transform="translate(80 92)"><use href="#x" class="strike"/></g>
+    <circle cx="150" cy="92" r="14" fill="none" stroke="#64748b" stroke-width="2.5"/>
+    <circle cx="210" cy="92" r="14" fill="none" stroke="#64748b" stroke-width="2.5"/>
+    <text x="20" y="154" class="cap">every survivor dropped by F2:</text>
+    <text x="20" y="172" class="cap">no copy reaches the final data</text>
+  </g>
+  <!-- partly hit -->
+  <g transform="translate(422 100)">
+    <rect width="356" height="180" rx="16" fill="#0f172a" stroke="#f59e0b" stroke-opacity=".6"/>
+    <text x="20" y="34" class="st" fill="#fcd34d">partly hit</text>
+    <circle cx="80" cy="92" r="16" fill="#2dd4bf"/>
+    <circle cx="140" cy="92" r="16" fill="#2dd4bf" class="fade"/>
+    <g transform="translate(140 92)"><use href="#x" class="strike"/></g>
+    <circle cx="210" cy="92" r="14" fill="none" stroke="#64748b" stroke-width="2.5"/>
+    <path d="M64 115H156" stroke="#2dd4bf" stroke-opacity=".5" stroke-width="2"/>
+    <text x="110" y="129" class="cap" text-anchor="middle" style="font-size:11.5px">2 held-out survivors</text>
+    <text x="20" y="154" class="cap">some survivors dropped, not all</text>
+    <text x="20" y="172" class="cap">(groups with held-out copies)</text>
+  </g>
+  <!-- untouched -->
+  <g transform="translate(804 100)">
+    <rect width="356" height="180" rx="16" fill="#0f172a" stroke="#2dd4bf" stroke-opacity=".6"/>
+    <text x="20" y="34" class="st" fill="#5eead4">untouched</text>
+    <circle cx="80" cy="92" r="16" fill="#2dd4bf"/>
+    <circle cx="80" cy="92" r="22" fill="none" stroke="#2dd4bf" stroke-opacity=".5">
+      <animate attributeName="r" values="18;30;18" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values=".6;0;.6" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="150" cy="92" r="14" fill="none" stroke="#64748b" stroke-width="2.5"/>
+    <text x="20" y="154" class="cap">F2 kept every survivor:</text>
+    <text x="20" y="172" class="cap">nothing lost</text>
+  </g>
+
+  <!-- legend -->
+  <g transform="translate(40 312)">
+    <circle cx="8" cy="0" r="8" fill="#2dd4bf"/><text x="24" y="5" class="lg">survivor (kept by dedup)</text>
+    <circle cx="268" cy="0" r="7" fill="none" stroke="#64748b" stroke-width="2.5"/><text x="284" y="5" class="lg">removed by dedup</text>
+    <g transform="translate(470 0) scale(.7)"><use href="#x"/></g><text x="486" y="5" class="lg">dropped by F2</text>
+    <text x="680" y="5" class="lg" fill="#94a3b8">matched on split + part + doc_id</text>
+  </g>
+</svg>

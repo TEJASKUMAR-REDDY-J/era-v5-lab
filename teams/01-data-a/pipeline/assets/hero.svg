@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="t d">
+  <title id="t">Data A Pipeline</title>
+  <desc id="d">Clean, dedup and F2 decontamination in one command, with every count checked.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070b1a"/>
+      <stop offset="0.55" stop-color="#0f1430"/>
+      <stop offset="1" stop-color="#1a1240"/>
+    </linearGradient>
+    <linearGradient id="ac" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="0.5" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="trk" gradientUnits="userSpaceOnUse" x1="90" y1="0" x2="1110" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="0.5" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <radialGradient id="g1" cx="0.15" cy="0.1" r="0.6">
+      <stop offset="0" stop-color="#2dd4bf" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="0.9" cy="0.95" r="0.6">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.045"/>
+    </pattern>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+    <clipPath id="card"><rect width="1200" height="320" rx="22"/></clipPath>
+  </defs>
+  <style>
+    .title{font:800 58px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;letter-spacing:-1.5px}
+    .sub{font:400 21px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;fill:#a5b4cf}
+    .kick{font:700 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#2dd4bf;letter-spacing:3px}
+    .chip{font:600 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#e2e8f0}
+    .node{font:600 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#cbd5e1}
+    .pulse{animation:pulse 2.6s ease-in-out infinite}
+    .d1{animation-delay:.0s}.d2{animation-delay:.35s}.d3{animation-delay:.7s}.d4{animation-delay:1.05s}.d5{animation-delay:1.4s}.d6{animation-delay:1.75s}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    .shine{animation:shine 6s linear infinite}
+    @keyframes shine{0%{transform:translateX(-400px)}100%{transform:translateX(1600px)}}
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <g clip-path="url(#card)">
+    <rect width="1200" height="320" fill="url(#bg)"/>
+    <rect width="1200" height="320" fill="url(#grid)"/>
+    <rect width="1200" height="320" fill="url(#g1)"/>
+    <rect width="1200" height="320" fill="url(#g2)"/>
+    <rect class="shine" x="0" y="0" width="160" height="320" fill="#ffffff" opacity="0.025" transform="skewX(-20)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1199" height="319" rx="22" fill="none" stroke="url(#ac)" stroke-opacity="0.55"/>
+
+  <text x="64" y="70" class="kick">ERA V5 · G1 DATA A · WEEK 2</text>
+  <text x="62" y="134" class="title" fill="url(#ac)">Data A Pipeline</text>
+  <text x="64" y="174" class="sub">Clean → Dedup → F2 decontamination. One command. Every count checked.</text>
+
+  <!-- chips -->
+  <g transform="translate(838 50)">
+    <rect width="140" height="30" rx="15" fill="#2dd4bf" fill-opacity="0.12" stroke="#2dd4bf" stroke-opacity="0.5"/>
+    <text x="70" y="20" class="chip" text-anchor="middle">filtered Parquet</text>
+    <rect x="150" width="150" height="30" rx="15" fill="#8b5cf6" fill-opacity="0.14" stroke="#8b5cf6" stroke-opacity="0.55"/>
+    <text x="225" y="20" class="chip" text-anchor="middle">IDs only, no text</text>
+    <rect x="150" y="40" width="150" height="30" rx="15" fill="#f59e0b" fill-opacity="0.12" stroke="#f59e0b" stroke-opacity="0.5"/>
+    <text x="225" y="60" class="chip" text-anchor="middle">pytest · synthetic</text>
+    <rect y="40" width="140" height="30" rx="15" fill="#f43f5e" fill-opacity="0.12" stroke="#f43f5e" stroke-opacity="0.5"/>
+    <text x="70" y="60" class="chip" text-anchor="middle">fail-closed</text>
+  </g>
+
+  <!-- the track -->
+  <path id="track" d="M90 250 H1110" stroke="url(#trk)" stroke-width="3" stroke-linecap="round" opacity="0.65"/>
+  <g>
+    <circle cx="90" cy="250" r="9" fill="#0b1020" stroke="#2dd4bf" stroke-width="3" class="pulse d1"/>
+    <circle cx="294" cy="250" r="9" fill="#0b1020" stroke="#38bdf8" stroke-width="3" class="pulse d2"/>
+    <circle cx="498" cy="250" r="9" fill="#0b1020" stroke="#818cf8" stroke-width="3" class="pulse d3"/>
+    <circle cx="702" cy="250" r="9" fill="#0b1020" stroke="#a78bfa" stroke-width="3" class="pulse d4"/>
+    <circle cx="906" cy="250" r="9" fill="#0b1020" stroke="#f472b6" stroke-width="3" class="pulse d5"/>
+    <circle cx="1110" cy="250" r="9" fill="#0b1020" stroke="#f59e0b" stroke-width="3" class="pulse d6"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="90" y="284" class="node">clean</text>
+    <text x="294" y="284" class="node">overlap</text>
+    <text x="498" y="284" class="node">dedup</text>
+    <text x="702" y="284" class="node">apply</text>
+    <text x="906" y="284" class="node">f2</text>
+    <text x="1110" y="284" class="node">survivor_loss</text>
+  </g>
+  <!-- documents flowing -->
+  <g fill="#e0f2fe">
+    <circle r="4" filter="url(#blur)" opacity="0.9"><animateMotion dur="5s" repeatCount="indefinite" path="M90 250 H1110"/></circle>
+    <circle r="3"><animateMotion dur="5s" repeatCount="indefinite" path="M90 250 H1110"/></circle>
+    <circle r="3" fill="#99f6e4"><animateMotion dur="5s" begin="1.25s" repeatCount="indefinite" path="M90 250 H1110"/></circle>
+    <circle r="3" fill="#c4b5fd"><animateMotion dur="5s" begin="2.5s" repeatCount="indefinite" path="M90 250 H1110"/></circle>
+    <circle r="3" fill="#fde68a"><animateMotion dur="5s" begin="3.75s" repeatCount="indefinite" path="M90 250 H1110"/></circle>
+  </g>
+</svg>

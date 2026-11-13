@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="470" viewBox="0 0 1200 470" role="img" aria-labelledby="t d">
+  <title id="t">Twelve guards</title>
+  <desc id="d">The checks that stop the pipeline before it writes anything wrong, grouped by the step that runs them.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070b1a"/><stop offset="1" stop-color="#14123a"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#fff" stroke-opacity="0.04"/></pattern>
+    <clipPath id="frame"><rect width="1200" height="470" rx="22"/></clipPath>
+    <g id="tile">
+      <rect width="270" height="92" rx="14" fill="#0f172a" stroke="#334155"/>
+    </g>
+  </defs>
+  <style>
+    .kick{font:700 13px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;letter-spacing:3px;fill:#2dd4bf}
+    .h{font:700 24px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;fill:#f8fafc}
+    .tt{font:700 15px 'Segoe UI',Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;fill:#f1f5f9}
+    .ts{font:500 12.5px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;fill:#94a3b8}
+    .who{font:700 11.5px ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;letter-spacing:1px}
+    .chk{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22;animation:draw 5s ease-out infinite}
+    @keyframes draw{0%{stroke-dashoffset:22}12%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:.2}}
+    .d1{animation-delay:.0s}.d2{animation-delay:.2s}.d3{animation-delay:.4s}.d4{animation-delay:.6s}.d5{animation-delay:.8s}.d6{animation-delay:1s}
+    .d7{animation-delay:1.2s}.d8{animation-delay:1.4s}.d9{animation-delay:1.6s}.d10{animation-delay:1.8s}.d11{animation-delay:2s}.d12{animation-delay:2.2s}
+    @media (prefers-reduced-motion:reduce){.chk{animation:none;stroke-dashoffset:0}}
+  </style>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="470" fill="url(#bg)"/><rect width="1200" height="470" fill="url(#grid)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1199" height="469" rx="22" fill="none" stroke="#334155" stroke-opacity="0.7"/>
+  <text x="40" y="44" class="kick">FAIL-CLOSED</text>
+  <text x="40" y="76" class="h">Twelve guards. Any one fails → the run stops, nothing half-written.</text>
+
+  <!-- row 1: apply_dedup.py -->
+  <g transform="translate(40 110)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#a78bfa" fill-opacity=".15" stroke="#a78bfa"/>
+    <path class="chk d1" d="M25 46l6 6 12-13" stroke="#a78bfa"/>
+    <text x="64" y="38" class="tt">Remove list is dedup.py's</text><text x="64" y="60" class="ts">exact header, 5 fields</text>
+    <text x="64" y="80" class="who" fill="#c4b5fd">APPLY</text>
+  </g>
+  <g transform="translate(328 110)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#a78bfa" fill-opacity=".15" stroke="#a78bfa"/>
+    <path class="chk d2" d="M25 46l6 6 12-13" stroke="#a78bfa"/>
+    <text x="64" y="38" class="tt">No row listed twice</text><text x="64" y="60" class="ts">(split, part, row) unique</text>
+    <text x="64" y="80" class="who" fill="#c4b5fd">APPLY</text>
+  </g>
+  <g transform="translate(616 110)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#f43f5e" fill-opacity=".15" stroke="#f43f5e"/>
+    <path class="chk d3" d="M25 46l6 6 12-13" stroke="#f43f5e"/>
+    <text x="64" y="38" class="tt">Held-out never removed</text><text x="64" y="60" class="ts">source priority rule 0</text>
+    <text x="64" y="80" class="who" fill="#fda4af">APPLY · RUNNER</text>
+  </g>
+  <g transform="translate(904 110)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#a78bfa" fill-opacity=".15" stroke="#a78bfa"/>
+    <path class="chk d4" d="M25 46l6 6 12-13" stroke="#a78bfa"/>
+    <text x="64" y="38" class="tt">Right doc at each row</text><text x="64" y="60" class="ts">doc_id + pack_id match</text>
+    <text x="64" y="80" class="who" fill="#c4b5fd">APPLY</text>
+  </g>
+
+  <!-- row 2 -->
+  <g transform="translate(40 216)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#a78bfa" fill-opacity=".15" stroke="#a78bfa"/>
+    <path class="chk d5" d="M25 46l6 6 12-13" stroke="#a78bfa"/>
+    <text x="64" y="38" class="tt">Every listed row exists</text><text x="64" y="60" class="ts">part found, row in range</text>
+    <text x="64" y="80" class="who" fill="#c4b5fd">APPLY</text>
+  </g>
+  <g transform="translate(328 216)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#a78bfa" fill-opacity=".15" stroke="#a78bfa"/>
+    <path class="chk d6" d="M25 46l6 6 12-13" stroke="#a78bfa"/>
+    <text x="64" y="38" class="tt">Output never inside input</text><text x="64" y="60" class="ts">no self-reading runs</text>
+    <text x="64" y="80" class="who" fill="#c4b5fd">APPLY · F2</text>
+  </g>
+  <g transform="translate(616 216)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#38bdf8" fill-opacity=".15" stroke="#38bdf8"/>
+    <path class="chk d7" d="M25 46l6 6 12-13" stroke="#38bdf8"/>
+    <text x="64" y="38" class="tt">Overlap saw every row</text><text x="64" y="60" class="ts">documents_all = cleaned</text>
+    <text x="64" y="80" class="who" fill="#7dd3fc">RUNNER</text>
+  </g>
+  <g transform="translate(904 216)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#38bdf8" fill-opacity=".15" stroke="#38bdf8"/>
+    <path class="chk d8" d="M25 46l6 6 12-13" stroke="#38bdf8"/>
+    <text x="64" y="38" class="tt">Dedup agrees with itself</text><text x="64" y="60" class="ts">summary = remove list</text>
+    <text x="64" y="80" class="who" fill="#7dd3fc">RUNNER</text>
+  </g>
+
+  <!-- row 3 -->
+  <g transform="translate(40 322)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#f472b6" fill-opacity=".15" stroke="#f472b6"/>
+    <path class="chk d9" d="M25 46l6 6 12-13" stroke="#f472b6"/>
+    <text x="64" y="38" class="tt">F2 saw every row</text><text x="64" y="60" class="ts">f2.rows = apply.kept</text>
+    <text x="64" y="80" class="who" fill="#f9a8d4">RUNNER</text>
+  </g>
+  <g transform="translate(328 322)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#f472b6" fill-opacity=".15" stroke="#f472b6"/>
+    <path class="chk d10" d="M25 46l6 6 12-13" stroke="#f472b6"/>
+    <text x="64" y="38" class="tt">F2 adds up, zero errors</text><text x="64" y="60" class="ts">kept + dropped = rows</text>
+    <text x="64" y="80" class="who" fill="#f9a8d4">RUNNER</text>
+  </g>
+  <g transform="translate(616 322)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#f59e0b" fill-opacity=".15" stroke="#f59e0b"/>
+    <path class="chk d11" d="M25 46l6 6 12-13" stroke="#f59e0b"/>
+    <text x="64" y="38" class="tt">One fingerprint set</text><text x="64" y="60" class="ts">same set_sha256 everywhere</text>
+    <text x="64" y="80" class="who" fill="#fcd34d">RUNNER · SURVIVOR</text>
+  </g>
+  <g transform="translate(904 322)">
+    <use href="#tile"/><circle cx="34" cy="46" r="18" fill="#2dd4bf" fill-opacity=".15" stroke="#2dd4bf"/>
+    <path class="chk d12" d="M25 46l6 6 12-13" stroke="#2dd4bf"/>
+    <text x="64" y="38" class="tt">Recorded inputs intact</text><text x="64" y="60" class="ts">digest match on --from</text>
+    <text x="64" y="80" class="who" fill="#5eead4">RUNNER</text>
+  </g>
+
+  <text x="40" y="446" class="ts">+ survivor_loss stops if F2 skipped a part that holds a dedup survivor</text>
+</svg>
