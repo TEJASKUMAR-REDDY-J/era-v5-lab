@@ -9,7 +9,8 @@ INPUT
 =====
 --groups is dedup.py's dedup_groups.csv: group_id, group_size, priority_rule, role (survivor or removed), pack_id, split,
 part, row_in_part, doc_id. --f2 is the folder F2 wrote, one run per split: <final>/<split>/<part>.f2.json, each with
-run_f2.py's "dropped" list ({doc_id, items, offset}) and "set_sha256". A survivor is matched on (split, part, doc_id):
+run_f2.py's "dropped" list ({doc_id, items, offset}), "errors" ([doc_id, error type]; such a doc is kept out of the
+output too, so it counts as gone, with f2_items "error:<type>") and "set_sha256". A survivor is matched on (split, part, doc_id):
 doc_id alone is not a key (in sample v0, 22,773 doc_ids sit in two parts of the same pack and split).
 
 A GROUP IS
@@ -27,7 +28,8 @@ every F2 report names the same set_sha256.
 OUTPUT
 ======
 <out>/survivor_loss.csv: one row per survivor F2 dropped (status, group_id, group_size, priority_rule, pack_id, split,
-part, row_in_part, doc_id, f2_items, offset). <out>/survivor_loss_summary.json: group counts, counts per pack, the
+part, row_in_part, doc_id, f2_items, offset). <out>/survivor_loss_summary.json: group counts, survivor rows per pack
+and status (survivor_rows_by_pack: dropped survivors, not groups), the
 set_sha256, the sha256 of dedup_groups.csv and of this file. IDs, benchmark item IDs and offsets only, never text.
 """
 import sys
@@ -78,7 +80,10 @@ def read_f2(final):
         part = part[: -len(SUFFIX)]
         data = json.loads(path.read_text(encoding="utf-8"))
         sets.add(data.get("set_sha256"))
-        dropped[(split, part)] = {d["doc_id"]: d for d in data.get("dropped", [])}
+        gone = {d["doc_id"]: d for d in data.get("dropped", [])}
+        for doc_id, kind in data.get("errors", []):  # kept out of the output too: gone as well
+            gone[doc_id] = {"doc_id": doc_id, "items": [f"error:{kind}"], "offset": ""}
+        dropped[(split, part)] = gone
     if len(sets) != 1 or None in sets:
         raise Stop(f"the F2 reports name {len(sets)} different set_sha256 values: {sorted(map(str, sets))}")
     return dropped, sets.pop(), len(reports)
@@ -119,7 +124,8 @@ def report(groups_csv, final, out):
         w.writerows(rows)
     summary = {"tool": "survivor_loss.py", "code_sha256": sha256(Path(__file__)), "groups_sha256": sha256(groups_csv),
                "set_sha256": set_sha, "f2_reports": n_reports, "groups": counts,
-               "survivors_dropped_by_f2": len(rows), "by_pack": {p: by_pack[p] for p in sorted(by_pack)}}
+               "survivors_dropped_by_f2": len(rows),
+               "survivor_rows_by_pack": {p: by_pack[p] for p in sorted(by_pack)}}
     (out / "survivor_loss_summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8", newline="\n")
     return summary
 

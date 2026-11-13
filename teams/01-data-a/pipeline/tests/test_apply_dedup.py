@@ -72,22 +72,49 @@ def test_windows_style_part_path_matches(tmp_path, cleaned, write_remove_list):
 
 
 @pytest.mark.parametrize("row, message", [
-    (["code-go", "train", "code-go/part-00000.parquet", 1, "WRONG"], "doc_id"),
-    (["en-dclm", "train", "code-go/part-00000.parquet", 1, "g1"], "pack_id"),
-    (["code-go", "train", "code-go/part-00009.parquet", 0, "g0"], "not found"),
-    (["code-go", "train", "code-go/part-00000.parquet", 99, "g0"], "row"),
+    (["en-dclm", "train", "en-dclm/part-00000.parquet", 1, "WRONG"], "doc_id"),
+    (["code-go", "train", "en-dclm/part-00000.parquet", 1, "e1"], "pack_id"),
+    (["en-dclm", "train", "en-dclm/part-00009.parquet", 0, "e0"], "not found"),
+    (["en-dclm", "train", "en-dclm/part-00000.parquet", 99, "e0"], "row"),
     (["code-go", "heldout", "code-go/part-00000.parquet", 0, "h0"], "held-out"),
-    (["code-go", "valid", "code-go/part-00000.parquet", 0, "g0"], "split"),
-    (["code-go", "train", "code-go/part-00000.parquet", -1, "g0"], "row_in_part"),
-    (["code-go", "train", "code-go/part-00000.parquet", "x", "g0"], "row_in_part"),
+    (["en-dclm", "valid", "en-dclm/part-00000.parquet", 0, "e0"], "split"),
+    (["en-dclm", "train", "en-dclm/part-00000.parquet", -1, "e0"], "row_in_part"),
+    (["en-dclm", "train", "en-dclm/part-00000.parquet", "x", "e0"], "row_in_part"),
 ])
 def test_stops_and_writes_nothing(tmp_path, cleaned, write_remove_list, row, message):
-    # a good row first, so a run that wrote as it went would leave a file behind
+    # a good row in the first part processed (code-go) and the bad one in the last (en-dclm): a run that checked each
+    # part just before writing it would already have written code-go when it reached the bad row
     rl = write_remove_list([["code-go", "train", "code-go/part-00000.parquet", 0, "g0"], row])
     out = tmp_path / "deduped"
     with pytest.raises(ad.Stop, match=message):
         ad.apply(cleaned, rl, out)
     assert not out.exists() or not any(out.rglob("*"))
+
+
+def test_unlisted_part_without_pack_id_stops_before_writing(tmp_path, cleaned, write_remove_list):
+    path = cleaned / "train" / "en-dclm" / "part-00000.parquet"
+    pq.write_table(pq.read_table(path).drop(["pack_id"]), path)
+    out = tmp_path / "deduped"
+    with pytest.raises(ad.Stop, match="no pack_id column"):
+        ad.apply(cleaned, write_remove_list([["code-go", "train", "code-go/part-00000.parquet", 0, "g0"]]), out)
+    assert not out.exists() or not any(out.rglob("*"))
+
+
+def test_row_groups_boundaries_and_codec_are_kept(tmp_path, write_remove_list):
+    import pyarrow as pa
+    root = tmp_path / "big"
+    path = root / "train" / "sci" / "part-00000.parquet"
+    path.parent.mkdir(parents=True)
+    rows = [{"doc_id": f"d{i}", "text": f"t{i}", "pack_id": "sci"} for i in range(2500)]
+    pq.write_table(pa.Table.from_pylist(rows), path, row_group_size=700, compression="zstd")
+    gone = [0, 699, 700, 701, 1399, 1400, 2499]
+    rl = write_remove_list([["sci", "train", "sci/part-00000.parquet", r, f"d{r}"] for r in gone])
+    out = tmp_path / "deduped"
+    ad.apply(root, rl, out, splits=("train",))
+    got = out / "train" / "sci" / "part-00000.parquet"
+    assert ids(got) == [f"d{i}" for i in range(2500) if i not in gone]
+    md = pq.ParquetFile(got).metadata
+    assert md.num_row_groups == 4 and md.row_group(0).column(0).compression == "ZSTD"
 
 
 def test_stops_on_duplicate_rows(tmp_path, cleaned, write_remove_list):
@@ -117,6 +144,35 @@ def test_rerun_skips_finished_parts(tmp_path, cleaned, write_remove_list):
     assert part.stat().st_mtime_ns == mtime
     assert all(p["skipped"] for p in s["parts"])
     assert s["totals"]["removed"] == 1
+
+
+def test_rerun_redoes_a_changed_output(tmp_path, cleaned, write_remove_list):
+    rl = write_remove_list([["code-go", "train", "code-go/part-00000.parquet", 1, "g1"]])
+    out = tmp_path / "deduped"
+    ad.apply(cleaned, rl, out)
+    part = out / "train" / "code-go" / "part-00000.parquet"
+    part.write_bytes(b"corrupted")
+    s = ad.apply(cleaned, rl, out)
+    assert ids(part) == ["g0", "g2", "g3", "g4"]
+    assert {p["part"]: p["skipped"] for p in s["parts"] if p["split"] == "train"}["code-go/part-00000.parquet"] is False
+
+
+def test_stops_on_stale_outputs(tmp_path, cleaned, write_remove_list):
+    out = tmp_path / "deduped"
+    ad.apply(cleaned, write_remove_list([]), out)
+    stale = out / "train" / "old-pack" / "part-00000.parquet"
+    stale.parent.mkdir(parents=True)
+    stale.write_bytes((out / "train" / "en-dclm" / "part-00000.parquet").read_bytes())
+    with pytest.raises(ad.Stop, match="earlier run"):
+        ad.apply(cleaned, write_remove_list([], name="again.csv"), out)
+
+
+def test_train_only(tmp_path, cleaned, write_remove_list):
+    import shutil
+    shutil.rmtree(cleaned / "heldout")
+    s = ad.apply(cleaned, write_remove_list([["code-go", "train", "code-go/part-00000.parquet", 1, "g1"]]),
+                 tmp_path / "deduped", splits=("train",))
+    assert s["totals"] == {"rows": 11, "removed": 1, "kept": 10}
 
 
 def test_summary_has_ids_and_hashes_only(tmp_path, cleaned, write_remove_list):

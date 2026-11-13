@@ -23,12 +23,14 @@ CHECKS (any failure stops the run before anything is written; exit code 1)
   - every listed part exists, every listed row is inside it, and the doc_id and pack_id at that row are the listed ones;
     a mismatch means the list came from another cleaning run than these parts
   - --out is not inside --cleaned, nor the other way round
+  - every part opens as Parquet with doc_id and pack_id columns (footer only), not just the parts with removals
+  - --out holds no Parquet file outside the current parts (one left by an earlier run would be read by F2)
 After writing, kept + removed must equal the rows of every part, and every listed row must have been removed once.
 
 OUTPUT
 ======
 <out>/<split>/<part> for every part, with the same schema and unchanged text. A part with nothing to remove is copied
-byte for byte, so its sha256 shows it is untouched. Files are written to .tmp and renamed. <out>/apply_dedup_summary.json
+byte for byte, so its sha256 shows it is untouched. A filtered part keeps the input's row groups and compression codec. Files are written to .tmp and renamed. <out>/apply_dedup_summary.json
 holds the remove list's sha256 and row count, this file's sha256, and per part: rows, removed, kept, the input and output
 sha256 and whether it was copied; then totals and counts per pack and split. IDs, counts and hashes only, never text.
 A rerun with the same remove list and code skips each part whose input and output still have the recorded sha256, so a
@@ -43,7 +45,6 @@ from pathlib import Path
 
 HEADER = ["pack_id", "split", "part", "row_in_part", "doc_id"]
 SPLITS = ("train", "heldout")
-BATCH = 1000
 SUMMARY = "apply_dedup_summary.json"
 
 
@@ -124,28 +125,62 @@ def check_rows(path, split, part, listed):
             raise Stop(f"{split}/{part} row {row}: pack_id is {packs[row]!r}, the remove list says {pack!r}")
 
 
+def check_columns(path, split, part):
+    """The part opens as Parquet and has doc_id and pack_id. Reads the footer only."""
+    import pyarrow.parquet as pq
+    try:
+        names = set(pq.ParquetFile(path).schema_arrow.names)
+    except Exception as e:  # not Parquet, truncated, unreadable
+        raise Stop(f"{split}/{part}: cannot be read as Parquet ({type(e).__name__})")
+    missing = {"doc_id", "pack_id"} - names
+    if missing:
+        raise Stop(f"{split}/{part}: no {', '.join(sorted(missing))} column")
+
+
+def stale_outputs(out, parts, splits):
+    """Parquet files under <out>/<split> that are not among the current parts: left by an earlier run."""
+    current = {(s, p) for s, p, _ in parts}
+    found = []
+    for split in splits:
+        if (out / split).is_dir():
+            found += [f"{split}/{f.relative_to(out / split).as_posix()}" for f in sorted((out / split).rglob("*.parquet"))
+                      if (split, f.relative_to(out / split).as_posix()) not in current]
+    return found
+
+
 def pack_counts(path):
     import pyarrow.parquet as pq
     return Counter(pq.read_table(path, columns=["pack_id"]).column("pack_id").to_pylist())
 
 
+def compression(pf):
+    """The input's codec, so a filtered part is written the way it was read (snappy, zstd, ...)."""
+    md = pf.metadata
+    if md.num_row_groups and md.num_columns:
+        codec = md.row_group(0).column(0).compression.lower()
+        return "none" if codec == "uncompressed" else codec
+    return "snappy"
+
+
 def filter_part(src, tmp, listed):
-    """Write src without the listed rows to tmp; return (rows, kept, removed per pack, rows per pack)."""
+    """Write src without the listed rows to tmp, row group by row group, with the input's codec.
+    Returns (rows, kept, removed per pack, rows per pack)."""
     import pyarrow as pa
     import pyarrow.parquet as pq
     pf = pq.ParquetFile(src)
     rows = kept = 0
     removed, per_pack = Counter(), Counter()
-    with pq.ParquetWriter(tmp, pf.schema_arrow) as w:
-        for batch in pf.iter_batches(batch_size=BATCH):
-            packs = batch.column("pack_id").to_pylist()
-            keep = [rows + i not in listed for i in range(batch.num_rows)]
+    with pq.ParquetWriter(tmp, pf.schema_arrow, compression=compression(pf)) as w:
+        for g in range(pf.num_row_groups):
+            t = pf.read_row_group(g)
+            packs = t.column("pack_id").to_pylist()
+            keep = [rows + i not in listed for i in range(t.num_rows)]
             for p, k in zip(packs, keep):
                 per_pack[p] += 1
                 if not k:
                     removed[p] += 1
-            w.write_table(pa.Table.from_batches([batch], schema=pf.schema_arrow).filter(pa.array(keep, pa.bool_())))
-            rows += batch.num_rows
+            w.write_table(t.filter(pa.array(keep, pa.bool_())))
+            rows += t.num_rows
             kept += sum(keep)
     return rows, kept, removed, per_pack
 
@@ -169,8 +204,13 @@ def apply(cleaned, remove_list, out, splits=SPLITS):
     if absent:
         raise Stop(f"{len(absent)} listed part(s) not found under --cleaned, e.g. {absent[0][0]}/{absent[0][1]}")
     for split, part, path in parts:  # every check before anything is written
+        check_columns(path, split, part)
         if (split, part) in todo:
             check_rows(path, split, part, todo[(split, part)])
+    stale = stale_outputs(out, parts, splits)
+    if stale:
+        raise Stop(f"--out {out} holds {len(stale)} Parquet file(s) that are not among the current parts, e.g. "
+                   f"{stale[0]}: left by an earlier run. Use a new --out, or delete them")
 
     rl_sha, code_sha = sha256(remove_list), sha256(Path(__file__))
     old = {}

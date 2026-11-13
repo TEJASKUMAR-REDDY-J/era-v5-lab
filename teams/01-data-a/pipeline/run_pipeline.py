@@ -2,41 +2,48 @@
 
   python -I teams/01-data-a/pipeline/run_pipeline.py --config teams/01-data-a/pipeline/pipeline.json [--from STAGE] [--to STAGE]
 
-It runs or adopts each stage in order, checks that each stage's counts follow from the one before, and writes
-<out>/<run_id>/pipeline_manifest.json. It never reimplements a stage: clean (#244), overlap and dedup (#255) and F2 (run_f2.py)
-are the team's scripts, called as they are; apply_dedup.py and survivor_loss.py are in this folder.
+It runs or adopts each stage in order, checks that each stage follows from the one before (counts and sha256 links), and
+writes <out>/<run_id>/pipeline_manifest.json. It never reimplements a stage: clean (#244), overlap and dedup (#255) and F2
+(run_f2.py, #35) are the team's scripts, called as they are; apply_dedup.py and survivor_loss.py are in this folder.
 
 STAGES
 ======
-  clean          cleaned parts: <output>/train/**.parquet and <output>/heldout/**.parquet          (TSAI job, #244)
-  overlap        overlap_summary.json, overlap_matches.csv, overlap_docs.parquet                    (TSAI job, #255)
-  dedup          remove_list.csv, dedup_groups.csv, dedup_summary.json                              (TSAI job, #255)
+  clean          cleaned parts: <output>/train/**.parquet and/or <output>/heldout/**.parquet              (TSAI job, #244)
+  overlap        overlap_summary.json, overlap_matches.csv, overlap_docs.parquet                          (TSAI job, #255)
+  dedup          remove_list.csv, dedup_groups.csv, dedup_summary.json                                    (TSAI job, #255)
   apply          apply_dedup.py on clean's output with dedup's remove list  -> <run>/deduped
   f2             run_f2.py once per split on <run>/deduped/<split>            -> <run>/final/<split>
   survivor_loss  survivor_loss.py on dedup_groups.csv and F2's reports        -> <run>/report
 
 clean, overlap and dedup take "mode": "adopt" (TSAI ran the job; "output" names the folder it returned) or "mode": "run"
 ("command": the script and its arguments, run with this Python from the repository root; "output": where that script writes).
-apply, f2 and survivor_loss always run. f2 takes "script" (default teams/01-data-a/spec_v1/run_f2.py).
+apply, f2 and survivor_loss always run. f2 takes "script" (default teams/01-data-a/spec_v1/run_f2.py). Scripts run with
+python -I, which ignores user site-packages and PYTHONPATH: install pyarrow and the rest into the environment itself.
+Each script's output streams to <run>/logs/<stage>.log.
 
 CONFIG (JSON; keys starting with "_" are comments; paths relative to the repository root, or absolute)
 =====================================================================================================
-  run_id   name of this run; out    folder for runs (default out/pipeline); stages  as above
+  run_id   name of this run;   out   folder for runs (default out/pipeline);   stages   as above
+The whole config is checked before the first stage runs.
 
 CHECKS (any failure stops the run; exit code 1)
 ==============================================
-  - each stage's expected files exist; a "run" stage's script exits 0
-  - overlap's documents_all = the cleaned rows; dedup's removed = the remove list's rows; dedup removed no held-out doc
-  - apply's rows = the cleaned rows and apply's removed = the remove list's rows (apply_dedup.py also checks each row)
-  - F2's rows = apply's kept rows, F2's kept + dropped + errors = its rows, F2 reported no errors
-  - with --from, every earlier stage's output must still have the digest the manifest recorded for it: an adopted
-    folder changed after it was recorded stops the run
+  overlap   status complete; documents_all = the cleaned rows; for every part it lists, its documents = that cleaned part's rows
+  dedup     status complete; the overlap_matches.csv and overlap_docs.parquet it checked (overlap_run.checked_sha256) are
+            the adopted overlap's files; documents_all = overlap's; removed = remove_list.csv rows; heldout_removed = 0
+  apply     rows = the cleaned rows; removed = the remove list (apply_dedup.py also checks every listed row)
+  f2        per split: its rows = apply's kept rows; every part's report names, as input_sha256, the sha256 apply wrote;
+            one fingerprint set; kept + dropped + errors = rows; no errors; no stale Parquet under final/<split>
+  survivor  groups = the groups in dedup_groups.csv
+  --from    every earlier stage's output still has the digest the manifest recorded for it
 
 MANIFEST
 ========
-<out>/<run_id>/pipeline_manifest.json: the git commit, Python and pyarrow versions; per stage its mode, command, the
-script's sha256, its output folder's digest (sha256 over the sorted relative paths and sha256 of every file), file count,
-counts and seconds; the checks; and totals (cleaned, removed by dedup, dropped by F2, final). IDs, counts and hashes only.
+<out>/<run_id>/pipeline_manifest.json: the git commit, Python and pyarrow versions; per stage its mode, command, the script's
+sha256, its output folder's digest and file count, its counts, its checks and its seconds; all checks; totals (cleaned, removed
+by dedup, dropped by F2, final). A digest is the sha256 over the sorted relative path and sha256 of every file in the folder;
+JSON summaries are hashed without the fields that change between identical runs (timings, absolute paths, skip flags), so two
+runs on the same inputs give the same digests. IDs, counts and hashes only.
 """
 import sys
 sys.dont_write_bytecode = True
@@ -52,6 +59,7 @@ NEEDED = {"overlap": ("overlap_summary.json", "overlap_matches.csv", "overlap_do
           "dedup": ("remove_list.csv", "dedup_groups.csv", "dedup_summary.json")}
 DEFAULT_F2 = "teams/01-data-a/spec_v1/run_f2.py"
 SPLITS = ("train", "heldout")
+VOLATILE = {"seconds", "input", "path", "cleaned", "skipped"}  # JSON fields that differ between identical runs
 
 
 class Stop(Exception):
@@ -66,12 +74,32 @@ def sha256(path):
     return h.hexdigest()
 
 
+def stable(obj):
+    if isinstance(obj, dict):
+        return {k: stable(v) for k, v in obj.items() if k not in VOLATILE}
+    if isinstance(obj, list):
+        return [stable(v) for v in obj]
+    return obj
+
+
+def file_hash(p):
+    """sha256 of a file; for JSON, of its content without the volatile fields."""
+    if p.suffix == ".json":
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            return hashlib.sha256(json.dumps(stable(data), sort_keys=True).encode("utf-8")).hexdigest()
+        except (ValueError, UnicodeDecodeError):
+            pass
+    return sha256(p)
+
+
 def digest(folder):
-    """(sha256 over every file's relative path and sha256, file count). Order-independent of the file system."""
-    files = sorted(p for p in Path(folder).rglob("*") if p.is_file() and not p.name.endswith(".tmp"))
+    """(digest over every file's relative path and hash, file count)."""
+    folder = Path(folder)
+    files = sorted(p for p in folder.rglob("*") if p.is_file() and not p.name.endswith(".tmp"))
     h = hashlib.sha256()
     for p in files:
-        h.update(f"{p.relative_to(folder).as_posix()}\t{sha256(p)}\n".encode("utf-8"))
+        h.update(f"{p.relative_to(folder).as_posix()}\t{file_hash(p)}\n".encode("utf-8"))
     return h.hexdigest(), len(files)
 
 
@@ -80,24 +108,36 @@ def path(p):
     return p if p.is_absolute() else REPO / p
 
 
-def run_script(script, args, stage):
+def run_script(script, args, stage, log):
+    """Run a script with this Python from the repository root, its output streamed to log. Returns the exit code."""
+    log.parent.mkdir(parents=True, exist_ok=True)
     cmd = [sys.executable, "-I", str(path(script)), *map(str, args)]
-    p = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True)
-    if p.returncode != 0:
-        tail = (p.stderr or p.stdout).strip().splitlines()[-5:]
-        raise Stop(f"{stage}: {Path(script).name} failed with exit code {p.returncode}: " + " | ".join(tail))
-    return p
+    with open(log, "w", encoding="utf-8", errors="replace") as f:
+        f.write("$ " + " ".join(cmd) + "\n")
+        f.flush()
+        return subprocess.run(cmd, cwd=REPO, stdout=f, stderr=subprocess.STDOUT).returncode
+
+
+def tail(log, n=5):
+    try:
+        return " | ".join(Path(log).read_text(encoding="utf-8", errors="replace").strip().splitlines()[-n:])
+    except OSError:
+        return ""
 
 
 def parquet_rows(folder):
+    """{"rows", "by_split", "by_part" ({"<split>/<part>": rows})} from the Parquet footers."""
     import pyarrow.parquet as pq
-    by_split = {}
+    by_split, by_part = {}, {}
     for split in SPLITS:
         if (folder / split).is_dir():
-            by_split[split] = sum(pq.ParquetFile(f).metadata.num_rows for f in sorted((folder / split).rglob("*.parquet")))
+            for f in sorted((folder / split).rglob("*.parquet")):
+                n = pq.ParquetFile(f).metadata.num_rows
+                by_part[f"{split}/{f.relative_to(folder / split).as_posix()}"] = n
+                by_split[split] = by_split.get(split, 0) + n
     if not by_split:
-        raise Stop(f"clean: {folder} has no train/ or heldout/ folder")
-    return {"rows": sum(by_split.values()), "by_split": by_split}
+        raise Stop(f"clean: {folder} has no Parquet parts under train/ or heldout/")
+    return {"rows": sum(by_split.values()), "by_split": by_split, "by_part": by_part}
 
 
 def csv_rows(file):
@@ -122,10 +162,32 @@ class Run:
 
     def output(self, stage):
         if stage in EXTERNAL:
-            if "output" not in self.stages.get(stage, {}):
-                raise Stop(f"config: stages.{stage}.output is missing")
             return path(self.stages[stage]["output"])
         return self.dir / {"apply": "deduped", "f2": "final", "survivor_loss": "report"}[stage]
+
+    def validate(self, upto):
+        """The whole config, before anything runs."""
+        for stage in EXTERNAL:
+            spec = self.stages.get(stage)
+            if not isinstance(spec, dict) or not spec.get("output"):
+                raise Stop(f"config: stages.{stage}.output is missing")
+            mode = spec.get("mode", "adopt")
+            if mode not in ("adopt", "run"):
+                raise Stop(f"config: stages.{stage}.mode is {mode!r}, expected adopt or run")
+            if mode == "run":
+                cmd = spec.get("command")
+                if not cmd or not isinstance(cmd, list):
+                    raise Stop(f"config: stages.{stage}.command (a list: script, then arguments) is missing for mode run")
+                if not path(cmd[0]).is_file():
+                    raise Stop(f"config: stages.{stage}.command script {cmd[0]} not found")
+        if STAGES.index(upto) >= STAGES.index("f2"):
+            script = self.stages.get("f2", {}).get("script", DEFAULT_F2)
+            if not path(script).is_file():
+                raise Stop(f"config: f2 script {script} not found (run_f2.py is in PR #35; set stages.f2.script)")
+        for stage in EXTERNAL:
+            o, r = self.output(stage).resolve(), self.dir.resolve()
+            if o == r or r in o.parents or o in r.parents:
+                raise Stop(f"config: stages.{stage}.output and the run folder {self.dir} overlap")
 
     def check(self, name, ok, detail):
         self.checks.append({"check": name, "ok": bool(ok), "detail": detail})
@@ -134,78 +196,135 @@ class Run:
 
     # --- the stages -------------------------------------------------------------------------------------------------
     def stage_external(self, stage):
-        spec = self.stages.get(stage, {})
+        spec = self.stages[stage]
         mode = spec.get("mode", "adopt")
-        if mode not in ("adopt", "run"):
-            raise Stop(f"config: stages.{stage}.mode is {mode!r}, expected adopt or run")
-        command = None
-        if mode == "run":
-            command = spec.get("command") or []
-            if not command:
-                raise Stop(f"config: stages.{stage}.command is missing for mode run")
-            run_script(command[0], command[1:], stage)
+        command = spec.get("command") if mode == "run" else None
+        if command:
+            log = self.dir / "logs" / f"{stage}.log"
+            rc = run_script(command[0], command[1:], stage, log)
+            if rc != 0:
+                raise Stop(f"{stage}: {Path(command[0]).name} failed with exit code {rc}: {tail(log)}")
         out = self.output(stage)
         for name in NEEDED.get(stage, ()):
             if not (out / name).is_file():
                 raise Stop(f"{stage}: {out} has no {name}")
-        if stage == "clean":
-            counts = parquet_rows(out)
-        elif stage == "overlap":
-            s = load_json(out / "overlap_summary.json")
-            self.check("overlap finished", s.get("status") == "complete", f"status {s.get('status')!r}")
-            counts = {"documents_all": s.get("documents_all")}
-            self.check("overlap read every cleaned row", counts["documents_all"] == self.done["clean"]["counts"]["rows"],
-                       f"overlap documents_all {counts['documents_all']}, cleaned rows {self.done['clean']['counts']['rows']}")
-        else:
-            s = load_json(out / "dedup_summary.json")
-            counts = {"remove_list_rows": csv_rows(out / "remove_list.csv"), "removed": s.get("removed"),
-                      "heldout_removed": s.get("heldout_removed"),
-                      "groups": len({r.split(",", 1)[0] for r in (out / "dedup_groups.csv").read_text(encoding="utf-8").splitlines()[1:] if r})}
-            self.check("dedup summary matches its remove list", counts["removed"] == counts["remove_list_rows"],
-                       f"summary removed {counts['removed']}, remove_list.csv rows {counts['remove_list_rows']}")
-            self.check("dedup removed no held-out doc", counts["heldout_removed"] == 0,
-                       f"heldout_removed {counts['heldout_removed']} (rule 0)")
+        counts = getattr(self, f"counts_{stage}")(out)
         return {"mode": mode, "command": command, "code_sha256": sha256(path(command[0])) if command else None,
-                "output": self.stages[stage]["output"], "counts": counts}
+                "output": spec["output"], "counts": counts}
+
+    def counts_clean(self, out):
+        return parquet_rows(out)
+
+    def counts_overlap(self, out):
+        s = load_json(out / "overlap_summary.json")
+        clean = self.done["clean"]["counts"]
+        self.check("overlap finished", s.get("status") == "complete", f"status {s.get('status')!r}")
+        self.check("overlap read every cleaned row", s.get("documents_all") == clean["rows"],
+                   f"overlap documents_all {s.get('documents_all')}, cleaned rows {clean['rows']}")
+        listed = {p["part"].replace("\\", "/"): p["documents"] for p in s.get("inputs", {}).get("parts", [])}
+        if listed:
+            diff = sorted(p for p in set(listed) | set(clean["by_part"]) if listed.get(p) != clean["by_part"].get(p))
+            self.check("overlap read these cleaned parts", not diff,
+                       f"{len(diff)} part(s) differ in name or row count, e.g. {diff[0] if diff else ''}")
+        files = {}
+        for name in ("overlap_matches.csv", "overlap_docs.parquet"):
+            files[name] = sha256(out / name)
+            want = s.get("outputs", {}).get(name, {}).get("sha256")
+            if want:
+                self.check(f"{name} matches overlap's summary", files[name] == want, f"{files[name][:12]}… vs {want[:12]}…")
+        return {"documents_all": s.get("documents_all"), "parts": len(listed), "files_sha256": files}
+
+    def counts_dedup(self, out):
+        s = load_json(out / "dedup_summary.json")
+        ov = self.done["overlap"]["counts"]
+        groups = set()
+        with open(out / "dedup_groups.csv", encoding="utf-8", newline="") as f:
+            next(f, None)
+            groups = {line.split(",", 1)[0] for line in f if line.strip()}
+        counts = {"remove_list_rows": csv_rows(out / "remove_list.csv"), "removed": s.get("removed"),
+                  "heldout_removed": s.get("heldout_removed"), "groups": len(groups)}
+        self.check("dedup finished", s.get("status") == "complete", f"status {s.get('status')!r}")
+        checked = s.get("overlap_run", {}).get("checked_sha256", {})
+        self.check("dedup used this overlap run", checked == ov["files_sha256"],
+                   f"dedup checked {sorted((k, v[:12]) for k, v in checked.items())}, "
+                   f"the adopted overlap has {sorted((k, v[:12]) for k, v in ov['files_sha256'].items())}")
+        self.check("dedup saw overlap's documents", s.get("documents_all") == ov["documents_all"],
+                   f"dedup documents_all {s.get('documents_all')}, overlap {ov['documents_all']}")
+        self.check("dedup summary matches its remove list", counts["removed"] == counts["remove_list_rows"],
+                   f"summary removed {counts['removed']}, remove_list.csv rows {counts['remove_list_rows']}")
+        self.check("dedup removed no held-out doc", counts["heldout_removed"] == 0,
+                   f"heldout_removed {counts['heldout_removed']} (rule 0)")
+        return counts
 
     def stage_apply(self):
         import apply_dedup
-        out = self.output("apply")
+        out, clean = self.output("apply"), self.done["clean"]["counts"]
         try:
-            s = apply_dedup.apply(self.output("clean"), self.output("dedup") / "remove_list.csv", out)
+            s = apply_dedup.apply(self.output("clean"), self.output("dedup") / "remove_list.csv", out,
+                                  splits=tuple(sp for sp in SPLITS if sp in clean["by_split"]))
         except apply_dedup.Stop as e:
             raise Stop(f"apply: {e}")
         counts = dict(s["totals"])
-        self.check("apply read every cleaned row", counts["rows"] == self.done["clean"]["counts"]["rows"],
-                   f"apply rows {counts['rows']}, cleaned rows {self.done['clean']['counts']['rows']}")
+        counts["kept_by_split"] = {}
+        for p in s["parts"]:
+            counts["kept_by_split"][p["split"]] = counts["kept_by_split"].get(p["split"], 0) + p["kept"]
+        self.check("apply read every cleaned row", counts["rows"] == clean["rows"],
+                   f"apply rows {counts['rows']}, cleaned rows {clean['rows']}")
         self.check("apply removed the remove list", counts["removed"] == self.done["dedup"]["counts"]["remove_list_rows"],
                    f"apply removed {counts['removed']}, remove list {self.done['dedup']['counts']['remove_list_rows']}")
+        self.apply_parts = {(p["split"], p["part"]): p["output_sha256"] for p in s["parts"]}
         return {"mode": "run", "command": ["teams/01-data-a/pipeline/apply_dedup.py"],
-                "code_sha256": s["code_sha256"], "output": out.relative_to(self.dir).as_posix(), "counts": counts}
+                "code_sha256": s["code_sha256"], "output": "deduped", "counts": counts}
 
     def stage_f2(self):
         script = self.stages.get("f2", {}).get("script", DEFAULT_F2)
-        if not path(script).is_file():
-            raise Stop(f"f2: {script} not found (run_f2.py is in PR #35; set stages.f2.script to its path)")
         src, out = self.output("apply"), self.output("f2")
+        parts = getattr(self, "apply_parts", None)
+        if parts is None:  # apply was recorded by an earlier run
+            s = load_json(src / "apply_dedup_summary.json")
+            parts = {(p["split"], p["part"]): p["output_sha256"] for p in s["parts"]}
+        kept_by_split = self.done["apply"]["counts"]["kept_by_split"]
         totals = {"rows": 0, "kept": 0, "dropped_by_f2": 0, "errors": 0}
-        sets = set()
+        by_split, sets = {}, set()
         for split in SPLITS:
             if not (src / split).is_dir():
                 continue
-            run_script(script, ["--inputs", src / split, "--out", out / split], "f2")
-            s = load_json(out / split / "f2_summary.json")
+            mine = {p for (sp, p) in parts if sp == split}
+            if (out / split).is_dir():
+                stale = sorted(f.relative_to(out / split).as_posix() for f in (out / split).rglob("*.parquet")
+                               if f.relative_to(out / split).as_posix() not in mine)
+                self.check(f"no stale F2 output in final/{split}", not stale,
+                           f"{len(stale)} Parquet file(s) from an earlier run, e.g. {stale[0] if stale else ''}")
+            log = self.dir / "logs" / f"f2_{split}.log"
+            rc = run_script(script, ["--inputs", src / split, "--out", out / split], "f2", log)
+            summary = out / split / "f2_summary.json"
+            if rc != 0 and not summary.is_file():
+                raise Stop(f"f2: {Path(script).name} on {split} failed with exit code {rc}: {tail(log)}")
+            s = load_json(summary)
             sets.add(s.get("set_sha256"))
+            errors = s.get("errors", 0)
+            errors = len(errors) if isinstance(errors, list) else errors
+            by_split[split] = {"rows": s.get("rows", 0), "kept": s.get("kept", 0),
+                               "dropped_by_f2": s.get("dropped_by_f2", 0), "errors": errors}
             for k in totals:
-                totals[k] += s.get(k, 0)
-        self.check("F2 used one fingerprint set", len(sets) == 1, f"set_sha256 values {sorted(map(str, sets))}")
-        self.check("F2 read every deduplicated row", totals["rows"] == self.done["apply"]["counts"]["kept"],
-                   f"F2 rows {totals['rows']}, apply kept {self.done['apply']['counts']['kept']}")
-        self.check("F2 counts add up", totals["kept"] + totals["dropped_by_f2"] + totals["errors"] == totals["rows"],
-                   f"{totals}")
-        self.check("F2 reported no errors", totals["errors"] == 0, f"{totals['errors']} docs raised during the check")
+                totals[k] += by_split[split][k]
+            self.check(f"F2 reported no errors on {split}", errors == 0 and rc == 0,
+                       f"{errors} docs raised during the check, exit code {rc}; see {log.name}")
+            self.check(f"F2 read every deduplicated row of {split}", by_split[split]["rows"] == kept_by_split.get(split),
+                       f"F2 rows {by_split[split]['rows']}, apply kept {kept_by_split.get(split)}")
+            wrong = []
+            for part in sorted(mine):
+                rep = out / split / (part + ".f2.json")
+                got = load_json(rep).get("input_sha256") if rep.is_file() else None
+                if got != parts[(split, part)]:
+                    wrong.append(part)
+            self.check(f"F2 read what apply wrote in {split}", not wrong,
+                       f"{len(wrong)} part(s) without a matching F2 report, e.g. {wrong[0] if wrong else ''}")
+        self.check("F2 used one fingerprint set", len(sets) == 1 and None not in sets, f"set_sha256 values {sorted(map(str, sets))}")
+        self.check("F2 counts add up", totals["kept"] + totals["dropped_by_f2"] + totals["errors"] == totals["rows"], f"{totals}")
         return {"mode": "run", "command": [script, "--inputs", "<run>/deduped/<split>", "--out", "<run>/final/<split>"],
-                "code_sha256": sha256(path(script)), "output": "final", "set_sha256": sets.pop(), "counts": totals}
+                "code_sha256": sha256(path(script)), "output": "final", "set_sha256": sets.pop(),
+                "counts": {**totals, "by_split": by_split}}
 
     def stage_survivor_loss(self):
         import survivor_loss
@@ -214,6 +333,8 @@ class Run:
             s = survivor_loss.report(self.output("dedup") / "dedup_groups.csv", self.output("f2"), out)
         except survivor_loss.Stop as e:
             raise Stop(f"survivor_loss: {e}")
+        self.check("survivor loss saw every dedup group", s["groups"]["total"] == self.done["dedup"]["counts"]["groups"],
+                   f"report {s['groups']['total']}, dedup_groups.csv {self.done['dedup']['counts']['groups']}")
         return {"mode": "run", "command": ["teams/01-data-a/pipeline/survivor_loss.py"], "code_sha256": s["code_sha256"],
                 "output": "report", "counts": {**s["groups"], "survivors_dropped_by_f2": s["survivors_dropped_by_f2"]}}
 
@@ -225,6 +346,7 @@ class Run:
                 raise Stop(f"unknown stage {s!r}; stages are {', '.join(STAGES)}")
         if STAGES.index(start) > STAGES.index(to):
             raise Stop(f"--from {start} comes after --to {to}")
+        self.validate(to)
         old = {s["stage"]: s for s in load_json(self.manifest_path)["stages"]} if self.manifest_path.is_file() else {}
         sys.path.insert(0, str(HERE))
         for stage in STAGES[: STAGES.index(to) + 1]:
@@ -236,12 +358,13 @@ class Run:
                     raise Stop(f"{stage}: {out} changed after the manifest recorded it; rerun from {stage}")
                 self.done[stage] = old[stage]
                 continue
-            t0 = time.time()
+            t0, self.checks = time.time(), []
             rec = self.stage_external(stage) if stage in EXTERNAL else getattr(self, f"stage_{stage}")()
             rec["digest"], rec["files"] = digest(out)
-            self.done[stage] = {"stage": stage, **rec, "seconds": round(time.time() - t0, 1)}
+            self.done[stage] = {"stage": stage, **rec, "checks": self.checks, "seconds": round(time.time() - t0, 1)}
             self.write()
-            print(f"{stage}: {json.dumps(self.done[stage]['counts'])}", file=sys.stderr, flush=True)
+            print(f"{stage}: {json.dumps({k: v for k, v in self.done[stage]['counts'].items() if k != 'by_part'})}",
+                  file=sys.stderr, flush=True)
         return self.write()
 
     def write(self):
@@ -254,10 +377,11 @@ class Run:
         if "f2" in c:
             totals["dropped_by_f2"] = c["f2"]["dropped_by_f2"]
             totals["final"] = c["f2"]["kept"]
+        stages = [self.done[s] for s in STAGES if s in self.done]
         manifest = {"tool": "run_pipeline.py", "run_id": self.cfg["run_id"], "config": self.cfg,
                     "code_sha256": sha256(Path(__file__)), "git_commit": git_commit(),
-                    "python": platform.python_version(), "pyarrow": pyarrow_version(),
-                    "stages": [self.done[s] for s in STAGES if s in self.done], "checks": self.checks, "totals": totals}
+                    "python": platform.python_version(), "pyarrow": pyarrow_version(), "stages": stages,
+                    "checks": [dict(ch, stage=s["stage"]) for s in stages for ch in s.get("checks", [])], "totals": totals}
         self.dir.mkdir(parents=True, exist_ok=True)
         tmp = self.manifest_path.with_name(self.manifest_path.name + ".tmp")
         tmp.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")

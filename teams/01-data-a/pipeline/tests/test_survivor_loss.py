@@ -17,18 +17,18 @@ GROUP_HEADER = ["group_id", "group_size", "priority_rule", "role", "pack_id", "s
 
 GROUPS = [
     # g1: one survivor, F2 drops it -> lost
-    [1, 2, "pack_order", "survivor", "code-go", "train", "code-go/part-00000.parquet", 0, "a"],
-    [1, 2, "pack_order", "removed", "code-go", "train", "code-go/part-00001.parquet", 3, "a2"],
+    ["G000001", 2, 4, "survivor", "code-go", "train", "code-go/part-00000.parquet", 0, "a"],
+    ["G000001", 2, 4, "removed", "code-go", "train", "code-go/part-00001.parquet", 3, "a2"],
     # g2: two held-out survivors, F2 drops one -> partly hit
-    [2, 3, "heldout_first", "survivor", "code-go", "heldout", "code-go/part-00000.parquet", 0, "h0"],
-    [2, 3, "heldout_first", "survivor", "code-go", "heldout", "code-go/part-00000.parquet", 1, "h1"],
-    [2, 3, "heldout_first", "removed", "code-go", "train", "code-go/part-00000.parquet", 1, "b"],
+    ["G000002", 3, 0, "survivor", "code-go", "heldout", "code-go/part-00000.parquet", 0, "h0"],
+    ["G000002", 3, 0, "survivor", "code-go", "heldout", "code-go/part-00000.parquet", 1, "h1"],
+    ["G000002", 3, 0, "removed", "code-go", "train", "code-go/part-00000.parquet", 1, "b"],
     # g3: survivor untouched by F2
-    [3, 2, "completeness", "survivor", "en-dclm", "train", "en-dclm/part-00000.parquet", 0, "e0"],
-    [3, 2, "completeness", "removed", "en-dclm", "train", "en-dclm/part-00000.parquet", 1, "e1"],
+    ["G000003", 2, 3, "survivor", "en-dclm", "train", "en-dclm/part-00000.parquet", 0, "e0"],
+    ["G000003", 2, 3, "removed", "en-dclm", "train", "en-dclm/part-00000.parquet", 1, "e1"],
     # g4: no usable licence, no survivor at all
-    [4, 2, "licence", "removed", "code-go", "train", "code-go/part-00000.parquet", 2, "c"],
-    [4, 2, "licence", "removed", "en-dclm", "train", "en-dclm/part-00000.parquet", 2, "c2"],
+    ["G000004", 2, 1, "removed", "code-go", "train", "code-go/part-00000.parquet", 2, "c"],
+    ["G000004", 2, 1, "removed", "en-dclm", "train", "en-dclm/part-00000.parquet", 2, "c2"],
 ]
 
 # F2 reports as run_f2.py writes them, one per part, at <final>/<split>/<part>.f2.json
@@ -74,8 +74,8 @@ def test_lost_partly_hit_and_untouched(tmp_path, groups, final):
     with (tmp_path / "report" / "survivor_loss.csv").open(encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     assert [(r["status"], r["group_id"], r["doc_id"], r["f2_items"]) for r in rows] == [
-        ("lost", "1", "a", "gsm8k:12"), ("partly_hit", "2", "h1", "era-v5-lab:canary")]
-    assert s["by_pack"] == {"code-go": {"lost": 1, "partly_hit": 1}}
+        ("lost", "G000001", "a", "gsm8k:12"), ("partly_hit", "G000002", "h1", "era-v5-lab:canary")]
+    assert s["survivor_rows_by_pack"] == {"code-go": {"lost": 1, "partly_hit": 1}}
 
 
 def test_matches_on_split_part_and_doc_id(tmp_path, groups, final):
@@ -85,6 +85,20 @@ def test_matches_on_split_part_and_doc_id(tmp_path, groups, final):
     reports[("train", "code-go/part-00001.parquet")] = [{"doc_id": "a", "items": ["gsm8k:1"], "offset": 0}]
     s = sl.report(groups(), final(reports), tmp_path / "report")
     assert s["groups"]["lost"] == 0
+
+
+def test_f2_errors_count_as_gone(tmp_path, groups, final):
+    reports = dict(F2)
+    reports[("train", "code-go/part-00000.parquet")] = []
+    root = final(reports)
+    rep = root / "train" / "code-go" / "part-00000.parquet.f2.json"
+    data = json.loads(rep.read_text(encoding="utf-8"))
+    data["errors"] = [["a", "UnicodeDecodeError"]]
+    rep.write_text(json.dumps(data), encoding="utf-8")
+    s = sl.report(groups(), root, tmp_path / "report")
+    assert s["groups"]["lost"] == 1
+    with (tmp_path / "report" / "survivor_loss.csv").open(encoding="utf-8") as f:
+        assert next(csv.DictReader(f))["f2_items"] == "error:UnicodeDecodeError"
 
 
 def test_no_f2_drops(tmp_path, groups, final):
