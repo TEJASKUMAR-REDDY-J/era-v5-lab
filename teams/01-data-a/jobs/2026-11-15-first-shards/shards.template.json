@@ -1,0 +1,46 @@
+{
+  "_comment": "Shard job for the first training data: the run config of week 3 task 4 with the shard and reconcile stages on. Values in <...> come from task 4's run (the folders TSAI returns for clean, overlap and dedup) and are filled in before submission. The tokenizer is G3's frozen C3 (sha256 15468e66...), staged at teams/03-tokenizer/release/tokenizer.json from G3's release; the shard writer refuses any other file. Packs: the code, math, science and English packs of Data A (no cadj-* until their lane is decided). tokens: 2^26 per shard (shard format v1).",
+  "run_id": "<task 4 run_id>",
+  "out": "out/pipeline",
+  "stages": {
+    "clean": {
+      "mode": "adopt",
+      "output": "<folder TSAI returned for the clean job>"
+    },
+    "overlap": {
+      "mode": "adopt",
+      "output": "<folder TSAI returned for the overlap job>"
+    },
+    "dedup": {
+      "mode": "adopt",
+      "output": "<folder TSAI returned for the dedup job>"
+    },
+    "apply": {
+      "link": true
+    },
+    "f2": {
+      "script": "teams/01-data-a/spec_v1/run_f2.py",
+      "workers": 4
+    },
+    "shards": {
+      "tokenizer": "teams/03-tokenizer/release/tokenizer.json",
+      "tokens": 67108864,
+      "packs": [
+        "code-cpp",
+        "code-go",
+        "code-java",
+        "code-js-ts",
+        "code-python",
+        "code-rust",
+        "math-finemath",
+        "math-megamath",
+        "sci-finepdfs",
+        "en-dclm",
+        "en-fineweb-edu",
+        "en-nemotroncc",
+        "en-nemotroncc-synth"
+      ]
+    },
+    "reconcile": {}
+  }
+}
