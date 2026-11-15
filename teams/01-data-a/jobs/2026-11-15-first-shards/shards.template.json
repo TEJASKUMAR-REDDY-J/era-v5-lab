@@ -1,5 +1,5 @@
 {
-  "_comment": "Shard job for the first training data: the run config of week 3 task 4 with the shard and reconcile stages on. Values in <...> come from task 4's run (the folders TSAI returns for clean, overlap and dedup) and are filled in before submission. The tokenizer is G3's frozen C3 (sha256 15468e66...), staged at teams/03-tokenizer/release/tokenizer.json from G3's release; the shard writer refuses any other file. Packs: the code, math, science and English packs of Data A (no cadj-* until their lane is decided). tokens: 2^26 per shard (shard format v1).",
+  "_comment": "Shard job for the first training data: the run config of week 3 task 4 with the shard and reconcile stages on. Values in <...> come from task 4's run (the folders TSAI returns for clean, overlap and dedup) and are filled in before submission. The tokenizer is G3's frozen C3 (sha256 15468e66...), staged at teams/03-tokenizer/release/tokenizer.json from G3's release; the shard writer refuses any other file. No 'packs' filter: every train part of every pack is sharded (code, code-adjacent, English, Indic, math, science); held-out parts are not_sharded. pack_table is pack_metadata.json of this job: capability_lane and license (from G10's licence table) for every pack, written into every shard manifest. tokens: 2^26 per shard (shard format v1).",
   "run_id": "<task 4 run_id>",
   "out": "out/pipeline",
   "stages": {
@@ -25,21 +25,7 @@
     "shards": {
       "tokenizer": "teams/03-tokenizer/release/tokenizer.json",
       "tokens": 67108864,
-      "packs": [
-        "code-cpp",
-        "code-go",
-        "code-java",
-        "code-js-ts",
-        "code-python",
-        "code-rust",
-        "math-finemath",
-        "math-megamath",
-        "sci-finepdfs",
-        "en-dclm",
-        "en-fineweb-edu",
-        "en-nemotroncc",
-        "en-nemotroncc-synth"
-      ]
+      "pack_table": "teams/01-data-a/jobs/2026-11-15-first-shards/pack_metadata.json"
     },
     "reconcile": {}
   }
