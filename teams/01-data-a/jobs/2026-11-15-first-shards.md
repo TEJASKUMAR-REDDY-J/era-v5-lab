@@ -41,7 +41,9 @@ Each shard manifest carries `capability_lane` and `license`, taken from the pack
 | `math` | `math-finemath`, `math-megamath` |
 | `science` | `sci-finepdfs` |
 
-- **Licence:** `license` is filled only from G10's licence table (`teams/10-post-training/licences/licence_table.md`, Stage 0: foundation data). It is `null` for every pack until then, and a pack whose licence is still `null` is not sharded.
+- **Licence:** every manifest gets `license` and `license_source`, for traceability. `license` is G10's licence text for the pack, copied word for word from G10's licence table (`teams/10-post-training/licences/licence_table.md`, Stage 0: foundation data), the only source for it; `license_source` names that file and the commit it was read from.
+  - **Filled (8 packs, TSAI main `ae4c03d`):** `code-python`, `code-go`, `code-js-ts`, `ind-mr-fw2`, `ind-kn-fw2`, `ind-ta-sangraha-v`, `ind-hi-hplt`, `ind-hi-indiccorp`.
+  - **Pending (30 packs):** no row in G10's table yet. They keep `license: null` and `license_source: "pending: …"`, and are not sharded until G10 adds their rows.
 - **Admission:** a licence in the manifest records the source's licence when the shard was written. Whether a shard is admitted to training stays TSAI's decision, recorded in the release's `admission.jsonl` (shard format v1, "Dataset level").
 
 ## Tokenizer
@@ -81,8 +83,8 @@ the `license` field: their manifests have `capability_lane` but no `license`.
 | 2 | **Shard IDs with rollover:** a running number per pack and split over the parts in order, and a part-to-shards map in `shards_summary.json`. Today the shard number is the part number | Data A shards (4.3) | to do |
 | 3 | **Atomic write and resume:** files written to `.tmp` and renamed, manifest last; a rerun skips shards that verify. Today a rerun into the same folder is refused | Data A shards (4.3) | to do |
 | 4 | **Empty parts:** a part with no document left gets its own status, not a failure and not a 0-token shard | Data A shards (4.3) | to do |
-| 5 | **Lane and licence in the manifest:** `pack_table.py` takes a fifth field, `license`, and the writer writes `license` into the manifest next to `capability_lane`; a pack with a `null` lane or licence is refused. Today `pack_table.py` accepts exactly `language`, `script`, `domain`, `lane` (so it refuses this job's table), `shards/pack_table.json` has `lane: null` for the 32 non-code packs, and the manifest has no `license` | Data A shards (4.3) | to do |
-| 6 | **Licences filled from G10's table** into `pack_metadata.json` for all 38 packs | G10's list; Data A shards | waiting for the list |
+| 5 | **Lane and licence in the manifest:** `pack_table.py` takes `license` and `license_source`, and the writer writes both into the manifest next to `capability_lane`; a pack with a `null` lane or licence is refused. Today `pack_table.py` accepts exactly `language`, `script`, `domain`, `lane` (so it refuses this job's table), `shards/pack_table.json` has `lane: null` for the 32 non-code packs, and the manifest has no `license` | Data A shards (4.3) | to do |
+| 6 | **Licences from G10's table** for the 30 packs with no row yet: `code-cpp`, `code-java`, `code-rust`, the 3 `cadj-*`, the 4 `en-*`, the 2 `math-*`, `sci-finepdfs` and 17 `ind-*` packs | G10 | 8 of 38 filled |
 | 7 | **Lane names confirmed:** `code`, `code-adjacent`, `english`, `indic`, `math`, `science` | TSAI, G7 | to confirm |
 | 8 | **Held-out:** stays `not_sharded`, or becomes `validation` shards | G3, G9 | to confirm |
 | 9 | **Task 4 run:** run_id, returned folders and pins (clean, overlap, dedup), so `shards.json` can be filled in | Data A lead (task 4) | open |
