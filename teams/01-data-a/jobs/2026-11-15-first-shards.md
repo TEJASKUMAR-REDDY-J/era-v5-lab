@@ -27,7 +27,7 @@ Test log:        teams/01-data-a/jobs/2026-11-15-first-shards/local_test/README.
 - **Shard IDs:** `<pack>-train-<6 digits>`, written by the job into each manifest and `shards_summary.json`. IDs are never assigned by hand.
 - **Splits:** only `train/` parts are sharded. `heldout/` parts are reported as `not_sharded` (the sample README: "Do not train on it"; G3 used them to choose and check the tokenizer).
 - **Packs:** all 38 packs of the input manifest, 48 train parts, listed in the config (`stages.shards.packs`) from the expected inventory.
-- **F2** stays on (`stages.f2`) until TSAI says how decontamination runs in the first job.
+- **F2** runs inside this job (`stages.f2`, after apply and before the ledger and shards). TSAI confirmed that no separate F2 job is needed.
 
 ## Accounting and coverage
 
