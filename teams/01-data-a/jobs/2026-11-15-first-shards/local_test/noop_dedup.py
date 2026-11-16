@@ -43,7 +43,7 @@ def main():
     (ov / "overlap_docs.parquet").write_bytes(b"no-op overlap: smoke test only")
     files = {n: sha256(ov / n) for n in ("overlap_matches.csv", "overlap_docs.parquet")}
     (ov / "overlap_summary.json").write_text(json.dumps({
-        "status": "complete", "documents_all": total, "config": {"no_op": True},
+        "status": "complete", "documents_all": total, "config": {"no_op": True, "k": None, "floor": None},
         "inputs": {"parts": parts}, "outputs": {n: {"sha256": s} for n, s in files.items()}}, indent=1), encoding="utf-8")
     write_csv(dd / "remove_list.csv", REMOVE_HEADER)
     write_csv(dd / "dedup_groups.csv", GROUP_HEADER)
