@@ -1,0 +1,64 @@
+{
+  "tool": "reconcile_shards.py",
+  "code_sha256": "84216502a879af2b2b0963c4b889e60093591170b2ad31dd660efae0ca67f425",
+  "inputs": {
+    "ledger_files": {
+      "train/code-go.parquet": "35b5ce7f9461129c0b540f1c2f9b36e6eb943676b4aca22e1007d15068ee12b7"
+    },
+    "shard_files": {
+      "shards_summary.json": "8159bcef8f6e53de7d881332e218000f187954f3f0839f611af3a1187109f66b",
+      "code-go-train-000000.docs.parquet": "719758990be60ecff7b085e6203452b1a1b0a0459dc5675f10bfa0d374bcbc43",
+      "code-go-train-000000.json": "00fc224f9d55f755c42f3b4cd638256f482a0002dcf4353846dd4019713e3534",
+      "code-go-train-000000.quality_report.json": "52d1a84ebed822b9e62b4d1bdf096fcee822f502a55211f20c8ef9812a0ad833",
+      "code-go-train-000001.docs.parquet": "762089e860113435995fb0288b89444c9c1c4e1df1358dba09a3597d02e2a763",
+      "code-go-train-000001.json": "80b5f87b76ea2cffb314db9513531cd40ffa3965dfb8cc1feeed70cf6734dbd2",
+      "code-go-train-000001.quality_report.json": "e21dd90725f7c00814ebe0f3a0b1cdb51a280f5d6e569419d1062d9b2106720b"
+    }
+  },
+  "packs": [
+    "code-go"
+  ],
+  "ledger_rows": 76955,
+  "kept": 76859,
+  "in_shards": 76801,
+  "totals": {
+    "in_shard": 76801,
+    "left_out:secret": 58
+  },
+  "by_pack": {
+    "code-go": {
+      "train": {
+        "in_shard": 76801,
+        "left_out:secret": 58
+      }
+    }
+  },
+  "checks": [
+    {
+      "check": "every document in a shard is a kept document at its ledger position",
+      "ok": true,
+      "detail": "0 shard row(s) at no kept ledger position, 0 with another doc_id"
+    },
+    {
+      "check": "no document is in two shards",
+      "ok": true,
+      "detail": "0 position(s) in more than one shard"
+    },
+    {
+      "check": "every document the writer left out is a kept document of that part, and none is also in a shard",
+      "ok": true,
+      "detail": "0 left-out doc_id(s) not kept there, 0 both left out and in a shard"
+    },
+    {
+      "check": "each shard manifest's doc_count = its docs.parquet rows",
+      "ok": true,
+      "detail": "0 shard(s) differ, e.g. "
+    },
+    {
+      "check": "every kept document of a selected pack is in a shard or left out for a stated reason",
+      "ok": true,
+      "detail": "all accounted"
+    }
+  ],
+  "ok": true
+}

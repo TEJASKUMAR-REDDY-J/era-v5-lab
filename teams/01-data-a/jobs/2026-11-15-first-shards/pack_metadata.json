@@ -1,37 +1,37 @@
 {
-  "_comment": "The job's pack table (stages.shards.pack_table): what each shard manifest says about its pack. language, script and domain are shards/pack_table.json's (g1-pipeline). lane (the manifest's capability_lane) follows the sample's groups (sample_manifest.json). license and license_source go into every manifest for traceability. license is G10's licence text for the pack, copied word for word from G10's licence table (Stage 0: foundation data), the only source for it; license_source names the file and commit it was read from. A pack with no row there keeps license null and license_source 'pending', and is not sharded until G10 adds its row. A licence here records the source's licence; admission stays TSAI's decision (admission.jsonl).",
+  "_comment": "The job's pack table (stages.shards.pack_table): what each shard manifest says about its pack. language, script and domain are shards/pack_table.json's (g1-pipeline). lane (the manifest's capability_lane) follows the sample's groups (sample_manifest.json). license and license_source go into every manifest for traceability. license is G10's licence text for the pack, copied word for word from G10's licence table (Stage 0: foundation data), the only source for it; license_source names the file and commit it was read from. A pack with no row there keeps license null and license_source 'pending', and is not sharded. license_source is repinned to TSAI main once G10's table is merged there. A licence here records the source's licence; admission stays TSAI's decision (admission.jsonl).",
   "packs": {
     "cadj-commits": {
       "language": "code",
       "script": "Latn",
       "domain": "code-adjacent",
       "lane": "code-adjacent",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "mit (per-file upstream repository licences; attribution required)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "cadj-notebooks": {
       "language": "code",
       "script": "Latn",
       "domain": "code-adjacent",
       "lane": "code-adjacent",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "apache-2.0",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "cadj-stackexchange": {
       "language": "en",
       "script": "Latn",
       "domain": "code-adjacent",
       "lane": "code-adjacent",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "cc-by-sa-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "code-cpp": {
       "language": "cpp",
       "script": "Latn",
       "domain": "code",
       "lane": "code",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "other (per-file permissive Stack licences; attribution required)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "code-go": {
       "language": "go",
@@ -39,23 +39,23 @@
       "domain": "code",
       "lane": "code",
       "license": "other (per-file permissive Stack licences; attribution required)",
-      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, TSAI main ae4c03d (15 Nov 2026)"
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "code-java": {
       "language": "java",
       "script": "Latn",
       "domain": "code",
       "lane": "code",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "other (per-file permissive Stack licences; attribution required)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "code-js-ts": {
       "language": "js-ts",
       "script": "Latn",
       "domain": "code",
       "lane": "code",
-      "license": "other (per-file upstream licensing; attribution and training-use rights require further verification)",
-      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, TSAI main ae4c03d (15 Nov 2026)"
+      "license": "other (per-file upstream licensing; attribution required)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "code-python": {
       "language": "python",
@@ -63,79 +63,79 @@
       "domain": "code",
       "lane": "code",
       "license": "other (per-file permissive Stack licences; attribution required)",
-      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, TSAI main ae4c03d (15 Nov 2026)"
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "code-rust": {
       "language": "rust",
       "script": "Latn",
       "domain": "code",
       "lane": "code",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "other (per-file permissive Stack licences; attribution required)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "en-dclm": {
       "language": "en",
       "script": "Latn",
       "domain": "english",
       "lane": "english",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (DCLM packaging, rev `817d675276`; Common Crawl terms; card's \"intended/designed for research purposes only\" under Uses/Bias is a statement of intent/fitness disclaimer, not a licence term, same as Dolci; fastText filter only, no generated text)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "en-fineweb-edu": {
       "language": "en",
       "script": "Latn",
       "domain": "english",
       "lane": "english",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "en-nemotroncc": {
       "language": "en",
       "script": "Latn",
       "domain": "english",
       "lane": "english",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "Common Crawl terms (pipeline Apache-2.0)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "en-nemotroncc-synth": {
       "language": "en",
       "script": "Latn",
       "domain": "english",
       "lane": "english",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "Common Crawl terms + permissive synthetic contribution (Mistral-NeMo-12B-Instruct, Apache-2.0; Wikipedia rewrites inherit CC-BY-SA)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-bn-fw2": {
       "language": "bn",
       "script": "Beng",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-bn-sangraha-v": {
       "language": "bn",
       "script": "Beng",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-gu-fw2": {
       "language": "gu",
       "script": "Gujr",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-hi-fw2": {
       "language": "hi",
       "script": "Deva",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-hi-hplt": {
       "language": "hi",
@@ -143,7 +143,7 @@
       "domain": "indic",
       "lane": "indic",
       "license": "CC0-1.0 (packaging) / Web terms",
-      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, TSAI main ae4c03d (15 Nov 2026)"
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-hi-indiccorp": {
       "language": "hi",
@@ -151,23 +151,23 @@
       "domain": "indic",
       "lane": "indic",
       "license": "CC-BY-4.0 (commercial use permitted with attribution)",
-      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, TSAI main ae4c03d (15 Nov 2026)"
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-hi-sangraha-s": {
       "language": "hi",
       "script": "Deva",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-hi-sangraha-v": {
       "language": "hi",
       "script": "Deva",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-kn-fw2": {
       "language": "kn",
@@ -175,31 +175,31 @@
       "domain": "indic",
       "lane": "indic",
       "license": "ODC-By v1.0 (commercial use permitted with attribution)",
-      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, TSAI main ae4c03d (15 Nov 2026)"
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-kn-sangraha-s": {
       "language": "kn",
       "script": "Knda",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-kn-sangraha-v": {
       "language": "kn",
       "script": "Knda",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-ml-fw2": {
       "language": "ml",
       "script": "Mlym",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-mr-fw2": {
       "language": "mr",
@@ -207,47 +207,47 @@
       "domain": "indic",
       "lane": "indic",
       "license": "ODC-By v1.0 (commercial use permitted with attribution)",
-      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, TSAI main ae4c03d (15 Nov 2026)"
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-mr-sangraha-v": {
       "language": "mr",
       "script": "Deva",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-or-fw2": {
       "language": "or",
       "script": "Orya",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-sa-fw2": {
       "language": "sa",
       "script": "Deva",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-ta-fw2": {
       "language": "ta",
       "script": "Taml",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-ta-sangraha-s": {
       "language": "ta",
       "script": "Taml",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-ta-sangraha-v": {
       "language": "ta",
@@ -255,55 +255,55 @@
       "domain": "indic",
       "lane": "indic",
       "license": "CC-BY-4.0 (commercial use permitted with attribution)",
-      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, TSAI main ae4c03d (15 Nov 2026)"
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-te-fw2": {
       "language": "te",
       "script": "Telu",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-te-sangraha-s": {
       "language": "te",
       "script": "Telu",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "ind-te-sangraha-v": {
       "language": "te",
       "script": "Telu",
       "domain": "indic",
       "lane": "indic",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "CC-BY-4.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "math-finemath": {
       "language": "en",
       "script": "Latn",
       "domain": "math",
       "lane": "math",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "math-megamath": {
       "language": "en",
       "script": "Latn",
       "domain": "math",
       "lane": "math",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (`megamath-web` subset; commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     },
     "sci-finepdfs": {
       "language": "en",
       "script": "Latn",
       "domain": "sci",
       "lane": "science",
-      "license": null,
-      "license_source": "pending: no row for this pack in G10's licence table (Stage 0) at TSAI main ae4c03d"
+      "license": "ODC-By v1.0 (commercial use permitted with attribution)",
+      "license_source": "teams/10-post-training/licences/licence_table.md, Stage 0, G10 branch saitej123/era-v5-lab g10-week3-post-training at fb7d5e6 (16 Nov 2026)"
     }
   }
 }

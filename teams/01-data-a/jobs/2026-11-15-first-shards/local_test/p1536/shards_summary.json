@@ -1,0 +1,45 @@
+{
+  "run_id": "sj-real",
+  "cleaning_pipeline_sha256": "9844819bf4708efe3f90d5f212e8f8b82b3da9d162bf0df06bc0338fadb45b5f",
+  "parts": {
+    "train/code-go/part-00000.parquet": {
+      "pack_id": "code-go",
+      "shard_id": "code-go-train-000000",
+      "status": "written",
+      "docs": 56588,
+      "tokens": 56698571,
+      "rows_read": 56634,
+      "rows_in_part": 56634,
+      "truncated": false,
+      "left_out": {
+        "secret": 46,
+        "empty": 0,
+        "special": 0,
+        "roundtrip": 0
+      }
+    },
+    "train/code-go/part-00001.parquet": {
+      "pack_id": "code-go",
+      "shard_id": "code-go-train-000001",
+      "status": "written",
+      "docs": 20213,
+      "tokens": 20255694,
+      "rows_read": 20225,
+      "rows_in_part": 20225,
+      "truncated": false,
+      "left_out": {
+        "secret": 12,
+        "empty": 0,
+        "special": 0,
+        "roundtrip": 0
+      }
+    }
+  },
+  "counts": {
+    "written": 2,
+    "failed": 0,
+    "skipped": 0,
+    "not_sharded": 0,
+    "truncated": 0
+  }
+}
