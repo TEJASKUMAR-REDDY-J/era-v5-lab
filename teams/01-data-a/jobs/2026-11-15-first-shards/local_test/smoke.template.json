@@ -1,0 +1,38 @@
+{
+  "_comment": "Local smoke test of the shard job on cleaned parts without dedup: copy to out/smoke.json, fill in the <...>, and run run_pipeline.py with it. Overlap and dedup are no-op folders from noop_dedup.py (nothing removed). F2, survivor loss, the ledger, the shards and reconcile run for real. Until gates 5 and 11 land on g1-pipeline: the shards use p1536 with any_tokenizer (shards marked 'test'), the pack table is shards/pack_table.json (no licence field yet), and packs lists only code-* packs that are in <cleaned> (the other packs have lane null there). ledger.raw needs the raw parts the clean job read and its reports/ folder; drop the ledger entry if you do not have them (the ledger then starts at the cleaned documents).",
+  "run_id": "smoke-shards",
+  "out": "out/pipeline",
+  "stages": {
+    "clean": {
+      "mode": "adopt",
+      "output": "<cleaned folder: <split>/<pack>/<part>.parquet and job_summary.json>"
+    },
+    "overlap": {
+      "mode": "adopt",
+      "output": "out/noop/overlap"
+    },
+    "dedup": {
+      "mode": "adopt",
+      "output": "out/noop/dedup"
+    },
+    "apply": {
+      "link": true
+    },
+    "f2": {
+      "script": "teams/01-data-a/spec_v1/run_f2.py",
+      "workers": 2
+    },
+    "ledger": {
+      "raw": "<raw sample folder the clean job read>"
+    },
+    "shards": {
+      "tokenizer": "<p1536 tokenizer.json, sha256 e6b93a93...>",
+      "any_tokenizer": true,
+      "tokens": 67108864,
+      "packs": [
+        "code-go"
+      ]
+    },
+    "reconcile": {}
+  }
+}
