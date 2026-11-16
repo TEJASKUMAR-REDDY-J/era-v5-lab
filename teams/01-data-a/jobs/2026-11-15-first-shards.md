@@ -99,6 +99,17 @@ with p1536, the ledger in mode B and reconcile. Overlap and dedup were stand-ins
 These shards are test evidence (dedup not real), not first training shards. The p1536 shards were written with `--any-tokenizer` (gate 11), so
 they are marked `dataset_version` "test". None of them has the `license` field yet (gate 5).
 
+## TSAI's answers (16 Nov)
+
+- **Scope:** TSAI already made the sample v0 shards (41 shards). This job is for the **first real training sources**, with an input
+  manifest TSAI approves later; `expected_inventory.json` is then rebuilt from it (the sample one here is the template). Held-out parts stay unsharded.
+- **One job:** adopt the verified #244 (clean) and #255 (overlap, dedup) outputs, then F2, then tokenize and shard, then verify (ledger, reconcile).
+  No separate F2 job. Lanes as proposed.
+- **Intermediate Parquet on:** the job keeps the pipeline's Parquet (`deduped/`, `final/`) with TSAI, so task 5 can audit before and after
+  against the sample rerun with the final spec v1.1 cleaner.
+- **Handoff to G6 and G5 (Wed 18 Nov):** verified shards and metadata: the shard list (`<payload_sha256>  <shard_id>` per line) and its sha256,
+  the manifests and the `.idx.npy` offsets. The loader, sampler and packing are G6's with G5; G6's `open_shard` reads the shards.
+
 ## Before submission
 
 | # | Gate | Owner | State |
@@ -109,11 +120,11 @@ they are marked `dataset_version` "test". None of them has the `license` field y
 | 4 | **Empty parts:** a part with no document left gets its own status, not a failure and not a 0-token shard | Data A shards (4.3) | to do |
 | 5 | **Lane and licence in the manifest:** `pack_table.py` takes `license` and `license_source`, and the writer writes both into the manifest next to `capability_lane`; a pack with a `null` lane or licence is refused. Today `pack_table.py` accepts exactly `language`, `script`, `domain`, `lane` (so it refuses this job's table), `shards/pack_table.json` has `lane: null` for the 32 non-code packs, and the manifest has no `license` | Data A shards (4.3) | to do |
 | 6 | **Licences from G10's table:** all 38 filled from G10's week 3 branch (`fb7d5e6`); repin `license_source` to TSAI main when G10's table is merged there | G10; Data A shards | 38 of 38 filled, merge pending |
-| 7 | **Lane names confirmed:** `code`, `code-adjacent`, `english`, `indic`, `math`, `science` | TSAI, G7 | to confirm |
-| 8 | **Held-out:** stays `not_sharded`, or becomes `validation` shards | G3, G9 | to confirm |
+| 7 | **Lane names confirmed:** `code`, `code-adjacent`, `english`, `indic`, `math`, `science` | TSAI | accepted (TSAI, 16 Nov) |
+| 8 | **Held-out:** stays `not_sharded` | TSAI | decided (TSAI, 16 Nov) |
 | 9 | **Task 4 run:** run_id, returned folders, raw input folder and pins (clean, overlap, dedup), and its approved input manifest, so `shards.json` and `expected_inventory.json` can be filled in | Data A lead (task 4) | open |
 | 10 | **Rehearsal (4.5):** a forced multi-shard part and a kill/restart on real stages, with independent checks | Data A pipeline and shards | after 1 to 5, 11, 12 |
-| 11 | **p1536 in the writer:** `shard_writer.py` pins p1536's sha256 (`e6b93a93…`) in place of C3's, and G3's `release/` names p1536 (README, `SHA256SUMS`, `verify_release.py`) | Data A shards (4.3); G3 | to do |
+| 11 | **p1536 in the writer:** `shard_writer.py` pins p1536's sha256 (`e6b93a93…`) in place of C3's, in a small separate PR (TSAI, 16 Nov); G3's `release/` names p1536 | Data A shards (4.3); G3 | to do |
 | 12 | **Inventory and raw ledger required:** the run takes `expected_inventory.json` and fails when a listed pack or part is missing from the ledger or `shards_summary.json`, has another status than listed, or when an unlisted part appears; a production run without `stages.ledger.raw` is refused | Data A pipeline (with the reconcile owner) | to do |
 
 ## After the job
