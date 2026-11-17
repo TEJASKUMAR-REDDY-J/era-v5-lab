@@ -1,0 +1,638 @@
+{
+  "shard_id": "code-rust-train-000000",
+  "manifest": {
+    "schema_version": "shard-v1",
+    "dataset_version": "sample",
+    "shard_id": "code-rust-train-000000",
+    "format": "brahmic_u32_v2+doc_index",
+    "token_dtype": "uint32",
+    "payload_uri": "code-rust-train-000000.bin",
+    "payload_sha256": "9468c56cccae9055e00dc2a530be2e1732b4798d1025611bc1ec438c1727278b",
+    "payload_bytes": 238125020,
+    "index_uri": "code-rust-train-000000.idx.npy",
+    "index_sha256": "978a875772b39a37189f58f7d693a67b6c4863e05cd974a122aac0d66f3a5640",
+    "doc_count": 43116,
+    "token_count": 59530999,
+    "eos_token_id": 130822,
+    "tokenizer_sha256": "e6b93a93a60520d7b1af2e9242485f443b5596a1e116b8f8798d83bbad25a64b",
+    "pack_id": "code-rust",
+    "language": "rust",
+    "script": "Latn",
+    "domain": "code",
+    "capability_lane": "code",
+    "split": "train",
+    "inputs_sha256": "a551868b406d2a70c377b2f80f4c23140195e7a61a42293bdf6d76808582c257",
+    "cleaning_pipeline_sha256": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589",
+    "decontam_set_sha256": "2826a3b883210c653979103c09ce1c79e40fc4f7034b54027f2836482370d22a",
+    "sample_metadata_uri": "code-rust-train-000000.docs.parquet",
+    "sample_metadata_sha256": "b47840d725272e10112b9482ee5bd184cdaff5bff25f0ee484f5462840025457",
+    "quality_report_uri": "code-rust-train-000000.quality_report.json",
+    "quality_report_sha256": "ea22d8909d72239bc6a3a6dad1eedf3267517de639f60fef99aecc499ff4ec70",
+    "created_by": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+  },
+  "artifact_sha256": {
+    "code-rust-train-000000.json": "e8c9cbb7bf03a6d56ec82d721a44798acb8882b8d98aa42d14728be936aefc73",
+    "code-rust-train-000000.bin": "9468c56cccae9055e00dc2a530be2e1732b4798d1025611bc1ec438c1727278b",
+    "code-rust-train-000000.idx.npy": "978a875772b39a37189f58f7d693a67b6c4863e05cd974a122aac0d66f3a5640",
+    "code-rust-train-000000.docs.parquet": "b47840d725272e10112b9482ee5bd184cdaff5bff25f0ee484f5462840025457",
+    "code-rust-train-000000.quality_report.json": "ea22d8909d72239bc6a3a6dad1eedf3267517de639f60fef99aecc499ff4ec70",
+    "cleaning_pipeline.json": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589"
+  },
+  "checks": [
+    {
+      "check": "manifest file sha256 (recorded)",
+      "status": "PASS",
+      "expected": "",
+      "observed": "e8c9cbb7bf03a6d56ec82d721a44798acb8882b8d98aa42d14728be936aefc73"
+    },
+    {
+      "check": "all template fields present",
+      "status": "PASS",
+      "expected": "none missing",
+      "observed": "none missing"
+    },
+    {
+      "check": "no fields outside the template",
+      "status": "PASS",
+      "expected": "none extra",
+      "observed": "none extra"
+    },
+    {
+      "check": "no empty or placeholder values",
+      "status": "PASS",
+      "expected": "none",
+      "observed": "none"
+    },
+    {
+      "check": "schema_version",
+      "status": "PASS",
+      "expected": "shard-v1",
+      "observed": "shard-v1"
+    },
+    {
+      "check": "format",
+      "status": "PASS",
+      "expected": "brahmic_u32_v2+doc_index",
+      "observed": "brahmic_u32_v2+doc_index"
+    },
+    {
+      "check": "token_dtype",
+      "status": "PASS",
+      "expected": "uint32",
+      "observed": "uint32"
+    },
+    {
+      "check": "eos_token_id",
+      "status": "PASS",
+      "expected": "130822",
+      "observed": "130822"
+    },
+    {
+      "check": "tokenizer_sha256 is p1536",
+      "status": "PASS",
+      "expected": "e6b93a93a60520d7",
+      "observed": "e6b93a93a60520d7"
+    },
+    {
+      "check": "decontam_set_sha256 is F2 v2",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "split is train or validation",
+      "status": "PASS",
+      "expected": "train|validation",
+      "observed": "train"
+    },
+    {
+      "check": "shard_id = <pack_id>-<split>-<6 digits>",
+      "status": "PASS",
+      "expected": "code-rust-train-NNNNNN",
+      "observed": "code-rust-train-000000"
+    },
+    {
+      "check": "created_by is a full git commit hash",
+      "status": "PASS",
+      "expected": "40 hex characters",
+      "observed": "0064f81d57ef"
+    },
+    {
+      "check": "payload_bytes = 1024 + 4 x token_count",
+      "status": "PASS",
+      "expected": "238125020",
+      "observed": "238125020"
+    },
+    {
+      "check": "payload_sha256 (code-rust-train-000000.bin)",
+      "status": "PASS",
+      "expected": "9468c56cccae9055",
+      "observed": "9468c56cccae9055"
+    },
+    {
+      "check": "index_sha256 (code-rust-train-000000.idx.npy)",
+      "status": "PASS",
+      "expected": "978a875772b39a37",
+      "observed": "978a875772b39a37"
+    },
+    {
+      "check": "sample_metadata_sha256 (code-rust-train-000000.docs.parquet)",
+      "status": "PASS",
+      "expected": "b47840d725272e10",
+      "observed": "b47840d725272e10"
+    },
+    {
+      "check": "quality_report_sha256 (code-rust-train-000000.quality_report.json)",
+      "status": "PASS",
+      "expected": "ea22d8909d72239b",
+      "observed": "ea22d8909d72239b"
+    },
+    {
+      "check": "cleaning_pipeline_sha256",
+      "status": "PASS",
+      "expected": "35611a83cfa6d6b5",
+      "observed": "35611a83cfa6d6b5"
+    },
+    {
+      "check": "cleaning_pipeline F2 set = manifest decontam set",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "cleaning_pipeline records a dedup version",
+      "status": "FAIL",
+      "expected": "a dedup version",
+      "observed": "None"
+    },
+    {
+      "check": "cleaning_pipeline clean.py = clean.py in this checkout",
+      "status": "PASS",
+      "expected": "22d818c72c9f30bf",
+      "observed": "22d818c72c9f30bf"
+    },
+    {
+      "check": "index dtype int64",
+      "status": "PASS",
+      "expected": "int64",
+      "observed": "int64"
+    },
+    {
+      "check": "index length = doc_count + 1",
+      "status": "PASS",
+      "expected": "43117",
+      "observed": "43117"
+    },
+    {
+      "check": "index starts at 0",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "index ends at token_count",
+      "status": "PASS",
+      "expected": "59530999",
+      "observed": "59530999"
+    },
+    {
+      "check": "every document has >= 2 tokens (text + EOS)",
+      "status": "PASS",
+      "expected": ">= 2",
+      "observed": "5"
+    },
+    {
+      "check": "document lengths sum to token_count",
+      "status": "PASS",
+      "expected": "59530999",
+      "observed": "59530999"
+    },
+    {
+      "check": "shard within 2^26 tokens, or one document",
+      "status": "PASS",
+      "expected": "<= 67108864",
+      "observed": "59530999"
+    },
+    {
+      "check": "quality report shard_id",
+      "status": "PASS",
+      "expected": "code-rust-train-000000",
+      "observed": "code-rust-train-000000"
+    },
+    {
+      "check": "quality report docs_in_shard = doc_count",
+      "status": "PASS",
+      "expected": "43116",
+      "observed": "43116"
+    },
+    {
+      "check": "rows_read = docs_in_shard + left out",
+      "status": "PASS",
+      "expected": "43132",
+      "observed": "43132"
+    },
+    {
+      "check": "left_out counts = left_out_docs lists",
+      "status": "PASS",
+      "expected": "{'secret': 16, 'empty': 0, 'special': 0, 'roundtrip': 0}",
+      "observed": "{'secret': 16, 'empty': 0, 'special': 0, 'roundtrip': 0}"
+    },
+    {
+      "check": ".bin size = payload_bytes",
+      "status": "PASS",
+      "expected": "238125020",
+      "observed": "238125020"
+    },
+    {
+      "check": ".bin header magic",
+      "status": "PASS",
+      "expected": "20261025",
+      "observed": "20261025"
+    },
+    {
+      "check": ".bin header version",
+      "status": "PASS",
+      "expected": "2",
+      "observed": "2"
+    },
+    {
+      "check": ".bin header token count",
+      "status": "PASS",
+      "expected": "59530999",
+      "observed": "59530999"
+    },
+    {
+      "check": ".bin header rest is zeros",
+      "status": "PASS",
+      "expected": "zeros",
+      "observed": "zeros"
+    },
+    {
+      "check": "tokens after the header = token_count",
+      "status": "PASS",
+      "expected": "59530999",
+      "observed": "59530999"
+    },
+    {
+      "check": "every id < vocab 131072",
+      "status": "PASS",
+      "expected": "< 131072",
+      "observed": "130822"
+    },
+    {
+      "check": "every document ends with EOS",
+      "status": "PASS",
+      "expected": "43116",
+      "observed": "43116"
+    },
+    {
+      "check": "no special id >= 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "none of the 9 special ids below 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "docs.parquet rows = doc_count",
+      "status": "PASS",
+      "expected": "43116",
+      "observed": "43116"
+    },
+    {
+      "check": "docs.parquet doc_ids unique",
+      "status": "PASS",
+      "expected": "43116",
+      "observed": "43116"
+    },
+    {
+      "check": "docs.parquet n_tokens = index lengths",
+      "status": "PASS",
+      "expected": "equal",
+      "observed": "equal"
+    },
+    {
+      "check": "assigned pack and sample/train scope",
+      "status": "PASS",
+      "expected": "code-rust, train, sample",
+      "observed": "code-rust, train, sample"
+    },
+    {
+      "check": "metadata required columns",
+      "status": "PASS",
+      "expected": "all six metadata columns",
+      "observed": "['doc_id', 'input_part', 'input_row', 'lang_label', 'n_chars', 'n_tokens']"
+    },
+    {
+      "check": "metadata source part belongs to assigned pack",
+      "status": "PASS",
+      "expected": "code-rust",
+      "observed": "['code-rust_part-00000_clean.parquet']"
+    },
+    {
+      "check": "metadata source rows ordered, unique and within rows_read",
+      "status": "PASS",
+      "expected": "strictly increasing in [0, rows_read)",
+      "observed": "0..43131, 43116 rows"
+    },
+    {
+      "check": "metadata source-row gaps equal excluded count",
+      "status": "PASS",
+      "expected": "16",
+      "observed": "16"
+    },
+    {
+      "check": "excluded IDs unique and absent from kept metadata",
+      "status": "PASS",
+      "expected": "unique, disjoint",
+      "observed": "16 excluded; intersection 0"
+    },
+    {
+      "check": "metadata character counts positive",
+      "status": "PASS",
+      "expected": "all > 0",
+      "observed": "16"
+    },
+    {
+      "check": "writer commit in audited main history",
+      "status": "PASS",
+      "expected": "ancestor of audited main",
+      "observed": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+    },
+    {
+      "check": "decode 20 documents: each ends with EOS 130822",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: no U+FFFD replacement characters",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "decode: re-encoding the decoded text gives the same IDs",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: decoded length equals metadata n_chars",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    }
+  ],
+  "counts": {
+    "PASS": 57,
+    "FAIL": 1,
+    "NOT CHECKED": 0
+  },
+  "quality_counts": {
+    "rows_read": 43132,
+    "docs_in_shard": 43116,
+    "left_out": {
+      "secret": 16,
+      "empty": 0,
+      "special": 0,
+      "roundtrip": 0
+    }
+  },
+  "input_parts": [
+    "code-rust_part-00000_clean.parquet"
+  ],
+  "input_rows": [
+    0,
+    43131
+  ],
+  "min_document_tokens": 5,
+  "max_document_tokens": 36550,
+  "decoded_documents": [
+    {
+      "position": 0,
+      "doc_id": "282562eef4bf00e6",
+      "n_tokens": 187,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 707,
+      "n_chars": 707,
+      "reencode_matches": true,
+      "decoded_sha256": "dab95de2dbe931ad3884bd4b0032d597824637437cdedc1588fd896f2c799655"
+    },
+    {
+      "position": 2269,
+      "doc_id": "d30ca2f24055fa9d",
+      "n_tokens": 90,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 409,
+      "n_chars": 409,
+      "reencode_matches": true,
+      "decoded_sha256": "d30ca2f24055fa9dc48e268171391eec9d3844aa2865e95daed24a02aa21b43f"
+    },
+    {
+      "position": 4538,
+      "doc_id": "7d63f75065acdef8",
+      "n_tokens": 13146,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 40925,
+      "n_chars": 40925,
+      "reencode_matches": true,
+      "decoded_sha256": "7d63f75065acdef89f3e01453e8665ddb4a7852ef2456aae3e6c23bef294802f"
+    },
+    {
+      "position": 6808,
+      "doc_id": "756c75df296f52a5",
+      "n_tokens": 357,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1223,
+      "n_chars": 1223,
+      "reencode_matches": true,
+      "decoded_sha256": "756c75df296f52a51885fc6fb7170488b7ed937a3635d608f917d187d7579d91"
+    },
+    {
+      "position": 9077,
+      "doc_id": "3da67bda76b3449d",
+      "n_tokens": 221,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 770,
+      "n_chars": 770,
+      "reencode_matches": true,
+      "decoded_sha256": "3da67bda76b3449da450b8a9827b9eca6d4ad9e86ed9512891eb0f7ac7bbdbac"
+    },
+    {
+      "position": 11346,
+      "doc_id": "255f10949c0d61af",
+      "n_tokens": 7129,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 31381,
+      "n_chars": 31381,
+      "reencode_matches": true,
+      "decoded_sha256": "23992213bbb9e3761fbe4ad2816a8774d9c7b6c2db007ff66dcc4e49caf5bd61"
+    },
+    {
+      "position": 13615,
+      "doc_id": "a798d00873c3837a",
+      "n_tokens": 1354,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 5321,
+      "n_chars": 5321,
+      "reencode_matches": true,
+      "decoded_sha256": "aba9198ae86659c6dd73e80f71bf51a9b230f0a02150b8260cc42f8fa6679ce9"
+    },
+    {
+      "position": 15884,
+      "doc_id": "a05d5af5e3286d83",
+      "n_tokens": 823,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3223,
+      "n_chars": 3223,
+      "reencode_matches": true,
+      "decoded_sha256": "a05d5af5e3286d831f078bdfb7b379a41895b814425ddae99616fa29a8d1d3f0"
+    },
+    {
+      "position": 18154,
+      "doc_id": "31c463c2b151fb5f",
+      "n_tokens": 441,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1533,
+      "n_chars": 1533,
+      "reencode_matches": true,
+      "decoded_sha256": "7447d4633b870d0ea43f0bea6a4d2c8d8330ebe06694f3e6930f5f2ac9ea428a"
+    },
+    {
+      "position": 20423,
+      "doc_id": "76877605ce3340d4",
+      "n_tokens": 821,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3766,
+      "n_chars": 3766,
+      "reencode_matches": true,
+      "decoded_sha256": "76877605ce3340d4075bf591ec9cc38cdf65c19022cac994788943ec00d128ae"
+    },
+    {
+      "position": 22692,
+      "doc_id": "bf0d4dc415374a94",
+      "n_tokens": 699,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2041,
+      "n_chars": 2041,
+      "reencode_matches": true,
+      "decoded_sha256": "bf0d4dc415374a94d8378575a32cac691f6ac58eb8a800534f9ea62e2df6831d"
+    },
+    {
+      "position": 24961,
+      "doc_id": "f387756f5e345ccd",
+      "n_tokens": 2939,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 12474,
+      "n_chars": 12474,
+      "reencode_matches": true,
+      "decoded_sha256": "4e32323a2abf3eaabbf567c93b78e78c24d787e88f103565f0a519acf4429758"
+    },
+    {
+      "position": 27231,
+      "doc_id": "3f42615d8f1f1ad0",
+      "n_tokens": 234,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 712,
+      "n_chars": 712,
+      "reencode_matches": true,
+      "decoded_sha256": "3f42615d8f1f1ad0f9de7580d631c5e92834405e9ac52c01e4566b13389182e8"
+    },
+    {
+      "position": 29500,
+      "doc_id": "eb7f290e4f076c5c",
+      "n_tokens": 2488,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 8002,
+      "n_chars": 8002,
+      "reencode_matches": true,
+      "decoded_sha256": "eb7f290e4f076c5c76923749d0f57e93038773fe5d9b591adaa1101bf0248917"
+    },
+    {
+      "position": 31769,
+      "doc_id": "1e830dc8bba06ade",
+      "n_tokens": 1919,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 7218,
+      "n_chars": 7218,
+      "reencode_matches": true,
+      "decoded_sha256": "1e830dc8bba06ade75092446b4ed793f0338d59d890ed6e4594bfe43c2435c34"
+    },
+    {
+      "position": 34038,
+      "doc_id": "d35d080f5c03de2b",
+      "n_tokens": 535,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1941,
+      "n_chars": 1941,
+      "reencode_matches": true,
+      "decoded_sha256": "ae10d4691ab8f5c5a927c2bb300496dcab07567bf6d9f87f5d43bf50985918de"
+    },
+    {
+      "position": 36307,
+      "doc_id": "85575fae96145bcc",
+      "n_tokens": 519,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1892,
+      "n_chars": 1892,
+      "reencode_matches": true,
+      "decoded_sha256": "85575fae96145bcc03265181adb3764c1205be70891c8cacd13bb3dd48b63577"
+    },
+    {
+      "position": 38577,
+      "doc_id": "3e24ab863873a7e7",
+      "n_tokens": 578,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2282,
+      "n_chars": 2282,
+      "reencode_matches": true,
+      "decoded_sha256": "ece5e2e0cdb82df6f5274acf177a0bec2a73281c2e708734f70e2b3d77445eee"
+    },
+    {
+      "position": 40846,
+      "doc_id": "0131a5619f73b4b8",
+      "n_tokens": 814,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2967,
+      "n_chars": 2967,
+      "reencode_matches": true,
+      "decoded_sha256": "0131a5619f73b4b851d731aa7ad50399cc138601c4307d231ab8f90d6af19c07"
+    },
+    {
+      "position": 43115,
+      "doc_id": "d07a7b96ed944260",
+      "n_tokens": 6403,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 26680,
+      "n_chars": 26680,
+      "reencode_matches": true,
+      "decoded_sha256": "d07a7b96ed9442609073f4618f5c25524ec8d535b079ea5fbc2d32d03a07f84c"
+    }
+  ],
+  "wall_seconds": 9.505
+}

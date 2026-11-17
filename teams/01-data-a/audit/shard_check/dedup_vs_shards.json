@@ -1,0 +1,29 @@
+{
+ "remove_list": 1345,
+ "by_split": {
+  "train": 1345
+ },
+ "removed_docs_whose_part_is_in_the_41_shards": 227,
+ "removed_docs_present_in_shards": 227,
+ "present_by_pack": {
+  "code-rust": 58,
+  "ind-hi-sangraha-s": 35,
+  "ind-hi-sangraha-v": 20,
+  "en-nemotroncc": 19,
+  "en-fineweb-edu": 15,
+  "math-megamath": 15,
+  "ind-sa-fw2": 12,
+  "en-dclm": 11,
+  "code-python": 9,
+  "code-go": 6,
+  "code-cpp": 5,
+  "ind-mr-sangraha-v": 5,
+  "ind-hi-indiccorp": 4,
+  "code-java": 3,
+  "ind-kn-sangraha-v": 3,
+  "math-finemath": 3,
+  "ind-te-sangraha-v": 2,
+  "en-nemotroncc-synth": 1,
+  "ind-bn-sangraha-v": 1
+ }
+}

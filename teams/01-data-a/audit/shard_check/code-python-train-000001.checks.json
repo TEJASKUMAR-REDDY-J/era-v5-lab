@@ -1,0 +1,638 @@
+{
+  "shard_id": "code-python-train-000001",
+  "manifest": {
+    "schema_version": "shard-v1",
+    "dataset_version": "sample",
+    "shard_id": "code-python-train-000001",
+    "format": "brahmic_u32_v2+doc_index",
+    "token_dtype": "uint32",
+    "payload_uri": "code-python-train-000001.bin",
+    "payload_sha256": "537723be5641f3aedab93695cb85f98c4b2259bb71300c9fb55bcc41ed2019d6",
+    "payload_bytes": 86037204,
+    "index_uri": "code-python-train-000001.idx.npy",
+    "index_sha256": "016396b816822dc6478fc9bd6adaa496b5e05c6ede838774478c490f1ec5b05e",
+    "doc_count": 19116,
+    "token_count": 21509045,
+    "eos_token_id": 130822,
+    "tokenizer_sha256": "e6b93a93a60520d7b1af2e9242485f443b5596a1e116b8f8798d83bbad25a64b",
+    "pack_id": "code-python",
+    "language": "python",
+    "script": "Latn",
+    "domain": "code",
+    "capability_lane": "code",
+    "split": "train",
+    "inputs_sha256": "6412dbccaf463cf465aadcfa13481313746a80d97cccbb902bf7b58b3604d08a",
+    "cleaning_pipeline_sha256": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589",
+    "decontam_set_sha256": "2826a3b883210c653979103c09ce1c79e40fc4f7034b54027f2836482370d22a",
+    "sample_metadata_uri": "code-python-train-000001.docs.parquet",
+    "sample_metadata_sha256": "4565b1d04a85ddd4b04c6cb3468efa4852ebb35935eeddd26a494ff83bd5f99e",
+    "quality_report_uri": "code-python-train-000001.quality_report.json",
+    "quality_report_sha256": "29fb0a7554f6cb502b8baf8e727ba4b4e33b68830c33c3a53c949fa824722ec5",
+    "created_by": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+  },
+  "artifact_sha256": {
+    "code-python-train-000001.json": "1f4ade8496d60fdffcac7bd7260a7b62d0347d7227fc90162e484e672da54c71",
+    "code-python-train-000001.bin": "537723be5641f3aedab93695cb85f98c4b2259bb71300c9fb55bcc41ed2019d6",
+    "code-python-train-000001.idx.npy": "016396b816822dc6478fc9bd6adaa496b5e05c6ede838774478c490f1ec5b05e",
+    "code-python-train-000001.docs.parquet": "4565b1d04a85ddd4b04c6cb3468efa4852ebb35935eeddd26a494ff83bd5f99e",
+    "code-python-train-000001.quality_report.json": "29fb0a7554f6cb502b8baf8e727ba4b4e33b68830c33c3a53c949fa824722ec5",
+    "cleaning_pipeline.json": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589"
+  },
+  "checks": [
+    {
+      "check": "manifest file sha256 (recorded)",
+      "status": "PASS",
+      "expected": "",
+      "observed": "1f4ade8496d60fdffcac7bd7260a7b62d0347d7227fc90162e484e672da54c71"
+    },
+    {
+      "check": "all template fields present",
+      "status": "PASS",
+      "expected": "none missing",
+      "observed": "none missing"
+    },
+    {
+      "check": "no fields outside the template",
+      "status": "PASS",
+      "expected": "none extra",
+      "observed": "none extra"
+    },
+    {
+      "check": "no empty or placeholder values",
+      "status": "PASS",
+      "expected": "none",
+      "observed": "none"
+    },
+    {
+      "check": "schema_version",
+      "status": "PASS",
+      "expected": "shard-v1",
+      "observed": "shard-v1"
+    },
+    {
+      "check": "format",
+      "status": "PASS",
+      "expected": "brahmic_u32_v2+doc_index",
+      "observed": "brahmic_u32_v2+doc_index"
+    },
+    {
+      "check": "token_dtype",
+      "status": "PASS",
+      "expected": "uint32",
+      "observed": "uint32"
+    },
+    {
+      "check": "eos_token_id",
+      "status": "PASS",
+      "expected": "130822",
+      "observed": "130822"
+    },
+    {
+      "check": "tokenizer_sha256 is p1536",
+      "status": "PASS",
+      "expected": "e6b93a93a60520d7",
+      "observed": "e6b93a93a60520d7"
+    },
+    {
+      "check": "decontam_set_sha256 is F2 v2",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "split is train or validation",
+      "status": "PASS",
+      "expected": "train|validation",
+      "observed": "train"
+    },
+    {
+      "check": "shard_id = <pack_id>-<split>-<6 digits>",
+      "status": "PASS",
+      "expected": "code-python-train-NNNNNN",
+      "observed": "code-python-train-000001"
+    },
+    {
+      "check": "created_by is a full git commit hash",
+      "status": "PASS",
+      "expected": "40 hex characters",
+      "observed": "0064f81d57ef"
+    },
+    {
+      "check": "payload_bytes = 1024 + 4 x token_count",
+      "status": "PASS",
+      "expected": "86037204",
+      "observed": "86037204"
+    },
+    {
+      "check": "payload_sha256 (code-python-train-000001.bin)",
+      "status": "PASS",
+      "expected": "537723be5641f3ae",
+      "observed": "537723be5641f3ae"
+    },
+    {
+      "check": "index_sha256 (code-python-train-000001.idx.npy)",
+      "status": "PASS",
+      "expected": "016396b816822dc6",
+      "observed": "016396b816822dc6"
+    },
+    {
+      "check": "sample_metadata_sha256 (code-python-train-000001.docs.parquet)",
+      "status": "PASS",
+      "expected": "4565b1d04a85ddd4",
+      "observed": "4565b1d04a85ddd4"
+    },
+    {
+      "check": "quality_report_sha256 (code-python-train-000001.quality_report.json)",
+      "status": "PASS",
+      "expected": "29fb0a7554f6cb50",
+      "observed": "29fb0a7554f6cb50"
+    },
+    {
+      "check": "cleaning_pipeline_sha256",
+      "status": "PASS",
+      "expected": "35611a83cfa6d6b5",
+      "observed": "35611a83cfa6d6b5"
+    },
+    {
+      "check": "cleaning_pipeline F2 set = manifest decontam set",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "cleaning_pipeline records a dedup version",
+      "status": "FAIL",
+      "expected": "a dedup version",
+      "observed": "None"
+    },
+    {
+      "check": "cleaning_pipeline clean.py = clean.py in this checkout",
+      "status": "PASS",
+      "expected": "22d818c72c9f30bf",
+      "observed": "22d818c72c9f30bf"
+    },
+    {
+      "check": "index dtype int64",
+      "status": "PASS",
+      "expected": "int64",
+      "observed": "int64"
+    },
+    {
+      "check": "index length = doc_count + 1",
+      "status": "PASS",
+      "expected": "19117",
+      "observed": "19117"
+    },
+    {
+      "check": "index starts at 0",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "index ends at token_count",
+      "status": "PASS",
+      "expected": "21509045",
+      "observed": "21509045"
+    },
+    {
+      "check": "every document has >= 2 tokens (text + EOS)",
+      "status": "PASS",
+      "expected": ">= 2",
+      "observed": "25"
+    },
+    {
+      "check": "document lengths sum to token_count",
+      "status": "PASS",
+      "expected": "21509045",
+      "observed": "21509045"
+    },
+    {
+      "check": "shard within 2^26 tokens, or one document",
+      "status": "PASS",
+      "expected": "<= 67108864",
+      "observed": "21509045"
+    },
+    {
+      "check": "quality report shard_id",
+      "status": "PASS",
+      "expected": "code-python-train-000001",
+      "observed": "code-python-train-000001"
+    },
+    {
+      "check": "quality report docs_in_shard = doc_count",
+      "status": "PASS",
+      "expected": "19116",
+      "observed": "19116"
+    },
+    {
+      "check": "rows_read = docs_in_shard + left out",
+      "status": "PASS",
+      "expected": "19125",
+      "observed": "19125"
+    },
+    {
+      "check": "left_out counts = left_out_docs lists",
+      "status": "PASS",
+      "expected": "{'secret': 8, 'empty': 0, 'special': 1, 'roundtrip': 0}",
+      "observed": "{'secret': 8, 'empty': 0, 'special': 1, 'roundtrip': 0}"
+    },
+    {
+      "check": ".bin size = payload_bytes",
+      "status": "PASS",
+      "expected": "86037204",
+      "observed": "86037204"
+    },
+    {
+      "check": ".bin header magic",
+      "status": "PASS",
+      "expected": "20261025",
+      "observed": "20261025"
+    },
+    {
+      "check": ".bin header version",
+      "status": "PASS",
+      "expected": "2",
+      "observed": "2"
+    },
+    {
+      "check": ".bin header token count",
+      "status": "PASS",
+      "expected": "21509045",
+      "observed": "21509045"
+    },
+    {
+      "check": ".bin header rest is zeros",
+      "status": "PASS",
+      "expected": "zeros",
+      "observed": "zeros"
+    },
+    {
+      "check": "tokens after the header = token_count",
+      "status": "PASS",
+      "expected": "21509045",
+      "observed": "21509045"
+    },
+    {
+      "check": "every id < vocab 131072",
+      "status": "PASS",
+      "expected": "< 131072",
+      "observed": "130822"
+    },
+    {
+      "check": "every document ends with EOS",
+      "status": "PASS",
+      "expected": "19116",
+      "observed": "19116"
+    },
+    {
+      "check": "no special id >= 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "none of the 9 special ids below 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "docs.parquet rows = doc_count",
+      "status": "PASS",
+      "expected": "19116",
+      "observed": "19116"
+    },
+    {
+      "check": "docs.parquet doc_ids unique",
+      "status": "PASS",
+      "expected": "19116",
+      "observed": "19116"
+    },
+    {
+      "check": "docs.parquet n_tokens = index lengths",
+      "status": "PASS",
+      "expected": "equal",
+      "observed": "equal"
+    },
+    {
+      "check": "assigned pack and sample/train scope",
+      "status": "PASS",
+      "expected": "code-python, train, sample",
+      "observed": "code-python, train, sample"
+    },
+    {
+      "check": "metadata required columns",
+      "status": "PASS",
+      "expected": "all six metadata columns",
+      "observed": "['doc_id', 'input_part', 'input_row', 'lang_label', 'n_chars', 'n_tokens']"
+    },
+    {
+      "check": "metadata source part belongs to assigned pack",
+      "status": "PASS",
+      "expected": "code-python",
+      "observed": "['code-python_part-00001_clean.parquet']"
+    },
+    {
+      "check": "metadata source rows ordered, unique and within rows_read",
+      "status": "PASS",
+      "expected": "strictly increasing in [0, rows_read)",
+      "observed": "0..19124, 19116 rows"
+    },
+    {
+      "check": "metadata source-row gaps equal excluded count",
+      "status": "PASS",
+      "expected": "9",
+      "observed": "9"
+    },
+    {
+      "check": "excluded IDs unique and absent from kept metadata",
+      "status": "PASS",
+      "expected": "unique, disjoint",
+      "observed": "9 excluded; intersection 0"
+    },
+    {
+      "check": "metadata character counts positive",
+      "status": "PASS",
+      "expected": "all > 0",
+      "observed": "113"
+    },
+    {
+      "check": "writer commit in audited main history",
+      "status": "PASS",
+      "expected": "ancestor of audited main",
+      "observed": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+    },
+    {
+      "check": "decode 20 documents: each ends with EOS 130822",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: no U+FFFD replacement characters",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "decode: re-encoding the decoded text gives the same IDs",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: decoded length equals metadata n_chars",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    }
+  ],
+  "counts": {
+    "PASS": 57,
+    "FAIL": 1,
+    "NOT CHECKED": 0
+  },
+  "quality_counts": {
+    "rows_read": 19125,
+    "docs_in_shard": 19116,
+    "left_out": {
+      "secret": 8,
+      "empty": 0,
+      "special": 1,
+      "roundtrip": 0
+    }
+  },
+  "input_parts": [
+    "code-python_part-00001_clean.parquet"
+  ],
+  "input_rows": [
+    0,
+    19124
+  ],
+  "min_document_tokens": 25,
+  "max_document_tokens": 42073,
+  "decoded_documents": [
+    {
+      "position": 0,
+      "doc_id": "ca1ef2e2bc41eff9",
+      "n_tokens": 2059,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 9384,
+      "n_chars": 9384,
+      "reencode_matches": true,
+      "decoded_sha256": "bd70293b604e173529abcc573fb540b0629fe6108b6a4cf54d4418c474e7bf43"
+    },
+    {
+      "position": 1006,
+      "doc_id": "ad5b9cff020c9fea",
+      "n_tokens": 136,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 494,
+      "n_chars": 494,
+      "reencode_matches": true,
+      "decoded_sha256": "ad5b9cff020c9feab20be50d418030eaf8de3f537992010fc8c04a7638b7bb10"
+    },
+    {
+      "position": 2012,
+      "doc_id": "099cc1e123e5dce2",
+      "n_tokens": 259,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 762,
+      "n_chars": 762,
+      "reencode_matches": true,
+      "decoded_sha256": "df1928933111bbfc20121f1a33251b9cb700f1b3ae4a2ff7786c94721638fdc0"
+    },
+    {
+      "position": 3018,
+      "doc_id": "58284f2a5046689a",
+      "n_tokens": 289,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 894,
+      "n_chars": 894,
+      "reencode_matches": true,
+      "decoded_sha256": "722909362f677f20f9e2b3ff39c1dfbe86bc5b169420b35b51dd638e3d4a1282"
+    },
+    {
+      "position": 4024,
+      "doc_id": "f43e548d80ed7d5f",
+      "n_tokens": 862,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2471,
+      "n_chars": 2471,
+      "reencode_matches": true,
+      "decoded_sha256": "f43e548d80ed7d5fa2fa4a93b0efa35088f4396772829aecc0148f26728ad19e"
+    },
+    {
+      "position": 5030,
+      "doc_id": "dfcfc06bf3b8b67b",
+      "n_tokens": 7278,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 35618,
+      "n_chars": 35618,
+      "reencode_matches": true,
+      "decoded_sha256": "dfcfc06bf3b8b67ba6e851ae6e814339e682cddb33904e1ab95562288ccc1c9e"
+    },
+    {
+      "position": 6036,
+      "doc_id": "c77f1aaae91db7c9",
+      "n_tokens": 189,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 553,
+      "n_chars": 553,
+      "reencode_matches": true,
+      "decoded_sha256": "1112ce76fe2f748bae4fdb108750a2f454d02c1476b17ba7c95d04507ba0373b"
+    },
+    {
+      "position": 7042,
+      "doc_id": "ada2722bb504a4d5",
+      "n_tokens": 659,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2530,
+      "n_chars": 2530,
+      "reencode_matches": true,
+      "decoded_sha256": "ada2722bb504a4d5d2ee6e3366edf7cbc6fcff504f78a89cf844d2511e1103d7"
+    },
+    {
+      "position": 8048,
+      "doc_id": "7397b3dab63b15fa",
+      "n_tokens": 511,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1310,
+      "n_chars": 1310,
+      "reencode_matches": true,
+      "decoded_sha256": "d9bb29c0cea737eb83b979843212c168343b562a97571cbf3a49d0fe08f44ae2"
+    },
+    {
+      "position": 9054,
+      "doc_id": "cb5862e0b6d410ef",
+      "n_tokens": 1316,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 5611,
+      "n_chars": 5611,
+      "reencode_matches": true,
+      "decoded_sha256": "27c5569f31e8aa9aa5054bd36dc8bf0378f7fe08114ffefa743ae5861f9a0722"
+    },
+    {
+      "position": 10061,
+      "doc_id": "6aaab3e0adf268d6",
+      "n_tokens": 1041,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 7889,
+      "n_chars": 7889,
+      "reencode_matches": true,
+      "decoded_sha256": "f300ec32aec1d4bd2963df1d0b64fcce1e4b9b59835e9a393230be23a0f16dc6"
+    },
+    {
+      "position": 11067,
+      "doc_id": "167e9f223d8512c7",
+      "n_tokens": 767,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3471,
+      "n_chars": 3471,
+      "reencode_matches": true,
+      "decoded_sha256": "167e9f223d8512c7938c140bb0a68e2ef019c00a2a54c9987554f57f6e48a614"
+    },
+    {
+      "position": 12073,
+      "doc_id": "5378122e23826e6f",
+      "n_tokens": 242,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 865,
+      "n_chars": 865,
+      "reencode_matches": true,
+      "decoded_sha256": "817a3f9673cc1a2e3471e2f200df903fde5e5ae6e60e33881a997e56770985ee"
+    },
+    {
+      "position": 13079,
+      "doc_id": "481028d8e4703848",
+      "n_tokens": 2342,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 9848,
+      "n_chars": 9848,
+      "reencode_matches": true,
+      "decoded_sha256": "481028d8e470384807779c84c40a252c6cb947b7a02fc8edbd2f43410ae59e8e"
+    },
+    {
+      "position": 14085,
+      "doc_id": "063628f0207ff157",
+      "n_tokens": 149,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 588,
+      "n_chars": 588,
+      "reencode_matches": true,
+      "decoded_sha256": "e7f98e9f18d4d440357b81819103cf059fe8487f883ca6b6819df507e257261c"
+    },
+    {
+      "position": 15091,
+      "doc_id": "de42fec4d988141b",
+      "n_tokens": 3197,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 13475,
+      "n_chars": 13475,
+      "reencode_matches": true,
+      "decoded_sha256": "de42fec4d988141b7d76892b19c62f447dd0e0c3a7eabc5fa7756bb786ccb7ca"
+    },
+    {
+      "position": 16097,
+      "doc_id": "11ceffbcc797275a",
+      "n_tokens": 2241,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 7846,
+      "n_chars": 7846,
+      "reencode_matches": true,
+      "decoded_sha256": "10cda25afd32f39e5e8d706fd30ada3422d923b85477970bfdad70976ff07e85"
+    },
+    {
+      "position": 17103,
+      "doc_id": "30da262ef3add936",
+      "n_tokens": 1052,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 4052,
+      "n_chars": 4052,
+      "reencode_matches": true,
+      "decoded_sha256": "30da262ef3add9360f8e11810c5f2f9ba1cb1520969b28d5ac5406ba7031bd92"
+    },
+    {
+      "position": 18109,
+      "doc_id": "5fc81fddf4b8aafc",
+      "n_tokens": 184,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 680,
+      "n_chars": 680,
+      "reencode_matches": true,
+      "decoded_sha256": "cfa0aa4606b26e76e1f430d4882f0bd9622f901d6b706f5b7416ae59a33b257e"
+    },
+    {
+      "position": 19115,
+      "doc_id": "476456a8fb667486",
+      "n_tokens": 870,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3853,
+      "n_chars": 3853,
+      "reencode_matches": true,
+      "decoded_sha256": "476456a8fb667486a4c8b7981a1fb3ee3762332a9a3c54368c6b50f3b8478bcf"
+    }
+  ],
+  "wall_seconds": 3.226
+}

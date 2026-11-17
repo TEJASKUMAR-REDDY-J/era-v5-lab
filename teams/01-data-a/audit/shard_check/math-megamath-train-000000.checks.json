@@ -1,0 +1,638 @@
+{
+  "shard_id": "math-megamath-train-000000",
+  "manifest": {
+    "schema_version": "shard-v1",
+    "dataset_version": "sample",
+    "shard_id": "math-megamath-train-000000",
+    "format": "brahmic_u32_v2+doc_index",
+    "token_dtype": "uint32",
+    "payload_uri": "math-megamath-train-000000.bin",
+    "payload_sha256": "ff5a213f47981243e42a31e3ffe6733e276181ef0e8cfb7c581f77bea6e22e57",
+    "payload_bytes": 135920540,
+    "index_uri": "math-megamath-train-000000.idx.npy",
+    "index_sha256": "1fbbfcfc8a8e19f160f5bbfc8b4902a017455421572232b3b55c0e6ed98fca8f",
+    "doc_count": 17232,
+    "token_count": 33979879,
+    "eos_token_id": 130822,
+    "tokenizer_sha256": "e6b93a93a60520d7b1af2e9242485f443b5596a1e116b8f8798d83bbad25a64b",
+    "pack_id": "math-megamath",
+    "language": "en",
+    "script": "Latn",
+    "domain": "math",
+    "capability_lane": "math",
+    "split": "train",
+    "inputs_sha256": "752f0c08643ec74337151a59ff29a07267de033a3fbaf099fb7b8b1f7b7bb71c",
+    "cleaning_pipeline_sha256": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589",
+    "decontam_set_sha256": "2826a3b883210c653979103c09ce1c79e40fc4f7034b54027f2836482370d22a",
+    "sample_metadata_uri": "math-megamath-train-000000.docs.parquet",
+    "sample_metadata_sha256": "7f11583f97a20c2904cb583a24981d04c4d4b002b3809e79447bd09bbff8e770",
+    "quality_report_uri": "math-megamath-train-000000.quality_report.json",
+    "quality_report_sha256": "538f893f47a2eb805fb27e7b11ba8d5890acd16d3359a254d00ec57b1eb6b33c",
+    "created_by": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+  },
+  "artifact_sha256": {
+    "math-megamath-train-000000.json": "ccdae49682b19c7f724620406911d02c157eb94b14463b9eb2463e27b0318214",
+    "math-megamath-train-000000.bin": "ff5a213f47981243e42a31e3ffe6733e276181ef0e8cfb7c581f77bea6e22e57",
+    "math-megamath-train-000000.idx.npy": "1fbbfcfc8a8e19f160f5bbfc8b4902a017455421572232b3b55c0e6ed98fca8f",
+    "math-megamath-train-000000.docs.parquet": "7f11583f97a20c2904cb583a24981d04c4d4b002b3809e79447bd09bbff8e770",
+    "math-megamath-train-000000.quality_report.json": "538f893f47a2eb805fb27e7b11ba8d5890acd16d3359a254d00ec57b1eb6b33c",
+    "cleaning_pipeline.json": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589"
+  },
+  "checks": [
+    {
+      "check": "manifest file sha256 (recorded)",
+      "status": "PASS",
+      "expected": "",
+      "observed": "ccdae49682b19c7f724620406911d02c157eb94b14463b9eb2463e27b0318214"
+    },
+    {
+      "check": "all template fields present",
+      "status": "PASS",
+      "expected": "none missing",
+      "observed": "none missing"
+    },
+    {
+      "check": "no fields outside the template",
+      "status": "PASS",
+      "expected": "none extra",
+      "observed": "none extra"
+    },
+    {
+      "check": "no empty or placeholder values",
+      "status": "PASS",
+      "expected": "none",
+      "observed": "none"
+    },
+    {
+      "check": "schema_version",
+      "status": "PASS",
+      "expected": "shard-v1",
+      "observed": "shard-v1"
+    },
+    {
+      "check": "format",
+      "status": "PASS",
+      "expected": "brahmic_u32_v2+doc_index",
+      "observed": "brahmic_u32_v2+doc_index"
+    },
+    {
+      "check": "token_dtype",
+      "status": "PASS",
+      "expected": "uint32",
+      "observed": "uint32"
+    },
+    {
+      "check": "eos_token_id",
+      "status": "PASS",
+      "expected": "130822",
+      "observed": "130822"
+    },
+    {
+      "check": "tokenizer_sha256 is p1536",
+      "status": "PASS",
+      "expected": "e6b93a93a60520d7",
+      "observed": "e6b93a93a60520d7"
+    },
+    {
+      "check": "decontam_set_sha256 is F2 v2",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "split is train or validation",
+      "status": "PASS",
+      "expected": "train|validation",
+      "observed": "train"
+    },
+    {
+      "check": "shard_id = <pack_id>-<split>-<6 digits>",
+      "status": "PASS",
+      "expected": "math-megamath-train-NNNNNN",
+      "observed": "math-megamath-train-000000"
+    },
+    {
+      "check": "created_by is a full git commit hash",
+      "status": "PASS",
+      "expected": "40 hex characters",
+      "observed": "0064f81d57ef"
+    },
+    {
+      "check": "payload_bytes = 1024 + 4 x token_count",
+      "status": "PASS",
+      "expected": "135920540",
+      "observed": "135920540"
+    },
+    {
+      "check": "payload_sha256 (math-megamath-train-000000.bin)",
+      "status": "PASS",
+      "expected": "ff5a213f47981243",
+      "observed": "ff5a213f47981243"
+    },
+    {
+      "check": "index_sha256 (math-megamath-train-000000.idx.npy)",
+      "status": "PASS",
+      "expected": "1fbbfcfc8a8e19f1",
+      "observed": "1fbbfcfc8a8e19f1"
+    },
+    {
+      "check": "sample_metadata_sha256 (math-megamath-train-000000.docs.parquet)",
+      "status": "PASS",
+      "expected": "7f11583f97a20c29",
+      "observed": "7f11583f97a20c29"
+    },
+    {
+      "check": "quality_report_sha256 (math-megamath-train-000000.quality_report.json)",
+      "status": "PASS",
+      "expected": "538f893f47a2eb80",
+      "observed": "538f893f47a2eb80"
+    },
+    {
+      "check": "cleaning_pipeline_sha256",
+      "status": "PASS",
+      "expected": "35611a83cfa6d6b5",
+      "observed": "35611a83cfa6d6b5"
+    },
+    {
+      "check": "cleaning_pipeline F2 set = manifest decontam set",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "cleaning_pipeline records a dedup version",
+      "status": "FAIL",
+      "expected": "a dedup version",
+      "observed": "None"
+    },
+    {
+      "check": "cleaning_pipeline clean.py = clean.py in this checkout",
+      "status": "PASS",
+      "expected": "22d818c72c9f30bf",
+      "observed": "22d818c72c9f30bf"
+    },
+    {
+      "check": "index dtype int64",
+      "status": "PASS",
+      "expected": "int64",
+      "observed": "int64"
+    },
+    {
+      "check": "index length = doc_count + 1",
+      "status": "PASS",
+      "expected": "17233",
+      "observed": "17233"
+    },
+    {
+      "check": "index starts at 0",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "index ends at token_count",
+      "status": "PASS",
+      "expected": "33979879",
+      "observed": "33979879"
+    },
+    {
+      "check": "every document has >= 2 tokens (text + EOS)",
+      "status": "PASS",
+      "expected": ">= 2",
+      "observed": "10"
+    },
+    {
+      "check": "document lengths sum to token_count",
+      "status": "PASS",
+      "expected": "33979879",
+      "observed": "33979879"
+    },
+    {
+      "check": "shard within 2^26 tokens, or one document",
+      "status": "PASS",
+      "expected": "<= 67108864",
+      "observed": "33979879"
+    },
+    {
+      "check": "quality report shard_id",
+      "status": "PASS",
+      "expected": "math-megamath-train-000000",
+      "observed": "math-megamath-train-000000"
+    },
+    {
+      "check": "quality report docs_in_shard = doc_count",
+      "status": "PASS",
+      "expected": "17232",
+      "observed": "17232"
+    },
+    {
+      "check": "rows_read = docs_in_shard + left out",
+      "status": "PASS",
+      "expected": "17555",
+      "observed": "17555"
+    },
+    {
+      "check": "left_out counts = left_out_docs lists",
+      "status": "PASS",
+      "expected": "{'secret': 323, 'empty': 0, 'special': 0, 'roundtrip': 0}",
+      "observed": "{'secret': 323, 'empty': 0, 'special': 0, 'roundtrip': 0}"
+    },
+    {
+      "check": ".bin size = payload_bytes",
+      "status": "PASS",
+      "expected": "135920540",
+      "observed": "135920540"
+    },
+    {
+      "check": ".bin header magic",
+      "status": "PASS",
+      "expected": "20261025",
+      "observed": "20261025"
+    },
+    {
+      "check": ".bin header version",
+      "status": "PASS",
+      "expected": "2",
+      "observed": "2"
+    },
+    {
+      "check": ".bin header token count",
+      "status": "PASS",
+      "expected": "33979879",
+      "observed": "33979879"
+    },
+    {
+      "check": ".bin header rest is zeros",
+      "status": "PASS",
+      "expected": "zeros",
+      "observed": "zeros"
+    },
+    {
+      "check": "tokens after the header = token_count",
+      "status": "PASS",
+      "expected": "33979879",
+      "observed": "33979879"
+    },
+    {
+      "check": "every id < vocab 131072",
+      "status": "PASS",
+      "expected": "< 131072",
+      "observed": "130822"
+    },
+    {
+      "check": "every document ends with EOS",
+      "status": "PASS",
+      "expected": "17232",
+      "observed": "17232"
+    },
+    {
+      "check": "no special id >= 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "none of the 9 special ids below 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "docs.parquet rows = doc_count",
+      "status": "PASS",
+      "expected": "17232",
+      "observed": "17232"
+    },
+    {
+      "check": "docs.parquet doc_ids unique",
+      "status": "PASS",
+      "expected": "17232",
+      "observed": "17232"
+    },
+    {
+      "check": "docs.parquet n_tokens = index lengths",
+      "status": "PASS",
+      "expected": "equal",
+      "observed": "equal"
+    },
+    {
+      "check": "assigned pack and sample/train scope",
+      "status": "PASS",
+      "expected": "math-megamath, train, sample",
+      "observed": "math-megamath, train, sample"
+    },
+    {
+      "check": "metadata required columns",
+      "status": "PASS",
+      "expected": "all six metadata columns",
+      "observed": "['doc_id', 'input_part', 'input_row', 'lang_label', 'n_chars', 'n_tokens']"
+    },
+    {
+      "check": "metadata source part belongs to assigned pack",
+      "status": "PASS",
+      "expected": "math-megamath",
+      "observed": "['math-megamath_part-00000_clean.parquet']"
+    },
+    {
+      "check": "metadata source rows ordered, unique and within rows_read",
+      "status": "PASS",
+      "expected": "strictly increasing in [0, rows_read)",
+      "observed": "0..17554, 17232 rows"
+    },
+    {
+      "check": "metadata source-row gaps equal excluded count",
+      "status": "PASS",
+      "expected": "323",
+      "observed": "323"
+    },
+    {
+      "check": "excluded IDs unique and absent from kept metadata",
+      "status": "PASS",
+      "expected": "unique, disjoint",
+      "observed": "323 excluded; intersection 0"
+    },
+    {
+      "check": "metadata character counts positive",
+      "status": "PASS",
+      "expected": "all > 0",
+      "observed": "36"
+    },
+    {
+      "check": "writer commit in audited main history",
+      "status": "PASS",
+      "expected": "ancestor of audited main",
+      "observed": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+    },
+    {
+      "check": "decode 20 documents: each ends with EOS 130822",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: no U+FFFD replacement characters",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "decode: re-encoding the decoded text gives the same IDs",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: decoded length equals metadata n_chars",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    }
+  ],
+  "counts": {
+    "PASS": 57,
+    "FAIL": 1,
+    "NOT CHECKED": 0
+  },
+  "quality_counts": {
+    "rows_read": 17555,
+    "docs_in_shard": 17232,
+    "left_out": {
+      "secret": 323,
+      "empty": 0,
+      "special": 0,
+      "roundtrip": 0
+    }
+  },
+  "input_parts": [
+    "math-megamath_part-00000_clean.parquet"
+  ],
+  "input_rows": [
+    0,
+    17554
+  ],
+  "min_document_tokens": 10,
+  "max_document_tokens": 518496,
+  "decoded_documents": [
+    {
+      "position": 0,
+      "doc_id": "39cc13dad69a1319",
+      "n_tokens": 727,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1700,
+      "n_chars": 1700,
+      "reencode_matches": true,
+      "decoded_sha256": "39cc13dad69a1319f4351d56d7d0ccf4d0c59a2ce65a32707b7d5911590f8732"
+    },
+    {
+      "position": 907,
+      "doc_id": "f1f592184965e0dd",
+      "n_tokens": 679,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2682,
+      "n_chars": 2682,
+      "reencode_matches": true,
+      "decoded_sha256": "f1f592184965e0dd97f51057233d0f5cb46a050bde79b77c89802bba5434f942"
+    },
+    {
+      "position": 1814,
+      "doc_id": "003a9c2588a374b5",
+      "n_tokens": 1253,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 6271,
+      "n_chars": 6271,
+      "reencode_matches": true,
+      "decoded_sha256": "003a9c2588a374b5a2e57910056488abfeebef58231779189880ebceb570fc6a"
+    },
+    {
+      "position": 2721,
+      "doc_id": "88c298aa9c053745",
+      "n_tokens": 273,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1231,
+      "n_chars": 1231,
+      "reencode_matches": true,
+      "decoded_sha256": "88c298aa9c053745da810aa63d62d8d796ae2611f363cf7365e3c8938142a3b1"
+    },
+    {
+      "position": 3628,
+      "doc_id": "5942a9ea3af140be",
+      "n_tokens": 719,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2998,
+      "n_chars": 2998,
+      "reencode_matches": true,
+      "decoded_sha256": "5942a9ea3af140beec8d2c49b15d6719903a89d8596a7b1ea4074eb5c7b1e1b4"
+    },
+    {
+      "position": 4534,
+      "doc_id": "d456d0d07342d36d",
+      "n_tokens": 161,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 626,
+      "n_chars": 626,
+      "reencode_matches": true,
+      "decoded_sha256": "d456d0d07342d36d4e5dab507ec3b1736d72006d5f5575f0d769a6d7ead6f8cd"
+    },
+    {
+      "position": 5441,
+      "doc_id": "59e3c4918ecaeed2",
+      "n_tokens": 1768,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 7688,
+      "n_chars": 7688,
+      "reencode_matches": true,
+      "decoded_sha256": "59e3c4918ecaeed2bf83e462814e8ef8d3793b606ca74b8e709a02d7a33fe7d4"
+    },
+    {
+      "position": 6348,
+      "doc_id": "c51529d0495b83f1",
+      "n_tokens": 295,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1114,
+      "n_chars": 1114,
+      "reencode_matches": true,
+      "decoded_sha256": "c51529d0495b83f199a1e07578e359c110d792965e4aaed5eb06aa16db8c76ad"
+    },
+    {
+      "position": 7255,
+      "doc_id": "ecaebd53d64c8a6e",
+      "n_tokens": 1838,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 6775,
+      "n_chars": 6775,
+      "reencode_matches": true,
+      "decoded_sha256": "ecaebd53d64c8a6e4284117cb7f3b87ee100c6dea8d1697f1b14bbcbad44c0af"
+    },
+    {
+      "position": 8162,
+      "doc_id": "7a4ca47ebfd419bd",
+      "n_tokens": 92033,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 294148,
+      "n_chars": 294148,
+      "reencode_matches": true,
+      "decoded_sha256": "7a4ca47ebfd419bdcf2130f9a898aaa60cbdfe9a6f8f4276682a4f7a2d71ff21"
+    },
+    {
+      "position": 9069,
+      "doc_id": "9df9e65aaa71cafa",
+      "n_tokens": 6962,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 21126,
+      "n_chars": 21126,
+      "reencode_matches": true,
+      "decoded_sha256": "9df9e65aaa71cafa4ff12b39e547691a3ebe81cd946409438c7d16c807313a08"
+    },
+    {
+      "position": 9976,
+      "doc_id": "625a76381ccc5782",
+      "n_tokens": 300,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1117,
+      "n_chars": 1117,
+      "reencode_matches": true,
+      "decoded_sha256": "625a76381ccc5782f5229b942b7411a11cda3e20adcad868d6a7601f734e70c3"
+    },
+    {
+      "position": 10883,
+      "doc_id": "4d3640f0a3e803b1",
+      "n_tokens": 185,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 707,
+      "n_chars": 707,
+      "reencode_matches": true,
+      "decoded_sha256": "4d3640f0a3e803b1808c5281e2fb3aac8ffbedffb7d18041a2a328cbff755546"
+    },
+    {
+      "position": 11790,
+      "doc_id": "963541384e79ccc6",
+      "n_tokens": 1029,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 4517,
+      "n_chars": 4517,
+      "reencode_matches": true,
+      "decoded_sha256": "963541384e79ccc6abdc74e6755ec2c9ffe174c9528441bd47bbbbda84e0eb1c"
+    },
+    {
+      "position": 12697,
+      "doc_id": "26756abe33ee5fcc",
+      "n_tokens": 675,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2793,
+      "n_chars": 2793,
+      "reencode_matches": true,
+      "decoded_sha256": "26756abe33ee5fcc602d15a0d9c87182f820588419605538121be1fb569c7818"
+    },
+    {
+      "position": 13603,
+      "doc_id": "6cdc9dc382cc33a1",
+      "n_tokens": 6503,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 30475,
+      "n_chars": 30475,
+      "reencode_matches": true,
+      "decoded_sha256": "ca449ba9aeb3a4dc28b0d36b130a20c9f9e56ac8c4c2f7ac702033e1e86a777c"
+    },
+    {
+      "position": 14510,
+      "doc_id": "42c936ff9bf3f690",
+      "n_tokens": 241,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 762,
+      "n_chars": 762,
+      "reencode_matches": true,
+      "decoded_sha256": "42c936ff9bf3f690d1e5e1a75c70914dbe0d732db5ff7bf79cd5633324a60065"
+    },
+    {
+      "position": 15417,
+      "doc_id": "9b4764e479cf82eb",
+      "n_tokens": 218,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 921,
+      "n_chars": 921,
+      "reencode_matches": true,
+      "decoded_sha256": "9b4764e479cf82eb822a44e01cd0e9429a3e82ec38083d25f705088fc4e159a5"
+    },
+    {
+      "position": 16324,
+      "doc_id": "ef02b4bea5beb1e6",
+      "n_tokens": 686,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1508,
+      "n_chars": 1508,
+      "reencode_matches": true,
+      "decoded_sha256": "ef02b4bea5beb1e609c826f7025a1d83d696bd9f47e0525a3ec74db16e2f8e63"
+    },
+    {
+      "position": 17231,
+      "doc_id": "9390180b8dc6723b",
+      "n_tokens": 2840,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 12762,
+      "n_chars": 12762,
+      "reencode_matches": true,
+      "decoded_sha256": "9390180b8dc6723b7c3a188a10121ce1579cef88c74470b937c689d1b71f30a9"
+    }
+  ],
+  "wall_seconds": 4.4
+}

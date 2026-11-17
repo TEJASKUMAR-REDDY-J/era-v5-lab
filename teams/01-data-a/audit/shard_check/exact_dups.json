@@ -1,0 +1,17 @@
+{
+ "docs": 1200725,
+ "unique": 1200714,
+ "dup_groups": 10,
+ "extra_copies": 11,
+ "extra_pct": 0.001,
+ "groups_within_one_shard": 9,
+ "groups_across_packs": 0,
+ "largest_group": 3,
+ "extra_by_pack": {
+  "ind-sa-fw2": 4,
+  "code-cpp": 2,
+  "code-java": 2,
+  "en-nemotroncc": 2,
+  "code-rust": 1
+ }
+}

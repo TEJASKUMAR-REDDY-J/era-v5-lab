@@ -1,0 +1,638 @@
+{
+  "shard_id": "math-finemath-train-000000",
+  "manifest": {
+    "schema_version": "shard-v1",
+    "dataset_version": "sample",
+    "shard_id": "math-finemath-train-000000",
+    "format": "brahmic_u32_v2+doc_index",
+    "token_dtype": "uint32",
+    "payload_uri": "math-finemath-train-000000.bin",
+    "payload_sha256": "6e84f270a53bcdd225bb2a6cd6cd053b5e8e74c3cdf93d3aa80a2606cc9597da",
+    "payload_bytes": 154329064,
+    "index_uri": "math-finemath-train-000000.idx.npy",
+    "index_sha256": "71e7583ba412e00d3aecc776333777df3a69428e5a9c0acfc4f0e572c9428e77",
+    "doc_count": 28088,
+    "token_count": 38582010,
+    "eos_token_id": 130822,
+    "tokenizer_sha256": "e6b93a93a60520d7b1af2e9242485f443b5596a1e116b8f8798d83bbad25a64b",
+    "pack_id": "math-finemath",
+    "language": "en",
+    "script": "Latn",
+    "domain": "math",
+    "capability_lane": "math",
+    "split": "train",
+    "inputs_sha256": "3fda381c9862bbd8790d0cc56aaec45f32c3051e63e49996c7f78171acaf6344",
+    "cleaning_pipeline_sha256": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589",
+    "decontam_set_sha256": "2826a3b883210c653979103c09ce1c79e40fc4f7034b54027f2836482370d22a",
+    "sample_metadata_uri": "math-finemath-train-000000.docs.parquet",
+    "sample_metadata_sha256": "49bca3b3a8eb9955b1bd821f7d2590d020da2ee8705c42f853fdf5ed3aa8e891",
+    "quality_report_uri": "math-finemath-train-000000.quality_report.json",
+    "quality_report_sha256": "7608571c0930abc22fa3232e22cefcc6abfe536840b0ce488bb846296134ce08",
+    "created_by": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+  },
+  "artifact_sha256": {
+    "math-finemath-train-000000.json": "2e18384cbeb96254f99ac302f8f53c1a6dddd6bdd68d75fdd754808f7ac5e206",
+    "math-finemath-train-000000.bin": "6e84f270a53bcdd225bb2a6cd6cd053b5e8e74c3cdf93d3aa80a2606cc9597da",
+    "math-finemath-train-000000.idx.npy": "71e7583ba412e00d3aecc776333777df3a69428e5a9c0acfc4f0e572c9428e77",
+    "math-finemath-train-000000.docs.parquet": "49bca3b3a8eb9955b1bd821f7d2590d020da2ee8705c42f853fdf5ed3aa8e891",
+    "math-finemath-train-000000.quality_report.json": "7608571c0930abc22fa3232e22cefcc6abfe536840b0ce488bb846296134ce08",
+    "cleaning_pipeline.json": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589"
+  },
+  "checks": [
+    {
+      "check": "manifest file sha256 (recorded)",
+      "status": "PASS",
+      "expected": "",
+      "observed": "2e18384cbeb96254f99ac302f8f53c1a6dddd6bdd68d75fdd754808f7ac5e206"
+    },
+    {
+      "check": "all template fields present",
+      "status": "PASS",
+      "expected": "none missing",
+      "observed": "none missing"
+    },
+    {
+      "check": "no fields outside the template",
+      "status": "PASS",
+      "expected": "none extra",
+      "observed": "none extra"
+    },
+    {
+      "check": "no empty or placeholder values",
+      "status": "PASS",
+      "expected": "none",
+      "observed": "none"
+    },
+    {
+      "check": "schema_version",
+      "status": "PASS",
+      "expected": "shard-v1",
+      "observed": "shard-v1"
+    },
+    {
+      "check": "format",
+      "status": "PASS",
+      "expected": "brahmic_u32_v2+doc_index",
+      "observed": "brahmic_u32_v2+doc_index"
+    },
+    {
+      "check": "token_dtype",
+      "status": "PASS",
+      "expected": "uint32",
+      "observed": "uint32"
+    },
+    {
+      "check": "eos_token_id",
+      "status": "PASS",
+      "expected": "130822",
+      "observed": "130822"
+    },
+    {
+      "check": "tokenizer_sha256 is p1536",
+      "status": "PASS",
+      "expected": "e6b93a93a60520d7",
+      "observed": "e6b93a93a60520d7"
+    },
+    {
+      "check": "decontam_set_sha256 is F2 v2",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "split is train or validation",
+      "status": "PASS",
+      "expected": "train|validation",
+      "observed": "train"
+    },
+    {
+      "check": "shard_id = <pack_id>-<split>-<6 digits>",
+      "status": "PASS",
+      "expected": "math-finemath-train-NNNNNN",
+      "observed": "math-finemath-train-000000"
+    },
+    {
+      "check": "created_by is a full git commit hash",
+      "status": "PASS",
+      "expected": "40 hex characters",
+      "observed": "0064f81d57ef"
+    },
+    {
+      "check": "payload_bytes = 1024 + 4 x token_count",
+      "status": "PASS",
+      "expected": "154329064",
+      "observed": "154329064"
+    },
+    {
+      "check": "payload_sha256 (math-finemath-train-000000.bin)",
+      "status": "PASS",
+      "expected": "6e84f270a53bcdd2",
+      "observed": "6e84f270a53bcdd2"
+    },
+    {
+      "check": "index_sha256 (math-finemath-train-000000.idx.npy)",
+      "status": "PASS",
+      "expected": "71e7583ba412e00d",
+      "observed": "71e7583ba412e00d"
+    },
+    {
+      "check": "sample_metadata_sha256 (math-finemath-train-000000.docs.parquet)",
+      "status": "PASS",
+      "expected": "49bca3b3a8eb9955",
+      "observed": "49bca3b3a8eb9955"
+    },
+    {
+      "check": "quality_report_sha256 (math-finemath-train-000000.quality_report.json)",
+      "status": "PASS",
+      "expected": "7608571c0930abc2",
+      "observed": "7608571c0930abc2"
+    },
+    {
+      "check": "cleaning_pipeline_sha256",
+      "status": "PASS",
+      "expected": "35611a83cfa6d6b5",
+      "observed": "35611a83cfa6d6b5"
+    },
+    {
+      "check": "cleaning_pipeline F2 set = manifest decontam set",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "cleaning_pipeline records a dedup version",
+      "status": "FAIL",
+      "expected": "a dedup version",
+      "observed": "None"
+    },
+    {
+      "check": "cleaning_pipeline clean.py = clean.py in this checkout",
+      "status": "PASS",
+      "expected": "22d818c72c9f30bf",
+      "observed": "22d818c72c9f30bf"
+    },
+    {
+      "check": "index dtype int64",
+      "status": "PASS",
+      "expected": "int64",
+      "observed": "int64"
+    },
+    {
+      "check": "index length = doc_count + 1",
+      "status": "PASS",
+      "expected": "28089",
+      "observed": "28089"
+    },
+    {
+      "check": "index starts at 0",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "index ends at token_count",
+      "status": "PASS",
+      "expected": "38582010",
+      "observed": "38582010"
+    },
+    {
+      "check": "every document has >= 2 tokens (text + EOS)",
+      "status": "PASS",
+      "expected": ">= 2",
+      "observed": "42"
+    },
+    {
+      "check": "document lengths sum to token_count",
+      "status": "PASS",
+      "expected": "38582010",
+      "observed": "38582010"
+    },
+    {
+      "check": "shard within 2^26 tokens, or one document",
+      "status": "PASS",
+      "expected": "<= 67108864",
+      "observed": "38582010"
+    },
+    {
+      "check": "quality report shard_id",
+      "status": "PASS",
+      "expected": "math-finemath-train-000000",
+      "observed": "math-finemath-train-000000"
+    },
+    {
+      "check": "quality report docs_in_shard = doc_count",
+      "status": "PASS",
+      "expected": "28088",
+      "observed": "28088"
+    },
+    {
+      "check": "rows_read = docs_in_shard + left out",
+      "status": "PASS",
+      "expected": "28262",
+      "observed": "28262"
+    },
+    {
+      "check": "left_out counts = left_out_docs lists",
+      "status": "PASS",
+      "expected": "{'secret': 174, 'empty': 0, 'special': 0, 'roundtrip': 0}",
+      "observed": "{'secret': 174, 'empty': 0, 'special': 0, 'roundtrip': 0}"
+    },
+    {
+      "check": ".bin size = payload_bytes",
+      "status": "PASS",
+      "expected": "154329064",
+      "observed": "154329064"
+    },
+    {
+      "check": ".bin header magic",
+      "status": "PASS",
+      "expected": "20261025",
+      "observed": "20261025"
+    },
+    {
+      "check": ".bin header version",
+      "status": "PASS",
+      "expected": "2",
+      "observed": "2"
+    },
+    {
+      "check": ".bin header token count",
+      "status": "PASS",
+      "expected": "38582010",
+      "observed": "38582010"
+    },
+    {
+      "check": ".bin header rest is zeros",
+      "status": "PASS",
+      "expected": "zeros",
+      "observed": "zeros"
+    },
+    {
+      "check": "tokens after the header = token_count",
+      "status": "PASS",
+      "expected": "38582010",
+      "observed": "38582010"
+    },
+    {
+      "check": "every id < vocab 131072",
+      "status": "PASS",
+      "expected": "< 131072",
+      "observed": "130822"
+    },
+    {
+      "check": "every document ends with EOS",
+      "status": "PASS",
+      "expected": "28088",
+      "observed": "28088"
+    },
+    {
+      "check": "no special id >= 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "none of the 9 special ids below 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "docs.parquet rows = doc_count",
+      "status": "PASS",
+      "expected": "28088",
+      "observed": "28088"
+    },
+    {
+      "check": "docs.parquet doc_ids unique",
+      "status": "PASS",
+      "expected": "28088",
+      "observed": "28088"
+    },
+    {
+      "check": "docs.parquet n_tokens = index lengths",
+      "status": "PASS",
+      "expected": "equal",
+      "observed": "equal"
+    },
+    {
+      "check": "assigned pack and sample/train scope",
+      "status": "PASS",
+      "expected": "math-finemath, train, sample",
+      "observed": "math-finemath, train, sample"
+    },
+    {
+      "check": "metadata required columns",
+      "status": "PASS",
+      "expected": "all six metadata columns",
+      "observed": "['doc_id', 'input_part', 'input_row', 'lang_label', 'n_chars', 'n_tokens']"
+    },
+    {
+      "check": "metadata source part belongs to assigned pack",
+      "status": "PASS",
+      "expected": "math-finemath",
+      "observed": "['math-finemath_part-00000_clean.parquet']"
+    },
+    {
+      "check": "metadata source rows ordered, unique and within rows_read",
+      "status": "PASS",
+      "expected": "strictly increasing in [0, rows_read)",
+      "observed": "0..28261, 28088 rows"
+    },
+    {
+      "check": "metadata source-row gaps equal excluded count",
+      "status": "PASS",
+      "expected": "174",
+      "observed": "174"
+    },
+    {
+      "check": "excluded IDs unique and absent from kept metadata",
+      "status": "PASS",
+      "expected": "unique, disjoint",
+      "observed": "174 excluded; intersection 0"
+    },
+    {
+      "check": "metadata character counts positive",
+      "status": "PASS",
+      "expected": "all > 0",
+      "observed": "83"
+    },
+    {
+      "check": "writer commit in audited main history",
+      "status": "PASS",
+      "expected": "ancestor of audited main",
+      "observed": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+    },
+    {
+      "check": "decode 20 documents: each ends with EOS 130822",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: no U+FFFD replacement characters",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "decode: re-encoding the decoded text gives the same IDs",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: decoded length equals metadata n_chars",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    }
+  ],
+  "counts": {
+    "PASS": 57,
+    "FAIL": 1,
+    "NOT CHECKED": 0
+  },
+  "quality_counts": {
+    "rows_read": 28262,
+    "docs_in_shard": 28088,
+    "left_out": {
+      "secret": 174,
+      "empty": 0,
+      "special": 0,
+      "roundtrip": 0
+    }
+  },
+  "input_parts": [
+    "math-finemath_part-00000_clean.parquet"
+  ],
+  "input_rows": [
+    0,
+    28261
+  ],
+  "min_document_tokens": 42,
+  "max_document_tokens": 277223,
+  "decoded_documents": [
+    {
+      "position": 0,
+      "doc_id": "b6e666857e40f35f",
+      "n_tokens": 48,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 120,
+      "n_chars": 120,
+      "reencode_matches": true,
+      "decoded_sha256": "b6e666857e40f35fe5cede69b2a9aaf6f43bbbfee79d7a00960708c5cfe2d4ea"
+    },
+    {
+      "position": 1478,
+      "doc_id": "e70fef27711277fe",
+      "n_tokens": 646,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2423,
+      "n_chars": 2423,
+      "reencode_matches": true,
+      "decoded_sha256": "e70fef27711277fe5887c9e86a081109c99129d2bfb55d473cd6c66417315feb"
+    },
+    {
+      "position": 2957,
+      "doc_id": "c5d7f9ebdd205067",
+      "n_tokens": 572,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2617,
+      "n_chars": 2617,
+      "reencode_matches": true,
+      "decoded_sha256": "c5d7f9ebdd205067fd3bfa844e8640a209b60d943e3da01196f52da16d82fceb"
+    },
+    {
+      "position": 4435,
+      "doc_id": "ccd57c2baaa76d78",
+      "n_tokens": 590,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1761,
+      "n_chars": 1761,
+      "reencode_matches": true,
+      "decoded_sha256": "ccd57c2baaa76d787bb8583f7ce3baca6f4630d1f6575ebbc6dc3b74ec38573b"
+    },
+    {
+      "position": 5913,
+      "doc_id": "840f3c7dd9baabe8",
+      "n_tokens": 556,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1458,
+      "n_chars": 1458,
+      "reencode_matches": true,
+      "decoded_sha256": "840f3c7dd9baabe83e55a29e31fc1a7b92960c634d9e34f5bffe0f54297707fe"
+    },
+    {
+      "position": 7391,
+      "doc_id": "5712e6cc2c38e446",
+      "n_tokens": 871,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 4085,
+      "n_chars": 4085,
+      "reencode_matches": true,
+      "decoded_sha256": "5712e6cc2c38e446cccbc61e9893554ab8c8f40d333b791e76142d4547628940"
+    },
+    {
+      "position": 8870,
+      "doc_id": "f55ac52e1e53ec48",
+      "n_tokens": 458,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1945,
+      "n_chars": 1945,
+      "reencode_matches": true,
+      "decoded_sha256": "f55ac52e1e53ec4879b1d7c34487b0815d36043874713f01ca43238cb4b09f13"
+    },
+    {
+      "position": 10348,
+      "doc_id": "87d49a727ef05785",
+      "n_tokens": 503,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1542,
+      "n_chars": 1542,
+      "reencode_matches": true,
+      "decoded_sha256": "87d49a727ef05785746304aebece975dab6373c26de352aa09de2c504d25ce30"
+    },
+    {
+      "position": 11826,
+      "doc_id": "a8968482b5582ead",
+      "n_tokens": 469,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1525,
+      "n_chars": 1525,
+      "reencode_matches": true,
+      "decoded_sha256": "a8968482b5582eadec8381d6f059f7907a90cd5bcd24467b146c3186994e99ca"
+    },
+    {
+      "position": 13304,
+      "doc_id": "f0a04650eea822a9",
+      "n_tokens": 2729,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 9934,
+      "n_chars": 9934,
+      "reencode_matches": true,
+      "decoded_sha256": "f0a04650eea822a9fc44113343f21bccd5afc404568640097e6e2ab1702a8b9f"
+    },
+    {
+      "position": 14783,
+      "doc_id": "a9ab534a93e21778",
+      "n_tokens": 256,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 834,
+      "n_chars": 834,
+      "reencode_matches": true,
+      "decoded_sha256": "a9ab534a93e217785d6632f5e0a162f2323f8848e4862b68ede18d574061808f"
+    },
+    {
+      "position": 16261,
+      "doc_id": "9a62ff2694b5a6d0",
+      "n_tokens": 172,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 598,
+      "n_chars": 598,
+      "reencode_matches": true,
+      "decoded_sha256": "9a62ff2694b5a6d0c79d815689c0da72028574bed9404041555045f2d66ba3c8"
+    },
+    {
+      "position": 17739,
+      "doc_id": "f31f64e570ba9c2e",
+      "n_tokens": 502,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2071,
+      "n_chars": 2071,
+      "reencode_matches": true,
+      "decoded_sha256": "f31f64e570ba9c2ee8561297e36793740443622121c23fd020d69c963abd11c8"
+    },
+    {
+      "position": 19217,
+      "doc_id": "27c8e68de2eff83c",
+      "n_tokens": 1198,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3463,
+      "n_chars": 3463,
+      "reencode_matches": true,
+      "decoded_sha256": "27c8e68de2eff83c0c7ab09c1a44ecad1b92e06e07936596691b95e1e768c534"
+    },
+    {
+      "position": 20696,
+      "doc_id": "e5d7d330890b15bd",
+      "n_tokens": 759,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2762,
+      "n_chars": 2762,
+      "reencode_matches": true,
+      "decoded_sha256": "e5d7d330890b15bdbbb46dc422086a5b3f43cc7239476fa4938d590e3da4aada"
+    },
+    {
+      "position": 22174,
+      "doc_id": "b7c2990e19ac0716",
+      "n_tokens": 1012,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3625,
+      "n_chars": 3625,
+      "reencode_matches": true,
+      "decoded_sha256": "0d1572c128c906c74993007a18d63638fb9c257f4ede670654abc2d6bc61cefa"
+    },
+    {
+      "position": 23652,
+      "doc_id": "cdc867cdf30fd660",
+      "n_tokens": 417,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1513,
+      "n_chars": 1513,
+      "reencode_matches": true,
+      "decoded_sha256": "cdc867cdf30fd6602ac8ca15cadc811ac23f05dcb1f00b598c2e543876a11aab"
+    },
+    {
+      "position": 25130,
+      "doc_id": "c0749c13bba6c725",
+      "n_tokens": 329,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 868,
+      "n_chars": 868,
+      "reencode_matches": true,
+      "decoded_sha256": "c0749c13bba6c7255c370da2d982baeb59a8ce42e34eed7de4d0e0f8522413b8"
+    },
+    {
+      "position": 26609,
+      "doc_id": "0010fb11906fd13b",
+      "n_tokens": 413,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1126,
+      "n_chars": 1126,
+      "reencode_matches": true,
+      "decoded_sha256": "0010fb11906fd13bace765f16bff6fce2d1904372a363a1d7b1eb098e5650888"
+    },
+    {
+      "position": 28087,
+      "doc_id": "af17b6498a753e35",
+      "n_tokens": 410,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1607,
+      "n_chars": 1607,
+      "reencode_matches": true,
+      "decoded_sha256": "7cc1f8bc067d05b4ad36ba0c083683fd7a1eb8b56679bbfa6d711c49845e6dd4"
+    }
+  ],
+  "wall_seconds": 3.327
+}

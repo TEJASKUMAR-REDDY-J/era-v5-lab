@@ -1,0 +1,638 @@
+{
+  "shard_id": "en-nemotroncc-train-000000",
+  "manifest": {
+    "schema_version": "shard-v1",
+    "dataset_version": "sample",
+    "shard_id": "en-nemotroncc-train-000000",
+    "format": "brahmic_u32_v2+doc_index",
+    "token_dtype": "uint32",
+    "payload_uri": "en-nemotroncc-train-000000.bin",
+    "payload_sha256": "3b64c48e320d38c58ae3e8114cdb26fabb71f387131ddebd5453184128ae2ce0",
+    "payload_bytes": 201373200,
+    "index_uri": "en-nemotroncc-train-000000.idx.npy",
+    "index_sha256": "64bfbe0d61a72c6c9f91afb7c80a08145cb58b2e64c168c8a32d94da24cc664e",
+    "doc_count": 65284,
+    "token_count": 50343044,
+    "eos_token_id": 130822,
+    "tokenizer_sha256": "e6b93a93a60520d7b1af2e9242485f443b5596a1e116b8f8798d83bbad25a64b",
+    "pack_id": "en-nemotroncc",
+    "language": "en",
+    "script": "Latn",
+    "domain": "english",
+    "capability_lane": "general_language",
+    "split": "train",
+    "inputs_sha256": "51e92318713fbdf846317cc74cba23db7136185c72aa737eb162fed449f69bbf",
+    "cleaning_pipeline_sha256": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589",
+    "decontam_set_sha256": "2826a3b883210c653979103c09ce1c79e40fc4f7034b54027f2836482370d22a",
+    "sample_metadata_uri": "en-nemotroncc-train-000000.docs.parquet",
+    "sample_metadata_sha256": "e73818ab8dad470e7a87ce570e2dc23efd79aa095aee25131c59359e4f0e4d75",
+    "quality_report_uri": "en-nemotroncc-train-000000.quality_report.json",
+    "quality_report_sha256": "48dc21a62f5fe77fb82d272b7b076809b0df540a3f2aef17caafb32f8ade72db",
+    "created_by": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+  },
+  "artifact_sha256": {
+    "en-nemotroncc-train-000000.json": "9b8ac78faa958bb36e117489d17615a5e6a58e532654ba8cbf965b9d6146dffb",
+    "en-nemotroncc-train-000000.bin": "3b64c48e320d38c58ae3e8114cdb26fabb71f387131ddebd5453184128ae2ce0",
+    "en-nemotroncc-train-000000.idx.npy": "64bfbe0d61a72c6c9f91afb7c80a08145cb58b2e64c168c8a32d94da24cc664e",
+    "en-nemotroncc-train-000000.docs.parquet": "e73818ab8dad470e7a87ce570e2dc23efd79aa095aee25131c59359e4f0e4d75",
+    "en-nemotroncc-train-000000.quality_report.json": "48dc21a62f5fe77fb82d272b7b076809b0df540a3f2aef17caafb32f8ade72db",
+    "cleaning_pipeline.json": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589"
+  },
+  "checks": [
+    {
+      "check": "manifest file sha256 (recorded)",
+      "status": "PASS",
+      "expected": "",
+      "observed": "9b8ac78faa958bb36e117489d17615a5e6a58e532654ba8cbf965b9d6146dffb"
+    },
+    {
+      "check": "all template fields present",
+      "status": "PASS",
+      "expected": "none missing",
+      "observed": "none missing"
+    },
+    {
+      "check": "no fields outside the template",
+      "status": "PASS",
+      "expected": "none extra",
+      "observed": "none extra"
+    },
+    {
+      "check": "no empty or placeholder values",
+      "status": "PASS",
+      "expected": "none",
+      "observed": "none"
+    },
+    {
+      "check": "schema_version",
+      "status": "PASS",
+      "expected": "shard-v1",
+      "observed": "shard-v1"
+    },
+    {
+      "check": "format",
+      "status": "PASS",
+      "expected": "brahmic_u32_v2+doc_index",
+      "observed": "brahmic_u32_v2+doc_index"
+    },
+    {
+      "check": "token_dtype",
+      "status": "PASS",
+      "expected": "uint32",
+      "observed": "uint32"
+    },
+    {
+      "check": "eos_token_id",
+      "status": "PASS",
+      "expected": "130822",
+      "observed": "130822"
+    },
+    {
+      "check": "tokenizer_sha256 is p1536",
+      "status": "PASS",
+      "expected": "e6b93a93a60520d7",
+      "observed": "e6b93a93a60520d7"
+    },
+    {
+      "check": "decontam_set_sha256 is F2 v2",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "split is train or validation",
+      "status": "PASS",
+      "expected": "train|validation",
+      "observed": "train"
+    },
+    {
+      "check": "shard_id = <pack_id>-<split>-<6 digits>",
+      "status": "PASS",
+      "expected": "en-nemotroncc-train-NNNNNN",
+      "observed": "en-nemotroncc-train-000000"
+    },
+    {
+      "check": "created_by is a full git commit hash",
+      "status": "PASS",
+      "expected": "40 hex characters",
+      "observed": "0064f81d57ef"
+    },
+    {
+      "check": "payload_bytes = 1024 + 4 x token_count",
+      "status": "PASS",
+      "expected": "201373200",
+      "observed": "201373200"
+    },
+    {
+      "check": "payload_sha256 (en-nemotroncc-train-000000.bin)",
+      "status": "PASS",
+      "expected": "3b64c48e320d38c5",
+      "observed": "3b64c48e320d38c5"
+    },
+    {
+      "check": "index_sha256 (en-nemotroncc-train-000000.idx.npy)",
+      "status": "PASS",
+      "expected": "64bfbe0d61a72c6c",
+      "observed": "64bfbe0d61a72c6c"
+    },
+    {
+      "check": "sample_metadata_sha256 (en-nemotroncc-train-000000.docs.parquet)",
+      "status": "PASS",
+      "expected": "e73818ab8dad470e",
+      "observed": "e73818ab8dad470e"
+    },
+    {
+      "check": "quality_report_sha256 (en-nemotroncc-train-000000.quality_report.json)",
+      "status": "PASS",
+      "expected": "48dc21a62f5fe77f",
+      "observed": "48dc21a62f5fe77f"
+    },
+    {
+      "check": "cleaning_pipeline_sha256",
+      "status": "PASS",
+      "expected": "35611a83cfa6d6b5",
+      "observed": "35611a83cfa6d6b5"
+    },
+    {
+      "check": "cleaning_pipeline F2 set = manifest decontam set",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "cleaning_pipeline records a dedup version",
+      "status": "FAIL",
+      "expected": "a dedup version",
+      "observed": "None"
+    },
+    {
+      "check": "cleaning_pipeline clean.py = clean.py in this checkout",
+      "status": "PASS",
+      "expected": "22d818c72c9f30bf",
+      "observed": "22d818c72c9f30bf"
+    },
+    {
+      "check": "index dtype int64",
+      "status": "PASS",
+      "expected": "int64",
+      "observed": "int64"
+    },
+    {
+      "check": "index length = doc_count + 1",
+      "status": "PASS",
+      "expected": "65285",
+      "observed": "65285"
+    },
+    {
+      "check": "index starts at 0",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "index ends at token_count",
+      "status": "PASS",
+      "expected": "50343044",
+      "observed": "50343044"
+    },
+    {
+      "check": "every document has >= 2 tokens (text + EOS)",
+      "status": "PASS",
+      "expected": ">= 2",
+      "observed": "2"
+    },
+    {
+      "check": "document lengths sum to token_count",
+      "status": "PASS",
+      "expected": "50343044",
+      "observed": "50343044"
+    },
+    {
+      "check": "shard within 2^26 tokens, or one document",
+      "status": "PASS",
+      "expected": "<= 67108864",
+      "observed": "50343044"
+    },
+    {
+      "check": "quality report shard_id",
+      "status": "PASS",
+      "expected": "en-nemotroncc-train-000000",
+      "observed": "en-nemotroncc-train-000000"
+    },
+    {
+      "check": "quality report docs_in_shard = doc_count",
+      "status": "PASS",
+      "expected": "65284",
+      "observed": "65284"
+    },
+    {
+      "check": "rows_read = docs_in_shard + left out",
+      "status": "PASS",
+      "expected": "66048",
+      "observed": "66048"
+    },
+    {
+      "check": "left_out counts = left_out_docs lists",
+      "status": "PASS",
+      "expected": "{'secret': 764, 'empty': 0, 'special': 0, 'roundtrip': 0}",
+      "observed": "{'secret': 764, 'empty': 0, 'special': 0, 'roundtrip': 0}"
+    },
+    {
+      "check": ".bin size = payload_bytes",
+      "status": "PASS",
+      "expected": "201373200",
+      "observed": "201373200"
+    },
+    {
+      "check": ".bin header magic",
+      "status": "PASS",
+      "expected": "20261025",
+      "observed": "20261025"
+    },
+    {
+      "check": ".bin header version",
+      "status": "PASS",
+      "expected": "2",
+      "observed": "2"
+    },
+    {
+      "check": ".bin header token count",
+      "status": "PASS",
+      "expected": "50343044",
+      "observed": "50343044"
+    },
+    {
+      "check": ".bin header rest is zeros",
+      "status": "PASS",
+      "expected": "zeros",
+      "observed": "zeros"
+    },
+    {
+      "check": "tokens after the header = token_count",
+      "status": "PASS",
+      "expected": "50343044",
+      "observed": "50343044"
+    },
+    {
+      "check": "every id < vocab 131072",
+      "status": "PASS",
+      "expected": "< 131072",
+      "observed": "130822"
+    },
+    {
+      "check": "every document ends with EOS",
+      "status": "PASS",
+      "expected": "65284",
+      "observed": "65284"
+    },
+    {
+      "check": "no special id >= 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "none of the 9 special ids below 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "docs.parquet rows = doc_count",
+      "status": "PASS",
+      "expected": "65284",
+      "observed": "65284"
+    },
+    {
+      "check": "docs.parquet doc_ids unique",
+      "status": "PASS",
+      "expected": "65284",
+      "observed": "65284"
+    },
+    {
+      "check": "docs.parquet n_tokens = index lengths",
+      "status": "PASS",
+      "expected": "equal",
+      "observed": "equal"
+    },
+    {
+      "check": "assigned pack and sample/train scope",
+      "status": "PASS",
+      "expected": "en-nemotroncc, train, sample",
+      "observed": "en-nemotroncc, train, sample"
+    },
+    {
+      "check": "metadata required columns",
+      "status": "PASS",
+      "expected": "all six metadata columns",
+      "observed": "['doc_id', 'input_part', 'input_row', 'lang_label', 'n_chars', 'n_tokens']"
+    },
+    {
+      "check": "metadata source part belongs to assigned pack",
+      "status": "PASS",
+      "expected": "en-nemotroncc",
+      "observed": "['en-nemotroncc_part-00000_clean.parquet']"
+    },
+    {
+      "check": "metadata source rows ordered, unique and within rows_read",
+      "status": "PASS",
+      "expected": "strictly increasing in [0, rows_read)",
+      "observed": "0..66047, 65284 rows"
+    },
+    {
+      "check": "metadata source-row gaps equal excluded count",
+      "status": "PASS",
+      "expected": "764",
+      "observed": "764"
+    },
+    {
+      "check": "excluded IDs unique and absent from kept metadata",
+      "status": "PASS",
+      "expected": "unique, disjoint",
+      "observed": "764 excluded; intersection 0"
+    },
+    {
+      "check": "metadata character counts positive",
+      "status": "PASS",
+      "expected": "all > 0",
+      "observed": "1"
+    },
+    {
+      "check": "writer commit in audited main history",
+      "status": "PASS",
+      "expected": "ancestor of audited main",
+      "observed": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+    },
+    {
+      "check": "decode 20 documents: each ends with EOS 130822",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: no U+FFFD replacement characters",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "decode: re-encoding the decoded text gives the same IDs",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: decoded length equals metadata n_chars",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    }
+  ],
+  "counts": {
+    "PASS": 57,
+    "FAIL": 1,
+    "NOT CHECKED": 0
+  },
+  "quality_counts": {
+    "rows_read": 66048,
+    "docs_in_shard": 65284,
+    "left_out": {
+      "secret": 764,
+      "empty": 0,
+      "special": 0,
+      "roundtrip": 0
+    }
+  },
+  "input_parts": [
+    "en-nemotroncc_part-00000_clean.parquet"
+  ],
+  "input_rows": [
+    0,
+    66047
+  ],
+  "min_document_tokens": 2,
+  "max_document_tokens": 131845,
+  "decoded_documents": [
+    {
+      "position": 0,
+      "doc_id": "28de470a6ce95506",
+      "n_tokens": 82,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 340,
+      "n_chars": 340,
+      "reencode_matches": true,
+      "decoded_sha256": "28de470a6ce95506a522d49ebe134d376bfc9e39b7546b97ab18ef91d74397b5"
+    },
+    {
+      "position": 3436,
+      "doc_id": "af287339531d4fd1",
+      "n_tokens": 309,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1190,
+      "n_chars": 1190,
+      "reencode_matches": true,
+      "decoded_sha256": "af287339531d4fd103715696f626021796f4fd1cc81274c88fb7a3fc3071c6ad"
+    },
+    {
+      "position": 6872,
+      "doc_id": "778faee76ebfead4",
+      "n_tokens": 119,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 576,
+      "n_chars": 576,
+      "reencode_matches": true,
+      "decoded_sha256": "778faee76ebfead41554589836ef2f56ea8a4075d634acf2893ff54490eb7ab4"
+    },
+    {
+      "position": 10308,
+      "doc_id": "25ee6ef68b6e3b06",
+      "n_tokens": 502,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2409,
+      "n_chars": 2409,
+      "reencode_matches": true,
+      "decoded_sha256": "25ee6ef68b6e3b06e8f72b3309c8d2d9a13ce4221a6355c408f7724ea4440d1a"
+    },
+    {
+      "position": 13744,
+      "doc_id": "758e2a1579f11ae7",
+      "n_tokens": 290,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1620,
+      "n_chars": 1620,
+      "reencode_matches": true,
+      "decoded_sha256": "758e2a1579f11ae70aa9f4899973ba76866d353f0a213c991bb162deb71a1ac1"
+    },
+    {
+      "position": 17180,
+      "doc_id": "9e3863c909a0770b",
+      "n_tokens": 749,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3422,
+      "n_chars": 3422,
+      "reencode_matches": true,
+      "decoded_sha256": "9e3863c909a0770b4881a60ef366c05962b3ac194ad33fd4f655311e2f329759"
+    },
+    {
+      "position": 20616,
+      "doc_id": "71b911d40ab25b12",
+      "n_tokens": 2104,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 10185,
+      "n_chars": 10185,
+      "reencode_matches": true,
+      "decoded_sha256": "71b911d40ab25b1295ed34584e478fd3223e26ce464cf3cc267ccfef80f5f3fc"
+    },
+    {
+      "position": 24052,
+      "doc_id": "1c281aca6e9c2d7f",
+      "n_tokens": 1305,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 6586,
+      "n_chars": 6586,
+      "reencode_matches": true,
+      "decoded_sha256": "1c281aca6e9c2d7f5ddb14d9d0835f70c0e4d2c67cb72c841495aa8fddb00d3c"
+    },
+    {
+      "position": 27488,
+      "doc_id": "3d17e3c292f72932",
+      "n_tokens": 216,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1019,
+      "n_chars": 1019,
+      "reencode_matches": true,
+      "decoded_sha256": "3d17e3c292f72932bc2a1abb03c631ffc73cf761f16d404956a04a0110994c8b"
+    },
+    {
+      "position": 30924,
+      "doc_id": "e1cecf2f3aae3268",
+      "n_tokens": 610,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2856,
+      "n_chars": 2856,
+      "reencode_matches": true,
+      "decoded_sha256": "e1cecf2f3aae32683d84029ca0354679c52c760e0897b1f42e40a7cabce6133d"
+    },
+    {
+      "position": 34359,
+      "doc_id": "91295f2ecff9a194",
+      "n_tokens": 827,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 4314,
+      "n_chars": 4314,
+      "reencode_matches": true,
+      "decoded_sha256": "91295f2ecff9a1946a0678648307914f9c6490717519909461977123c895dfad"
+    },
+    {
+      "position": 37795,
+      "doc_id": "6c077610035835ba",
+      "n_tokens": 669,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3488,
+      "n_chars": 3488,
+      "reencode_matches": true,
+      "decoded_sha256": "6c077610035835ba86e3d33d9be044662a61522a55d0df2c5107c7c251fabeb0"
+    },
+    {
+      "position": 41231,
+      "doc_id": "602238ef453c276c",
+      "n_tokens": 96,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 488,
+      "n_chars": 488,
+      "reencode_matches": true,
+      "decoded_sha256": "602238ef453c276ce9c3e76a42214e0669c1eb4ccf9fdc2127dc84a090b77062"
+    },
+    {
+      "position": 44667,
+      "doc_id": "40405e86946ed623",
+      "n_tokens": 1038,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 4307,
+      "n_chars": 4307,
+      "reencode_matches": true,
+      "decoded_sha256": "40405e86946ed6236001686c03eb55442e5e60e0e0d0c5ad7b24c1a66691b124"
+    },
+    {
+      "position": 48103,
+      "doc_id": "b18ec42f22a39bf7",
+      "n_tokens": 828,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 4242,
+      "n_chars": 4242,
+      "reencode_matches": true,
+      "decoded_sha256": "b18ec42f22a39bf71449fc5ac4ad4313ccc3b4c40c0878de5f0879e3a9775e1a"
+    },
+    {
+      "position": 51539,
+      "doc_id": "5cc946d0b5e2fb9f",
+      "n_tokens": 690,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3048,
+      "n_chars": 3048,
+      "reencode_matches": true,
+      "decoded_sha256": "5cc946d0b5e2fb9fb995061783050bbdeceb7e054fd5d9805dcdc3b7a9d6f1d1"
+    },
+    {
+      "position": 54975,
+      "doc_id": "00ebfe4da8bd8163",
+      "n_tokens": 2025,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 11630,
+      "n_chars": 11630,
+      "reencode_matches": true,
+      "decoded_sha256": "00ebfe4da8bd81632c3eefe21af38de9cf9b4a27822da178d27b10b26cb0f565"
+    },
+    {
+      "position": 58411,
+      "doc_id": "a20bae7225d60aaa",
+      "n_tokens": 358,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2063,
+      "n_chars": 2063,
+      "reencode_matches": true,
+      "decoded_sha256": "a20bae7225d60aaa0d2a6439af95a666faa455f522b78252e41c100570282585"
+    },
+    {
+      "position": 61847,
+      "doc_id": "7544b4162e397655",
+      "n_tokens": 485,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2347,
+      "n_chars": 2347,
+      "reencode_matches": true,
+      "decoded_sha256": "bc607b443f962ed5a0e5bcadbde01c1d352bd2f41ec61d7da874e775f5a0ab0e"
+    },
+    {
+      "position": 65283,
+      "doc_id": "c696cb5fe848e7d8",
+      "n_tokens": 13382,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 57903,
+      "n_chars": 57903,
+      "reencode_matches": true,
+      "decoded_sha256": "c696cb5fe848e7d86cace55e6576656605333eaf4a5ce3beb79b9f4a1a59cf32"
+    }
+  ],
+  "wall_seconds": 7.32
+}

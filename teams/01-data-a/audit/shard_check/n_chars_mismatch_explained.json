@@ -1,0 +1,8 @@
+{
+  "docs": 41,
+  "src_found": 41,
+  "src_len_eq_n_chars": 36,
+  "decoded_eq_tok_normalized_src": 35,
+  "nfc_dec_eq_nfc_src": 35,
+  "note": "All 41 mismatched decodes: re-encode gives identical IDs, 0 U+FFFD. 35/41 decoded text == p1536 normalizer(raw sample text) exactly (Bengali: normalizer composes letters NFC keeps split, e.g. U+09DC/U+09DF, so decoded is shorter and NFC(decoded) == n_chars; Hindi indiccorp: source has precomposed nukta letters that normalization splits, so decoded is longer). Remaining 6 differ from the raw sample by clean.py edits (contiguous block removals; U+00F8 -> U+09CD U+09B2; U+09F0 -> U+09B0; literal backslash-n -> newline). n_chars is the cleaned-text length before tokenizer normalization, not the decoded length."
+}

@@ -1,0 +1,384 @@
+{
+  "scope": "Data A sample-v0 integrity audit and 20-document decode; not training admission or G9 clearance",
+  "repository_commit": "0ebfb8d74c23814a5f871e35adf935b0c3b04dd9",
+  "checker_sha256": "196c20ff70f7bdd6551a4a54dd3df1d6c5647e4d510a32276cd64bae24f6f007",
+  "tokenizer_sha256": "e6b93a93a60520d7b1af2e9242485f443b5596a1e116b8f8798d83bbad25a64b",
+  "special_token_count": 356,
+  "environment": {
+    "python": "3.12.7",
+    "numpy": "1.26.4",
+    "pyarrow": "21.0.0",
+    "tokenizers": "0.20.3"
+  },
+  "shards": [
+    {
+      "shard_id": "code-cpp-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 11.619
+    },
+    {
+      "shard_id": "code-cpp-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.531
+    },
+    {
+      "shard_id": "code-go-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 9.787
+    },
+    {
+      "shard_id": "code-go-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.448
+    },
+    {
+      "shard_id": "code-java-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 9.42
+    },
+    {
+      "shard_id": "code-java-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.03
+    },
+    {
+      "shard_id": "code-js-ts-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 7.772
+    },
+    {
+      "shard_id": "code-js-ts-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.528
+    },
+    {
+      "shard_id": "code-python-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 8.076
+    },
+    {
+      "shard_id": "code-python-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.226
+    },
+    {
+      "shard_id": "code-rust-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 9.505
+    },
+    {
+      "shard_id": "code-rust-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 2.799
+    },
+    {
+      "shard_id": "en-dclm-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 9.624
+    },
+    {
+      "shard_id": "en-dclm-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.312
+    },
+    {
+      "shard_id": "en-fineweb-edu-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 9.02
+    },
+    {
+      "shard_id": "en-fineweb-edu-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.613
+    },
+    {
+      "shard_id": "en-nemotroncc-synth-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 12.535
+    },
+    {
+      "shard_id": "en-nemotroncc-synth-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.589
+    },
+    {
+      "shard_id": "en-nemotroncc-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 7.32
+    },
+    {
+      "shard_id": "en-nemotroncc-train-000001",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 4.266
+    },
+    {
+      "shard_id": "ind-bn-fw2-train-000000",
+      "counts": {
+        "PASS": 56,
+        "FAIL": 2,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.838
+    },
+    {
+      "shard_id": "ind-bn-sangraha-v-train-000000",
+      "counts": {
+        "PASS": 56,
+        "FAIL": 2,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.451
+    },
+    {
+      "shard_id": "ind-gu-fw2-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 2.147
+    },
+    {
+      "shard_id": "ind-hi-fw2-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.484
+    },
+    {
+      "shard_id": "ind-hi-hplt-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.915
+    },
+    {
+      "shard_id": "ind-hi-indiccorp-train-000000",
+      "counts": {
+        "PASS": 56,
+        "FAIL": 2,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.925
+    },
+    {
+      "shard_id": "ind-hi-sangraha-s-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.866
+    },
+    {
+      "shard_id": "ind-hi-sangraha-v-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 0.887
+    },
+    {
+      "shard_id": "ind-kn-fw2-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 0.917
+    },
+    {
+      "shard_id": "ind-kn-sangraha-s-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 0.845
+    },
+    {
+      "shard_id": "ind-kn-sangraha-v-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 0.641
+    },
+    {
+      "shard_id": "ind-mr-fw2-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 2.134
+    },
+    {
+      "shard_id": "ind-mr-sangraha-v-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 0.824
+    },
+    {
+      "shard_id": "ind-sa-fw2-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 2.233
+    },
+    {
+      "shard_id": "ind-ta-sangraha-v-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.04
+    },
+    {
+      "shard_id": "ind-te-fw2-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.002
+    },
+    {
+      "shard_id": "ind-te-sangraha-s-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 0.595
+    },
+    {
+      "shard_id": "ind-te-sangraha-v-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 1.371
+    },
+    {
+      "shard_id": "math-finemath-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.327
+    },
+    {
+      "shard_id": "math-megamath-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 4.4
+    },
+    {
+      "shard_id": "sci-finepdfs-train-000000",
+      "counts": {
+        "PASS": 57,
+        "FAIL": 1,
+        "NOT CHECKED": 0
+      },
+      "wall_seconds": 3.528
+    }
+  ]
+}

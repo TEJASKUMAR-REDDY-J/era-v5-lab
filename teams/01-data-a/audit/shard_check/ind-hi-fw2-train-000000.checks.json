@@ -1,0 +1,638 @@
+{
+  "shard_id": "ind-hi-fw2-train-000000",
+  "manifest": {
+    "schema_version": "shard-v1",
+    "dataset_version": "sample",
+    "shard_id": "ind-hi-fw2-train-000000",
+    "format": "brahmic_u32_v2+doc_index",
+    "token_dtype": "uint32",
+    "payload_uri": "ind-hi-fw2-train-000000.bin",
+    "payload_sha256": "e64b18601f2ffc82cfeaca78c864cead9aab62b0747adf62c38a1d891613a13b",
+    "payload_bytes": 35956296,
+    "index_uri": "ind-hi-fw2-train-000000.idx.npy",
+    "index_sha256": "a25df3d8c92f2369156aa37eb82886df9f481890f5e6d75642a1a6f06fd2b6f6",
+    "doc_count": 13773,
+    "token_count": 8988818,
+    "eos_token_id": 130822,
+    "tokenizer_sha256": "e6b93a93a60520d7b1af2e9242485f443b5596a1e116b8f8798d83bbad25a64b",
+    "pack_id": "ind-hi-fw2",
+    "language": "hi",
+    "script": "Deva",
+    "domain": "indic",
+    "capability_lane": "general_language",
+    "split": "train",
+    "inputs_sha256": "5277dbdd9509402530f72b7a829e101f5df25cb6ff46715e9cc2351b18917f8c",
+    "cleaning_pipeline_sha256": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589",
+    "decontam_set_sha256": "2826a3b883210c653979103c09ce1c79e40fc4f7034b54027f2836482370d22a",
+    "sample_metadata_uri": "ind-hi-fw2-train-000000.docs.parquet",
+    "sample_metadata_sha256": "5c4dc9c258e7d7b9b9711bfe5eaebe9d93a1f7a8394416490eb281fb29e3c028",
+    "quality_report_uri": "ind-hi-fw2-train-000000.quality_report.json",
+    "quality_report_sha256": "69a0b16d5d57fb97ba6b765d034d78baf5822a0df08ccab8bda6cd4b6fc8fc0f",
+    "created_by": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+  },
+  "artifact_sha256": {
+    "ind-hi-fw2-train-000000.json": "44b6e81ee0e3cb2a3ce09e33acc2f67c66e9f2525a3763b123f0fdb1c3af541f",
+    "ind-hi-fw2-train-000000.bin": "e64b18601f2ffc82cfeaca78c864cead9aab62b0747adf62c38a1d891613a13b",
+    "ind-hi-fw2-train-000000.idx.npy": "a25df3d8c92f2369156aa37eb82886df9f481890f5e6d75642a1a6f06fd2b6f6",
+    "ind-hi-fw2-train-000000.docs.parquet": "5c4dc9c258e7d7b9b9711bfe5eaebe9d93a1f7a8394416490eb281fb29e3c028",
+    "ind-hi-fw2-train-000000.quality_report.json": "69a0b16d5d57fb97ba6b765d034d78baf5822a0df08ccab8bda6cd4b6fc8fc0f",
+    "cleaning_pipeline.json": "35611a83cfa6d6b510a43b07c5d356c4f6d5d908bbb7d4f3c8b9f05856046589"
+  },
+  "checks": [
+    {
+      "check": "manifest file sha256 (recorded)",
+      "status": "PASS",
+      "expected": "",
+      "observed": "44b6e81ee0e3cb2a3ce09e33acc2f67c66e9f2525a3763b123f0fdb1c3af541f"
+    },
+    {
+      "check": "all template fields present",
+      "status": "PASS",
+      "expected": "none missing",
+      "observed": "none missing"
+    },
+    {
+      "check": "no fields outside the template",
+      "status": "PASS",
+      "expected": "none extra",
+      "observed": "none extra"
+    },
+    {
+      "check": "no empty or placeholder values",
+      "status": "PASS",
+      "expected": "none",
+      "observed": "none"
+    },
+    {
+      "check": "schema_version",
+      "status": "PASS",
+      "expected": "shard-v1",
+      "observed": "shard-v1"
+    },
+    {
+      "check": "format",
+      "status": "PASS",
+      "expected": "brahmic_u32_v2+doc_index",
+      "observed": "brahmic_u32_v2+doc_index"
+    },
+    {
+      "check": "token_dtype",
+      "status": "PASS",
+      "expected": "uint32",
+      "observed": "uint32"
+    },
+    {
+      "check": "eos_token_id",
+      "status": "PASS",
+      "expected": "130822",
+      "observed": "130822"
+    },
+    {
+      "check": "tokenizer_sha256 is p1536",
+      "status": "PASS",
+      "expected": "e6b93a93a60520d7",
+      "observed": "e6b93a93a60520d7"
+    },
+    {
+      "check": "decontam_set_sha256 is F2 v2",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "split is train or validation",
+      "status": "PASS",
+      "expected": "train|validation",
+      "observed": "train"
+    },
+    {
+      "check": "shard_id = <pack_id>-<split>-<6 digits>",
+      "status": "PASS",
+      "expected": "ind-hi-fw2-train-NNNNNN",
+      "observed": "ind-hi-fw2-train-000000"
+    },
+    {
+      "check": "created_by is a full git commit hash",
+      "status": "PASS",
+      "expected": "40 hex characters",
+      "observed": "0064f81d57ef"
+    },
+    {
+      "check": "payload_bytes = 1024 + 4 x token_count",
+      "status": "PASS",
+      "expected": "35956296",
+      "observed": "35956296"
+    },
+    {
+      "check": "payload_sha256 (ind-hi-fw2-train-000000.bin)",
+      "status": "PASS",
+      "expected": "e64b18601f2ffc82",
+      "observed": "e64b18601f2ffc82"
+    },
+    {
+      "check": "index_sha256 (ind-hi-fw2-train-000000.idx.npy)",
+      "status": "PASS",
+      "expected": "a25df3d8c92f2369",
+      "observed": "a25df3d8c92f2369"
+    },
+    {
+      "check": "sample_metadata_sha256 (ind-hi-fw2-train-000000.docs.parquet)",
+      "status": "PASS",
+      "expected": "5c4dc9c258e7d7b9",
+      "observed": "5c4dc9c258e7d7b9"
+    },
+    {
+      "check": "quality_report_sha256 (ind-hi-fw2-train-000000.quality_report.json)",
+      "status": "PASS",
+      "expected": "69a0b16d5d57fb97",
+      "observed": "69a0b16d5d57fb97"
+    },
+    {
+      "check": "cleaning_pipeline_sha256",
+      "status": "PASS",
+      "expected": "35611a83cfa6d6b5",
+      "observed": "35611a83cfa6d6b5"
+    },
+    {
+      "check": "cleaning_pipeline F2 set = manifest decontam set",
+      "status": "PASS",
+      "expected": "2826a3b883210c65",
+      "observed": "2826a3b883210c65"
+    },
+    {
+      "check": "cleaning_pipeline records a dedup version",
+      "status": "FAIL",
+      "expected": "a dedup version",
+      "observed": "None"
+    },
+    {
+      "check": "cleaning_pipeline clean.py = clean.py in this checkout",
+      "status": "PASS",
+      "expected": "22d818c72c9f30bf",
+      "observed": "22d818c72c9f30bf"
+    },
+    {
+      "check": "index dtype int64",
+      "status": "PASS",
+      "expected": "int64",
+      "observed": "int64"
+    },
+    {
+      "check": "index length = doc_count + 1",
+      "status": "PASS",
+      "expected": "13774",
+      "observed": "13774"
+    },
+    {
+      "check": "index starts at 0",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "index ends at token_count",
+      "status": "PASS",
+      "expected": "8988818",
+      "observed": "8988818"
+    },
+    {
+      "check": "every document has >= 2 tokens (text + EOS)",
+      "status": "PASS",
+      "expected": ">= 2",
+      "observed": "68"
+    },
+    {
+      "check": "document lengths sum to token_count",
+      "status": "PASS",
+      "expected": "8988818",
+      "observed": "8988818"
+    },
+    {
+      "check": "shard within 2^26 tokens, or one document",
+      "status": "PASS",
+      "expected": "<= 67108864",
+      "observed": "8988818"
+    },
+    {
+      "check": "quality report shard_id",
+      "status": "PASS",
+      "expected": "ind-hi-fw2-train-000000",
+      "observed": "ind-hi-fw2-train-000000"
+    },
+    {
+      "check": "quality report docs_in_shard = doc_count",
+      "status": "PASS",
+      "expected": "13773",
+      "observed": "13773"
+    },
+    {
+      "check": "rows_read = docs_in_shard + left out",
+      "status": "PASS",
+      "expected": "13773",
+      "observed": "13773"
+    },
+    {
+      "check": "left_out counts = left_out_docs lists",
+      "status": "PASS",
+      "expected": "{'secret': 0, 'empty': 0, 'special': 0, 'roundtrip': 0}",
+      "observed": "{'secret': 0, 'empty': 0, 'special': 0, 'roundtrip': 0}"
+    },
+    {
+      "check": ".bin size = payload_bytes",
+      "status": "PASS",
+      "expected": "35956296",
+      "observed": "35956296"
+    },
+    {
+      "check": ".bin header magic",
+      "status": "PASS",
+      "expected": "20261025",
+      "observed": "20261025"
+    },
+    {
+      "check": ".bin header version",
+      "status": "PASS",
+      "expected": "2",
+      "observed": "2"
+    },
+    {
+      "check": ".bin header token count",
+      "status": "PASS",
+      "expected": "8988818",
+      "observed": "8988818"
+    },
+    {
+      "check": ".bin header rest is zeros",
+      "status": "PASS",
+      "expected": "zeros",
+      "observed": "zeros"
+    },
+    {
+      "check": "tokens after the header = token_count",
+      "status": "PASS",
+      "expected": "8988818",
+      "observed": "8988818"
+    },
+    {
+      "check": "every id < vocab 131072",
+      "status": "PASS",
+      "expected": "< 131072",
+      "observed": "130822"
+    },
+    {
+      "check": "every document ends with EOS",
+      "status": "PASS",
+      "expected": "13773",
+      "observed": "13773"
+    },
+    {
+      "check": "no special id >= 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "none of the 9 special ids below 130725 inside a document",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "docs.parquet rows = doc_count",
+      "status": "PASS",
+      "expected": "13773",
+      "observed": "13773"
+    },
+    {
+      "check": "docs.parquet doc_ids unique",
+      "status": "PASS",
+      "expected": "13773",
+      "observed": "13773"
+    },
+    {
+      "check": "docs.parquet n_tokens = index lengths",
+      "status": "PASS",
+      "expected": "equal",
+      "observed": "equal"
+    },
+    {
+      "check": "assigned pack and sample/train scope",
+      "status": "PASS",
+      "expected": "ind-hi-fw2, train, sample",
+      "observed": "ind-hi-fw2, train, sample"
+    },
+    {
+      "check": "metadata required columns",
+      "status": "PASS",
+      "expected": "all six metadata columns",
+      "observed": "['doc_id', 'input_part', 'input_row', 'lang_label', 'n_chars', 'n_tokens']"
+    },
+    {
+      "check": "metadata source part belongs to assigned pack",
+      "status": "PASS",
+      "expected": "ind-hi-fw2",
+      "observed": "['ind-hi-fw2_part-00000_clean.parquet']"
+    },
+    {
+      "check": "metadata source rows ordered, unique and within rows_read",
+      "status": "PASS",
+      "expected": "strictly increasing in [0, rows_read)",
+      "observed": "0..13772, 13773 rows"
+    },
+    {
+      "check": "metadata source-row gaps equal excluded count",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "excluded IDs unique and absent from kept metadata",
+      "status": "PASS",
+      "expected": "unique, disjoint",
+      "observed": "0 excluded; intersection 0"
+    },
+    {
+      "check": "metadata character counts positive",
+      "status": "PASS",
+      "expected": "all > 0",
+      "observed": "239"
+    },
+    {
+      "check": "writer commit in audited main history",
+      "status": "PASS",
+      "expected": "ancestor of audited main",
+      "observed": "0064f81d57ef47e22d8fa5f42d96c99089a98ce4"
+    },
+    {
+      "check": "decode 20 documents: each ends with EOS 130822",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: no U+FFFD replacement characters",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0"
+    },
+    {
+      "check": "decode: re-encoding the decoded text gives the same IDs",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    },
+    {
+      "check": "decode: decoded length equals metadata n_chars",
+      "status": "PASS",
+      "expected": "20",
+      "observed": "20"
+    }
+  ],
+  "counts": {
+    "PASS": 57,
+    "FAIL": 1,
+    "NOT CHECKED": 0
+  },
+  "quality_counts": {
+    "rows_read": 13773,
+    "docs_in_shard": 13773,
+    "left_out": {
+      "secret": 0,
+      "empty": 0,
+      "special": 0,
+      "roundtrip": 0
+    }
+  },
+  "input_parts": [
+    "ind-hi-fw2_part-00000_clean.parquet"
+  ],
+  "input_rows": [
+    0,
+    13772
+  ],
+  "min_document_tokens": 68,
+  "max_document_tokens": 21067,
+  "decoded_documents": [
+    {
+      "position": 0,
+      "doc_id": "d2ef7093f4f13822",
+      "n_tokens": 272,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 826,
+      "n_chars": 826,
+      "reencode_matches": true,
+      "decoded_sha256": "d2ef7093f4f1382222762a2014006a1ecc825ccfeae3004c7d2a81c3679eb281"
+    },
+    {
+      "position": 725,
+      "doc_id": "0f81ba6db71c3d8e",
+      "n_tokens": 357,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1157,
+      "n_chars": 1157,
+      "reencode_matches": true,
+      "decoded_sha256": "0f81ba6db71c3d8e4f06d86248e7b7d91a6d99964d8b1eee4c3aa6a44c9435b9"
+    },
+    {
+      "position": 1450,
+      "doc_id": "309756f26d999148",
+      "n_tokens": 310,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1010,
+      "n_chars": 1010,
+      "reencode_matches": true,
+      "decoded_sha256": "309756f26d99914833cfc945f8e46e946f2258d357be36756c71644ae6565cd5"
+    },
+    {
+      "position": 2175,
+      "doc_id": "8d7cb2c5d4d5e8d4",
+      "n_tokens": 353,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1363,
+      "n_chars": 1363,
+      "reencode_matches": true,
+      "decoded_sha256": "8d7cb2c5d4d5e8d496b11e9b628c0a7da7435363eb4bbca932f976eb664110e2"
+    },
+    {
+      "position": 2899,
+      "doc_id": "f31cf3dd4f2e2ac9",
+      "n_tokens": 885,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 3413,
+      "n_chars": 3413,
+      "reencode_matches": true,
+      "decoded_sha256": "f31cf3dd4f2e2ac9ee733e2d3e490d82ebf2855a13bbe7eec3155affafe3acc1"
+    },
+    {
+      "position": 3624,
+      "doc_id": "23bd932807344665",
+      "n_tokens": 517,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1683,
+      "n_chars": 1683,
+      "reencode_matches": true,
+      "decoded_sha256": "23bd932807344665d1d670a7ffc498a2617600dc1e29de6d89c35c45863c5062"
+    },
+    {
+      "position": 4349,
+      "doc_id": "8be0a6e1e2eadb16",
+      "n_tokens": 551,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1920,
+      "n_chars": 1920,
+      "reencode_matches": true,
+      "decoded_sha256": "8be0a6e1e2eadb16cf1dc4c33fe3757a4d674205d2328b16ea72740f2280ec74"
+    },
+    {
+      "position": 5074,
+      "doc_id": "3ec5458a7766a023",
+      "n_tokens": 348,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1130,
+      "n_chars": 1130,
+      "reencode_matches": true,
+      "decoded_sha256": "3ec5458a7766a023c2d5e0c2aca8ad2071c002c5bda0cda3ea3b1d61a165b06b"
+    },
+    {
+      "position": 5799,
+      "doc_id": "bc59a7f5e402a749",
+      "n_tokens": 150,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 493,
+      "n_chars": 493,
+      "reencode_matches": true,
+      "decoded_sha256": "bc59a7f5e402a74976307616863f8bf9ea44f6d69aa535836b315e3831b84103"
+    },
+    {
+      "position": 6524,
+      "doc_id": "dde41d4933d2ebd7",
+      "n_tokens": 1413,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 4914,
+      "n_chars": 4914,
+      "reencode_matches": true,
+      "decoded_sha256": "dde41d4933d2ebd7070fbd47036399d5f5b7a100467faafb5652e0a319c1c668"
+    },
+    {
+      "position": 7248,
+      "doc_id": "f7eba4007bd11c42",
+      "n_tokens": 427,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1402,
+      "n_chars": 1402,
+      "reencode_matches": true,
+      "decoded_sha256": "f7eba4007bd11c421c5266a3e1b7d7cac8e77d96d68fb2816e0fe5cf0bcc7a1b"
+    },
+    {
+      "position": 7973,
+      "doc_id": "41dcd55501a6077e",
+      "n_tokens": 416,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1436,
+      "n_chars": 1436,
+      "reencode_matches": true,
+      "decoded_sha256": "41dcd55501a6077e664f6821317aa327df9ee00838f61fd47c4ec7d79aead4a6"
+    },
+    {
+      "position": 8698,
+      "doc_id": "d6e2a3effde0712f",
+      "n_tokens": 680,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2386,
+      "n_chars": 2386,
+      "reencode_matches": true,
+      "decoded_sha256": "d6e2a3effde0712ff82ea4f773086b3ab5e57318c52359bbf48566fe5d71ed65"
+    },
+    {
+      "position": 9423,
+      "doc_id": "687863c4fef41ade",
+      "n_tokens": 405,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1430,
+      "n_chars": 1430,
+      "reencode_matches": true,
+      "decoded_sha256": "687863c4fef41adedca6e0552e56b2df834cc0a7ecb07a2d5ea6bc82f37adce4"
+    },
+    {
+      "position": 10148,
+      "doc_id": "119a033a67abe964",
+      "n_tokens": 638,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2153,
+      "n_chars": 2153,
+      "reencode_matches": true,
+      "decoded_sha256": "119a033a67abe9645d4c8a232f55e541b56623c163fde88679a8ca9ea7b54747"
+    },
+    {
+      "position": 10873,
+      "doc_id": "48a026d66ad04d1c",
+      "n_tokens": 688,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 2181,
+      "n_chars": 2181,
+      "reencode_matches": true,
+      "decoded_sha256": "48a026d66ad04d1c842c1f0f750a71d26985c516efe418181d28d6b4f996b883"
+    },
+    {
+      "position": 11597,
+      "doc_id": "9467f7584d02a018",
+      "n_tokens": 318,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 946,
+      "n_chars": 946,
+      "reencode_matches": true,
+      "decoded_sha256": "9467f7584d02a0181407e98e9073a5cc45a54f48c3d6ab13a1f6979ed4d0c87e"
+    },
+    {
+      "position": 12322,
+      "doc_id": "e66547508b444b05",
+      "n_tokens": 249,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 862,
+      "n_chars": 862,
+      "reencode_matches": true,
+      "decoded_sha256": "e66547508b444b054f1871e9c736bb6ce7d284ea6603c31db94f156754cc1d99"
+    },
+    {
+      "position": 13047,
+      "doc_id": "d76193c51f5e170b",
+      "n_tokens": 321,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1092,
+      "n_chars": 1092,
+      "reencode_matches": true,
+      "decoded_sha256": "d76193c51f5e170bdfbce1f0623a32dbdca260664cf3e74a056b495026c24c74"
+    },
+    {
+      "position": 13772,
+      "doc_id": "58c38b1b73a3a943",
+      "n_tokens": 553,
+      "ends_with_eos": true,
+      "replacement_chars": 0,
+      "decoded_chars": 1798,
+      "n_chars": 1798,
+      "reencode_matches": true,
+      "decoded_sha256": "58c38b1b73a3a943bc4ff8a9fc334cdba18a476e463f21e575302a2f831e0456"
+    }
+  ],
+  "wall_seconds": 1.484
+}
