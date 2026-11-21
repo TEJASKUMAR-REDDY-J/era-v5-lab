@@ -6,7 +6,22 @@
 - **This is its own sheet**, not `medicine_english.md`: `combine_spec.py` builds `specv1_1.md` from `medicine_english.md`, and a replacement added there would run next to the rule it replaces. When a proposal is accepted, its card replaces the old card in `specv1_1.md` and `clean.py` is rebuilt.
 - **Every bug was reproduced with the current `spec_v1_1/clean.py`**: on the five audited docs its output is the text in `tokenizer_sample_v0_clean` and in the decoded frozen-p1536 shards, byte for byte.
 - **Rule form** as the other sheets: `medicine(doc)` returns `(action, text)`; each rule runs on the four English packs only.
-- **Tests:** `tests/test_proposals_english.py`, 22 tests, all text made up.
+- **Tests:** `tests/test_proposals_english.py`, 22 tests, and `tests/test_speed_equivalence_proposals_english.py`, 9 tests; all text made up.
+
+**Speed.** `python3 -I spec_v1_1/scripts/speed_proposals.py --clean spec_v1_1/clean.py --packs <dir of the 500-doc sample packs>` (from `teams/01-data-a`) times each proposal against the rule it replaces, and spec v1.1's English `clean()` as it is and with all five proposals in place; best of 3 passes, one process, CPU only. The first versions made `clean()` 0.69x as fast (`DA-C2-005` tested every line against `C2_CODE`: 0.34 to 1.03 ms/doc against 0.04 to 0.13 for `DA-C2-003`). Three speed-ups, each exact (same output), bring it back:
+- **`DA-C2-005`:** `C2_CODE` is tested only on a line whose key is there 3 or more times; a key there fewer times cannot reach 3 without its code lines either. The fence test runs only when the text holds ` ``` ` or `~~~`.
+- **`DA-F1-007`:** the numbers to mask on every line are found once, and only when a phone line near an organisation asks (on an organisation's page there are none).
+- **`DA-A2-009`:** a text with no control character (most) is returned after the line-ending step; the C1 search starts at the first control character.
+
+| pack (500 docs) | `clean()` spec v1.1, docs/s | with the proposals, first version | with the proposals, now |
+|---|---:|---:|---:|
+| en-dclm | 418.4 | 294.6 (0.69x) | 411.9 (0.98x) |
+| en-fineweb-edu | 556.4 | 393.9 (0.69x) | 583.2 (1.05x) |
+| en-nemotroncc | 533.7 | 409.9 (0.72x) | 558.5 (1.05x) |
+| en-nemotroncc-synth | 1524.8 | 989.8 (0.63x) | 1526.8 (1.00x) |
+| all 2,000 | 3.36 s | 4.69 s (0.69x) | 3.29 s (1.02x) |
+
+Timings vary by about 5%, so 0.98x to 1.05x is the same speed. Each sped-up rule gives the same result as its first version on all 63,367 docs (the four sample packs and the two en-dclm train parts), the harm results are identical, and the equivalence tests hold a frozen copy of each first version (9 of 9 hand-made mutations of the speed-ups are caught). No rule loops over tokens; the loops are over lines, as in the rules they replace.
 
 **How each proposal was checked**
 - **Harm test:** `python3 -I teams/01-data-a/harmtest/harm_test.py --pack <pack>.parquet --gold teams/01-data-a/gold/<pack>_gold.csv --rules teams/01-data-a/spec_v1_1/sheets/proposals_english.md --rule all`, on the 500-doc sample packs whose sha256 equals `pack_sha256` in `results/sheets/<pack>_harm.json`. Limits: 1 doc on en-dclm (62 gold), en-fineweb-edu (158) and en-nemotroncc (129); 3 on en-nemotroncc-synth (326).
@@ -63,9 +78,11 @@ def _a2_utf8(m):
 
 def medicine_a2(text):
     new = text.replace("\r\n", "\n").replace("\r", "\n")
-    if A2_C1.search(new):  # speed: most docs have none
-        new = A2_UTF8.sub(_a2_utf8, new).translate(A2_CP1252)
-    new = A2_CONTROL.sub("", new)
+    first = A2_CONTROL.search(new)  # speed: most docs have no control character, and then nothing else changes
+    if first:
+        if A2_C1.search(new, first.start()):  # a C1 control is a control character: none comes before the first
+            new = A2_UTF8.sub(_a2_utf8, new).translate(A2_CP1252)
+        new = A2_CONTROL.sub("", new)
     return ("fix" if new != text else "keep", new)
 
 
@@ -150,18 +167,24 @@ C2_CODE = re.compile(r"^\s*(?:#|//|\$ |>>> )|\{\s*$|^\s*\}|\)\s*;\s*$|=[^=\n]*;\
 
 def c2_spans(text):
     """C2: later copies of a line repeated C2_MIN_REPEAT or more times in the document."""
+    fenced = "```" in text or "~~~" in text  # speed: no fence marker, no fence
     seen, lines, pos, fence = {}, [], 0, False
     for line in text.split("\n"):
         key = " ".join(line.split())
-        if line.lstrip().startswith(("```", "~~~")):
+        if fenced and line.lstrip().startswith(("```", "~~~")):
             fence = not fence
-        if len(key) >= C2_MIN_CHARS and not fence and not C2_CODE.search(line):
-            lines.append((pos, pos + len(line), key))
+        if len(key) >= C2_MIN_CHARS and not fence:
+            lines.append((pos, pos + len(line), key, line))
             seen[key] = seen.get(key, 0) + 1
         pos += len(line) + 1
+    # a code line is not counted. speed: C2_CODE is tested only on a line whose key is there C2_MIN_REPEAT times or
+    # more with code lines counted; a key there fewer times stays under C2_MIN_REPEAT without them too
+    code = {k for k, (_, _, key, line) in enumerate(lines) if seen[key] >= C2_MIN_REPEAT and C2_CODE.search(line)}
+    for k in code:
+        seen[lines[k][2]] -= 1
     out, first = [], set()
-    for s, e, key in lines:
-        if seen[key] >= C2_MIN_REPEAT:
+    for k, (s, e, key, _) in enumerate(lines):
+        if k not in code and seen[key] >= C2_MIN_REPEAT:
             if key in first:
                 out.append((s, e, "C2-repeated-line"))
             first.add(key)
@@ -461,11 +484,21 @@ def medicine_f1(text):
         return False
 
     # one decision per number, privacy first: a number masked on any line is masked on every line, also on a line
-    # near an organisation word (the 13-line window alone can mask a number on one line and keep it on the next)
-    masked = set()
-    for i, line in enumerate(lines):
-        if DIGIT.search(line) and PHONE.search(line) and not (on_org_page() or org_near(i)):
-            masked.update(NOT_DIGIT.sub("", m.group()) for m in PHONE.finditer(line) if not TOLL_FREE.match(m.group()))
+    # near an organisation word (the 13-line window alone can mask a number on one line and keep it on the next).
+    # speed: the masked numbers are found once, and only when a phone line near an organisation asks
+    masked = []
+
+    def masked_numbers():
+        if not masked:
+            nums = set()
+            if not on_org_page():  # on an organisation's page no line is masked
+                for i, line in enumerate(lines):
+                    if DIGIT.search(line) and PHONE.search(line) and not org_near(i):
+                        nums.update(NOT_DIGIT.sub("", m.group()) for m in PHONE.finditer(line)
+                                    if not TOLL_FREE.match(m.group()))
+            masked.append(nums)
+        return masked[0]
+
     out = []
     for i, line in enumerate(lines):
         if "@" not in line and not DIGIT.search(line):  # no EMAIL, PHONE or ADDRESS can match
@@ -478,8 +511,8 @@ def medicine_f1(text):
                 new = PHONE.sub(lambda m: m.group() if TOLL_FREE.match(m.group()) else "<PHONE>", new)
                 if len(line.strip()) <= CONTACT_LINE:
                     new = ADDRESS.sub("<ADDRESS>", new)
-            elif masked:
-                new = PHONE.sub(lambda m: "<PHONE>" if NOT_DIGIT.sub("", m.group()) in masked else m.group(), new)
+            elif masked_numbers():
+                new = PHONE.sub(lambda m: "<PHONE>" if NOT_DIGIT.sub("", m.group()) in masked[0] else m.group(), new)
         out.append(new)
     return "\n".join(out)
 
