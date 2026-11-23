@@ -141,6 +141,42 @@ The pipeline's clean stage (`pipeline/clean_job.py`, parallel since #85) on a tr
 
 The log is [`../jobs/logs/2026-11-23-collation-e2e-local.txt`](../jobs/logs/2026-11-23-collation-e2e-local.txt). The overlap, dedup, F2 and shards stages were not run: `overlap.py` needs Linux, and they do not read the cards.
 
+## Tests and benchmark carried from #75
+
+The five proposals are in the collated sheet, so their tests now load
+`audit/collated_medicine.md` directly. No separate copy of `proposals_english.md`
+is needed. Source: #75 commit `2ecacf5f`.
+
+- `spec_v1_1/tests/test_proposals_english.py`: the 22 regression tests, using
+  the renumbered cards. The synth-specific merges remain covered by
+  `tests/audit/test_collated_medicine.py`.
+- `spec_v1_1/tests/test_speed_equivalence_proposals_english.py`: the 9 speed-up
+  checks, including 4,000 seeded random texts for each of A2, C2 and F1. The
+  unoptimized F1 reference also applies #81's DOI/year exclusions, so these
+  compare the same policy before and after the speed-up.
+- `spec_v1_1/scripts/speed_proposals.py`: the benchmark now uses the collation's
+  own pack scopes and replacement order. It times every applicable card and the
+  whole pipeline, including the shared F1 rule. It verifies its baseline replay
+  against `clean()` before timing. The default is the four English packs;
+  `--pack` can select any of the thirteen collated packs.
+- `tests/audit/test_speed_proposals.py`: command checks on synthetic Parquet
+  packs, including the synth merges, changed-output counts, and an empty pack.
+
+From the repository root:
+
+```bash
+python -m pytest -q teams/01-data-a/spec_v1_1/tests teams/01-data-a/tests/audit
+python -I teams/01-data-a/spec_v1_1/scripts/speed_proposals.py --clean teams/01-data-a/spec_v1_1/clean.py --packs <sample-pack-folder>
+```
+
+Validation on Python 3.12: **2,014 passed, 1 skipped, 9 subtests passed** using
+the command above, including the synthetic benchmark command checks.
+
+The synthetic command checks do not establish corpus throughput. #75's reported
+timings apply to its original five proposals; the full collated set still needs
+timing on real sample packs before adoption. These files preserve the proposal
+and validation work; the running cleaner and spec are unchanged.
+
 ## Limits
 
 - The replay uses the raw tokenizer sample v0 train parts, not corpus-v1 and not the token shards.
