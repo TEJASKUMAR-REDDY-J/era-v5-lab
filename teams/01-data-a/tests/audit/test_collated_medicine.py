@@ -20,7 +20,7 @@ def out(rid, text, pack=SYNTH):
 
 
 def test_ids_are_unique_and_not_in_the_registry():
-    assert len(CARDS) == len(check.cards) == 15
+    assert len(CARDS) == len(check.cards) == 22
     registry = json.loads((DATA_A / "rules" / "registry.json").read_text(encoding="utf-8"))["rules"]
     assert not CARDS.keys() & ({r["id"] for r in registry} | set(check.replay.c.SCOPE))
 
@@ -84,7 +84,7 @@ def test_c2_keeps_code_lines_and_record_fields_and_cuts_furniture():
 
 def test_c2_and_f1_cards_stay_on_their_packs():
     text = "\n".join(["Read more stories", "x"] * 3)
-    for rid, pack in (("DA-C2-010", "en-dclm"), ("DA-F1-009", "en-dclm"), ("DA-C2-009", SYNTH), ("DA-F1-007", SYNTH)):
+    for rid, pack in (("DA-C2-010", "en-dclm"), ("DA-F1-009", "en-dclm"), ("DA-C2-009", SYNTH), ("DA-F1-007", SYNTH), ("DA-C3-009", SYNTH)):
         assert out(rid, text + f"\nAsk for Sam on {PHONE}.", pack)[0] == "keep"
 
 
@@ -92,3 +92,29 @@ def test_c1_licence_line_only_at_the_start():
     line = "Distributed under a Creative Commons Attribution 4.0 International License"
     assert out("DA-C1-014", line + "\nBody.", "sci-finepdfs") == ("fix", "Body.")
     assert out("DA-C1-014", "Body.\n" + line + "\nMore.", "sci-finepdfs")[0] == "keep"
+
+
+@pytest.mark.parametrize("rid, pack", [("DA-F1-007", "en-dclm"), ("DA-F1-009", SYNTH)])
+@pytest.mark.parametrize("text", [
+    "See doi 10.1034/j.1399-3054.1998.1040203.x for the method.",  # from #81: digits in a DOI
+    "The records for 1933 1934 1935 were lost.",  # from #81: a run of years
+])
+def test_f1_doi_and_years_are_not_phones_in_both_merged_cards(rid, pack, text):
+    assert out(rid, text, pack) == ("keep", text)
+    action, new = out(rid, f"Ask for Sam on {PHONE}. {text}", pack)
+    assert action == "fix" and new.count("<PHONE>") == 1
+
+
+LONG = " ".join(["The river rose in spring and the farmers moved their stock to the hills."] * 30)
+
+
+def test_c3_trims_long_prose_and_drops_a_short_fragment():  # from #81
+    action, new = out("DA-C3-009", LONG + "\nApply now at", "en-dclm")
+    assert action == "fix" and new == LONG
+    assert out("DA-C3-009", "A short teaser that ends with the word of", "en-dclm")[0] == "drop"
+    assert out("DA-C3-009", "He said “we worked on.”", "en-dclm")[0] == "keep"
+
+
+def test_java_card_is_renumbered_and_keeps_its_place():  # #72's DA-C1-012 next to #71's
+    assert CARDS["DA-C1-016"]["FROM"] == "#72 DA-C1-012" and CARDS["DA-C1-012"]["FROM"] == "#71 DA-C1-012"
+    assert set(check.packs_of(CARDS["DA-C1-016"])) == {"code-java"}

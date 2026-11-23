@@ -1,0 +1,21 @@
+# Collation end-to-end trial, 23 Nov 2026, local (Windows 11, CPU, Python 3.12.7, pyarrow 23.0.1, tree-sitter-language-pack 1.22.1)
+# input: trial copy of tokenizer sample v0, 86 parts, first 150 rows of each plus the audited documents (12,145 rows); manifest sha256 72ff45d3bb625f36…
+# clean.py sha256 ce131217cd5247a3019fa00b6d040a3fd41726874714750b3580c89117c63f83
+
+$ python -I teams/01-data-a/pipeline/clean_job.py --config <trial clean.json, workers 4>
+{"clean_sha256": "ce131217cd5247a3019fa00b6d040a3fd41726874714750b3580c89117c63f83", "event": "start", "kept_parts": 0, "manifest_parts": 86, "resumed": false, "runner_sha256": "6eecbdf85087821f17f14e05cdee42e3bd7e7d615625144aa63ce2c6787e2be6", "sample_rows": 12145, "scope": "full manifest", "selected_parts": 86, "workers": 4}
+{"actions": {"drop": 397, "fix": 3176, "keep": 8572}, "completed_parts": 86, "errors": 0, "event": "complete", "input_rows": 12145, "output_rows": 11748, "peak_rss_mib": null, "wall_seconds": 75.328}
+
+$ python -I teams/01-data-a/pipeline/clean_job.py --config <trial clean.json, workers 1>
+{"clean_sha256": "ce131217cd5247a3019fa00b6d040a3fd41726874714750b3580c89117c63f83", "event": "start", "kept_parts": 0, "manifest_parts": 86, "resumed": false, "runner_sha256": "6eecbdf85087821f17f14e05cdee42e3bd7e7d615625144aa63ce2c6787e2be6", "sample_rows": 12145, "scope": "full manifest", "selected_parts": 86, "workers": 1}
+{"actions": {"drop": 397, "fix": 3176, "keep": 8572}, "completed_parts": 86, "errors": 0, "event": "complete", "input_rows": 12145, "output_rows": 11748, "peak_rss_mib": null, "wall_seconds": 123.735}
+
+# 4 workers against 1 worker: 86 cleaned parts byte-identical; 86 reports equal apart from timings
+
+$ python -I teams/01-data-a/audit/collation_e2e_check.py <trial copy> out/trial-collation-w4   # clean stage output against collation_replay, then the collated cards
+86 parts; {'passthrough': 1894, 'same': 10251, 'cards: same': 10106, 'cards: changed': 119, 'cards: kept': 26}
+pass-through packs (cadj-commits, cadj-notebooks, cadj-stackexchange, ind-ml-fw2, ind-or-fw2, ind-ta-fw2, ind-ta-sangraha-s): 1894 documents, 0 differ from the raw text
+
+# ce131217 against 6a57276c, same documents
+documents whose output differs: {'ind-sa-fw2': 5, 'code-rust': 1, 'code-go': 1, 'code-python': 1}
+mask change: {('code-rust', '<ADDRESS>'): +2, ('code-go', '<PHONE>'): +1, ('code-python', '<PHONE>'): +1}

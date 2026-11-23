@@ -4,7 +4,7 @@
     python -I teams/01-data-a/audit/collated_medicine_check.py packs --raw <tokenizer_sample_v0/train> --out <csv> [--pack en-dclm ...]
     python -I teams/01-data-a/audit/collated_medicine_check.py gold  --raw <folder of the 500-document sample packs>
 
-docs   the 313 labelled documents of collation_docs.csv: what the cleaner does now, what it does with the cards, whether the
+docs   the labelled documents of collation_docs.csv: what the cleaner does now, what it does with the cards, whether the
        output differs, the rules that acted, and the number of <PHONE> masks now and with the cards.
 packs  whole packs: documents dropped now and with the cards, recovered, newly dropped, output changed, changed again by a
        second run; and for each card the documents where it does something else than the rule it replaces, on the same text.
@@ -34,7 +34,7 @@ import collation_replay as replay  # noqa: E402
 
 SHEET = HERE / "collated_medicine.md"
 GOLD = HERE.parent / "gold"
-PACKS = replay.SCOPE_PACKS + ["sci-finepdfs"]
+PACKS = replay.SCOPE_PACKS + ["sci-finepdfs", "code-cpp", "code-go", "code-java", "code-js-ts", "code-python", "code-rust"]
 cards = []  # the namespace of each card, loaded once in each process
 
 
