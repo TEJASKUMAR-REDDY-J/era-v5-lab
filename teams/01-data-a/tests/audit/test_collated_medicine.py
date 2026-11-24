@@ -118,3 +118,37 @@ def test_c3_trims_long_prose_and_drops_a_short_fragment():  # from #81
 def test_java_card_is_renumbered_and_keeps_its_place():  # #72's DA-C1-012 next to #71's
     assert CARDS["DA-C1-016"]["FROM"] == "#72 DA-C1-012" and CARDS["DA-C1-012"]["FROM"] == "#71 DA-C1-012"
     assert set(check.packs_of(CARDS["DA-C1-016"])) == {"code-java"}
+
+
+@pytest.mark.parametrize("rid, pack", [("DA-F1-007", "en-dclm"), ("DA-F1-009", SYNTH)])
+def test_f1_binary_value_is_kept_and_a_phone_beside_it_is_masked(rid, pack):  # the binary guard of DA-F1-005 (c1b46368)
+    text = "The binary number is 1111 1111 1111 in this example."
+    assert out(rid, text, pack) == ("keep", text)
+    action, new = out(rid, f"The binary number is 1111 1111 1111; ask for Sam on {PHONE}.", pack)
+    assert action == "fix" and "1111 1111 1111" in new and new.count("<PHONE>") == 1
+    assert out(rid, "The phone number is 1011 0101 1100.", pack)[1].count("<PHONE>") == 1
+
+
+def _e2e(tmp_path, out_rows):
+    import subprocess
+    import sys
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    part = Path("train") / "cadj-commits" / "part-00000.parquet"  # a pack with no rules: the job copies it through
+    for root, rows in (("raw", [("a", "one"), ("b", "two")]), ("job", out_rows)):
+        (tmp_path / root / part).parent.mkdir(parents=True)
+        pq.write_table(pa.table({"doc_id": [r[0] for r in rows], "text": [r[1] for r in rows],
+                                 "url": [""] * len(rows), "lang_label": ["code"] * len(rows)}), tmp_path / root / part)
+    return subprocess.run([sys.executable, "-I", str(DATA_A / "audit" / "collation_e2e_check.py"), str(tmp_path / "raw"),
+                           str(tmp_path / "job")], capture_output=True, text=True).returncode
+
+
+@pytest.mark.parametrize("rows, code", [
+    ([("a", "one"), ("b", "two")], 0),
+    ([("a", "one"), ("b", "TWO")], 1),  # same id, other text
+    ([("a", "one")], 1),  # a row missing
+    ([("a", "one"), ("b", "two"), ("b", "two")], 1),  # a row twice
+    ([("a", "one"), ("b", "two"), ("c", "three")], 1),  # a row the raw part does not have
+])
+def test_e2e_checker_fails_on_changed_or_missing_pass_through_rows(tmp_path, rows, code):
+    assert _e2e(tmp_path, rows) == code

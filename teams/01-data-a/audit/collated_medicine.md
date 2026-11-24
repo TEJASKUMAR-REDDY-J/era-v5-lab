@@ -879,7 +879,7 @@ def medicine(doc):
 ### `DA-F1-007` · F1 · one decision for each phone number
 
 1. **Disease:** `DA-F1-005` masks a number on one line and keeps it on the next (`ef987c066d1cdf0f`); it does not know UK freephone. Findings: F04, F39.
-2. **Medicine:** A number masked on any line is masked on every line. 0800, 0808 and their +44 forms are toll-free. From #81: digits inside a DOI and a run of years (`1933 1934 1935`) are not a phone.
+2. **Medicine:** A number masked on any line is masked on every line. 0800, 0808 and their +44 forms are toll-free. From #81: digits inside a DOI and a run of years (`1933 1934 1935`) are not a phone. From `g1-w4-pipeline` (`c1b46368`): a value introduced as binary is not a phone.
 3. **Action and place:** fix; replaces `DA-F1-005`. **Runs on:** en-dclm, en-fineweb-edu, en-nemotroncc. **From:** #75 `DA-F1-007` + #81 `DA-F1-010` (merged; synth moves to `DA-F1-009`).
 
 ```python
@@ -962,6 +962,22 @@ def _email(m, org):
     # a name-like address at an organisation's domain is a work address when the context is an organisation's
     return addr if org or not PERSONAL_LOCAL.search(local) else "<EMAIL>"
 
+# from DA-F1-005 on g1-w4-pipeline (c1b46368), the same code
+# Binary digits explicitly introduced as a binary value are technical content, not a phone.
+# Keep this local to the matched span: a phone elsewhere on the same line still gets masked.
+BINARY_LABEL = re.compile(r"(?i)\b(?:binary(?:[ \t]+(?:number|value|literal|pattern|representation))?|bit[ \t]+(?:pattern|string))"
+                          r"[ \t]*(?:is[ \t]+|[:=][ \t]*)?[`\"']?[ \t]*$")
+BINARY_DIGITS = re.compile(r"[01]+(?:[ \t]+[01]+)+")
+BINARY_PHONE_CONTEXT = re.compile(r"(?i)\b(?:phone|telephone|tel|mobile|cell|fax|whatsapp|contact)\b")
+
+
+def _binary_value(m):
+    value = m.group()
+    before = m.string[max(0, m.start() - 64):m.start()]
+    return bool(BINARY_DIGITS.fullmatch(value) and BINARY_LABEL.search(before) and not BINARY_PHONE_CONTEXT.search(before)
+                   and not re.match(r"[ \t]+[0-9]", m.string[m.end():]))
+
+
 # merged from #81 DA-F1-010
 # not a phone number: a run of years ("1933 1934 1935"), or digits inside a DOI ("10.1034/j.1399-3054.1998...")
 YEARS = re.compile(r"(?:1[5-9]|20)\d\d(?:[\s.\-‐‑–]+(?:1[5-9]|20)\d\d)+")
@@ -972,71 +988,6 @@ def _not_phone(m):
     if YEARS.fullmatch(m.group()):
         return True
     return DOI_BEFORE.search(m.string, max(0, m.start() - 80), m.start()) is not None
-
-def _email(m, org):
-    addr = m.group()
-    local = addr.split("@", 1)[0]
-    if NOT_REAL.search(addr) or ROLE_LOCAL.match(local):
-        return addr
-    if WEBMAIL.search(addr):  # a webmail address belongs to a person
-        return "<EMAIL>"
-    # a name-like address at an organisation's domain is a work address when the context is an organisation's
-    return addr if org or not PERSONAL_LOCAL.search(local) else "<EMAIL>"
-
-def medicine_f1(text):
-    lines = text.split("\n")
-    org_page = bool(ORG_VOICE.search(text))
-    has_org = {}  # line number -> an organisation word on that line: searched once, and only when a contact line asks
-
-    def org_near(i):  # same answer as searching the joined 13-line window, as no match spans a newline
-        for j in range(max(0, i - 6), min(len(lines), i + 7)):
-            if j not in has_org:
-                has_org[j] = ORGANISATION.search(lines[j]) is not None
-            if has_org[j]:
-                return True
-        return False
-
-    out = []
-    for i, line in enumerate(lines):
-        if "@" not in line and not DIGIT.search(line):  # no EMAIL, PHONE or ADDRESS can match
-            out.append(line)
-            continue
-        new = EMAIL.sub(lambda m: _email(m, org_page or org_near(i) or bool(PUBLIC_ROLE.search(
-            "\n".join(lines[max(0, i - 2):i + 1])))), line) if "@" in line else line
-        if PHONE.search(new) or ADDRESS.search(new):
-            if not (org_page or org_near(i)):
-                new = PHONE.sub(lambda m: m.group() if TOLL_FREE.match(m.group()) or _not_phone(m) else "<PHONE>", new)
-                if len(line.strip()) <= CONTACT_LINE:
-                    new = ADDRESS.sub("<ADDRESS>", new)
-        out.append(new)
-    return "\n".join(out)
-
-
-def _std(out, text):  # added by Data A
-    # the author's result in the shared form: str -> fix/keep, None or True -> drop, False -> keep,
-    # ("drop", _) -> drop. An empty result is a drop: nothing of the document is left.
-    if out is None or out is True: return ("drop", text)
-    if out is False: return ("keep", text)
-    if isinstance(out, tuple):
-        if out[0] == "drop": return ("drop", text)
-        out = out[1]
-    if not out.strip(): return ("drop", text)
-    return ("fix" if out != text else "keep", out)
-
-
-def medicine(doc):
-    if doc.get("lang_label") not in LANGS:
-        return ("keep", doc["text"])
-    return _std(medicine_f1(doc["text"]), doc["text"])
-
-_spec_source_medicine = medicine
-
-SPEC_PACKS = {'en-dclm', 'en-fineweb-edu', 'en-nemotroncc', 'en-nemotroncc-synth'}
-
-def medicine(doc):
-    if doc.get("pack_id") not in SPEC_PACKS:
-        return ("keep", doc["text"])
-    return _spec_source_medicine(doc)
 
 
 def medicine_f1(text):
@@ -1069,7 +1020,7 @@ def medicine_f1(text):
                 for i, line in enumerate(lines):
                     if DIGIT.search(line) and PHONE.search(line) and not org_near(i):
                         nums.update(NOT_DIGIT.sub("", m.group()) for m in PHONE.finditer(line)
-                                    if not (TOLL_FREE.match(m.group()) or _not_phone(m)))
+                                    if not (TOLL_FREE.match(m.group()) or _not_phone(m) or _binary_value(m)))
             masked.append(nums)
         return masked[0]
 
@@ -1082,11 +1033,11 @@ def medicine_f1(text):
             "\n".join(lines[max(0, i - 2):i + 1])))), line) if "@" in line else line
         if PHONE.search(new) or ADDRESS.search(new):
             if not (on_org_page() or org_near(i)):
-                new = PHONE.sub(lambda m: m.group() if TOLL_FREE.match(m.group()) or _not_phone(m) else "<PHONE>", new)
+                new = PHONE.sub(lambda m: m.group() if TOLL_FREE.match(m.group()) or _not_phone(m) or _binary_value(m) else "<PHONE>", new)
                 if len(line.strip()) <= CONTACT_LINE:
                     new = ADDRESS.sub("<ADDRESS>", new)
             elif masked_numbers():
-                new = PHONE.sub(lambda m: "<PHONE>" if NOT_DIGIT.sub("", m.group()) in masked[0] and not _not_phone(m) else m.group(), new)
+                new = PHONE.sub(lambda m: "<PHONE>" if NOT_DIGIT.sub("", m.group()) in masked[0] and not (_not_phone(m) or _binary_value(m)) else m.group(), new)
         out.append(new)
     return "\n".join(out)
 
@@ -1120,7 +1071,7 @@ def medicine(doc):
 ```
 
 4. **Harm test:** 0 changed, 0 dropped on every gold set (see above). PASS.
-5. **Side effects:** A `+44` copy of a masked number is not matched. Grit, binary and IP values on these three packs are masked as before.
+5. **Side effects:** A `+44` copy of a masked number is not matched. Grit and IP values on these three packs are masked as before; a value introduced as binary is kept, with the guard of `DA-F1-005` on `g1-w4-pipeline`.
 
 ### `DA-F1-009` · F1 · one decision for each phone number; technical values and public contacts
 
@@ -1282,71 +1233,6 @@ def _not_phone(m):
     if YEARS.fullmatch(m.group()):
         return True
     return DOI_BEFORE.search(m.string, max(0, m.start() - 80), m.start()) is not None
-
-def _email(m, org):
-    addr = m.group()
-    local = addr.split("@", 1)[0]
-    if NOT_REAL.search(addr) or ROLE_LOCAL.match(local):
-        return addr
-    if WEBMAIL.search(addr):  # a webmail address belongs to a person
-        return "<EMAIL>"
-    # a name-like address at an organisation's domain is a work address when the context is an organisation's
-    return addr if org or not PERSONAL_LOCAL.search(local) else "<EMAIL>"
-
-def medicine_f1(text):
-    lines = text.split("\n")
-    org_page = bool(ORG_VOICE.search(text))
-    has_org = {}  # line number -> an organisation word on that line: searched once, and only when a contact line asks
-
-    def org_near(i):  # same answer as searching the joined 13-line window, as no match spans a newline
-        for j in range(max(0, i - 6), min(len(lines), i + 7)):
-            if j not in has_org:
-                has_org[j] = ORGANISATION.search(lines[j]) is not None
-            if has_org[j]:
-                return True
-        return False
-
-    out = []
-    for i, line in enumerate(lines):
-        if "@" not in line and not DIGIT.search(line):  # no EMAIL, PHONE or ADDRESS can match
-            out.append(line)
-            continue
-        new = EMAIL.sub(lambda m: _email(m, org_page or org_near(i) or bool(PUBLIC_ROLE.search(
-            "\n".join(lines[max(0, i - 2):i + 1])))), line) if "@" in line else line
-        if PHONE.search(new) or ADDRESS.search(new):
-            if not (org_page or org_near(i)):
-                new = PHONE.sub(lambda m: m.group() if TOLL_FREE.match(m.group()) or _not_phone(m) else "<PHONE>", new)
-                if len(line.strip()) <= CONTACT_LINE:
-                    new = ADDRESS.sub("<ADDRESS>", new)
-        out.append(new)
-    return "\n".join(out)
-
-
-def _std(out, text):  # added by Data A
-    # the author's result in the shared form: str -> fix/keep, None or True -> drop, False -> keep,
-    # ("drop", _) -> drop. An empty result is a drop: nothing of the document is left.
-    if out is None or out is True: return ("drop", text)
-    if out is False: return ("keep", text)
-    if isinstance(out, tuple):
-        if out[0] == "drop": return ("drop", text)
-        out = out[1]
-    if not out.strip(): return ("drop", text)
-    return ("fix" if out != text else "keep", out)
-
-
-def medicine(doc):
-    if doc.get("lang_label") not in LANGS:
-        return ("keep", doc["text"])
-    return _std(medicine_f1(doc["text"]), doc["text"])
-
-_spec_source_medicine = medicine
-
-SPEC_PACKS = {'en-dclm', 'en-fineweb-edu', 'en-nemotroncc', 'en-nemotroncc-synth'}
-
-def medicine(doc):
-    if doc.get("pack_id") not in SPEC_PACKS:
-        return ("keep", doc["text"])
-    return _spec_source_medicine(doc)
 
 
 def medicine_f1(text):

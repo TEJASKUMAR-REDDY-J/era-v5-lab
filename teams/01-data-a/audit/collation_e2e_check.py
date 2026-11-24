@@ -21,11 +21,15 @@ tot, per = Counter(), {}
 for raw in sorted(RAW.rglob("part-*.parquet")):
     rel = raw.relative_to(RAW)
     split, pack = rel.parts[0], rel.parts[1]
-    out = {r["doc_id"]: r["text"] for r in pq.read_table(JOB / rel, columns=["doc_id", "text"]).to_pylist()}
+    rows = pq.read_table(JOB / rel, columns=["doc_id", "text"]).to_pylist()
+    out = {r["doc_id"]: r["text"] for r in rows}
     family = c._FAMILY.get(pack)
     n = Counter()
-    if family is None:  # no rules: the job copies the part through
-        n["passthrough"] = sum(1 for r in pq.read_table(raw, columns=["doc_id"]).to_pylist() if r["doc_id"] in out)
+    raw_ids = {r["doc_id"] for r in pq.read_table(raw, columns=["doc_id"]).to_pylist()}
+    n["DIFFERENT"] += (len(rows) - len(out)) + len(out.keys() - raw_ids)  # a repeated row, or a row the raw part does not have
+    if family is None:  # no rules: the job copies the part through, every row with its text unchanged
+        for doc in pq.read_table(raw, columns=["doc_id", "text"]).to_pylist():
+            n["passthrough" if out.get(doc["doc_id"]) == doc["text"] else "DIFFERENT"] += 1
     else:
         now = replay.rules(pack)
         new, _ = check.with_cards(pack) if any(pack in check.packs_of(k) for k in check.cards) else (now, None)
